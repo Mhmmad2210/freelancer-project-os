@@ -1,0 +1,2333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  
+  <title>Freelancer Project OS Core Bundle - One-Stop Project Workflow Solution</title>
+  <meta name="description" content="One-Stop Project Workflow Solution untuk Freelancer Digital Indonesia. Kelola brief, client, quotation, tracking, revisi, invoice, payment, delivery, sampai portfolio dalam satu sistem kerja.">
+  
+  <!-- Premium Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & VARIABLES
+       ========================================================================== */
+    :root {
+      /* Palette */
+      --color-primary: #064e3b;      /* Rich Dark Teal/Green */
+      --color-primary-light: #0d9488;
+      --color-primary-bg: #f0fdf4;
+      --color-accent: #b45309;       /* Amber/Gold for Highlights */
+      --color-accent-light: #f59e0b;
+      --color-accent-bg: #fef3c7;
+      --color-bg: #fbf9f4;           /* Premium Warm Beige */
+      --color-card-bg: #ffffff;
+      --color-border: #ede8dc;        /* Warm light gray/beige border */
+      --color-text-main: #2d3748;    /* Dark Charcoal for high readability */
+      --color-text-muted: #718096;
+      --color-text-light: #ffffff;
+      
+      /* Typography */
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-accent: 'Plus Jakarta Sans', sans-serif;
+      
+      /* Structural System */
+      --max-width: 1140px;
+      --border-radius-lg: 16px;
+      --border-radius-md: 8px;
+      --transition-fast: all 0.25s ease-in-out;
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.03);
+      --shadow-md: 0 8px 30px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 16px 40px rgba(6, 78, 59, 0.06);
+    }
+
+    /* Reset Styles */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      background-color: var(--color-bg);
+      color: var(--color-text-main);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 70px; /* Space for Mobile Sticky Bottom CTA */
+    }
+
+    /* Typography Utilities */
+    h1, h2, h3, h4 {
+      font-family: var(--font-heading);
+      color: var(--color-primary);
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    p {
+      color: var(--color-text-main);
+    }
+
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Helper Badges */
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-primary-light);
+      background-color: var(--color-primary-bg);
+      padding: 6px 16px;
+      border-radius: 99px;
+      margin-bottom: 16px;
+    }
+
+    /* Button System */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 28px;
+      border-radius: var(--border-radius-md);
+      font-family: var(--font-accent);
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: var(--transition-fast);
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: var(--color-text-light);
+      border: 2px solid var(--color-primary);
+      box-shadow: 0 4px 14px rgba(6, 78, 59, 0.25);
+    }
+
+    .btn-primary:hover {
+      background-color: #043e2f;
+      border-color: #043e2f;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(6, 78, 59, 0.35);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--color-primary);
+      border: 2px solid var(--color-primary);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--color-primary-bg);
+      transform: translateY(-2px);
+    }
+
+    .btn-accent {
+      background-color: var(--color-accent);
+      color: var(--color-text-light);
+      border: 2px solid var(--color-accent);
+      box-shadow: 0 4px 14px rgba(180, 83, 9, 0.25);
+    }
+
+    .btn-accent:hover {
+      background-color: #92400e;
+      border-color: #92400e;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(180, 83, 9, 0.35);
+    }
+
+    /* Section Global Styles */
+    section {
+      padding: 80px 0;
+      position: relative;
+    }
+
+    .section-header {
+      max-width: 720px;
+      margin: 0 auto 50px auto;
+      text-align: center;
+    }
+
+    .section-header h2 {
+      font-size: 2.25rem;
+      margin-bottom: 16px;
+    }
+
+    .section-header p {
+      font-size: 1.1rem;
+      color: var(--color-text-muted);
+    }
+
+    /* ==========================================================================
+       1. NAVBAR SECTION
+       ========================================================================== */
+    .navbar {
+      background-color: rgba(251, 249, 244, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 16px 0;
+      transition: var(--transition-fast);
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--color-primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--color-accent);
+      border-radius: 50%;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-links a {
+      font-family: var(--font-accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-text-main);
+      text-decoration: none;
+      transition: var(--transition-fast);
+    }
+
+    .nav-links a:hover {
+      color: var(--color-primary-light);
+    }
+
+    /* Mobile Nav Toggle */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .mobile-menu-btn span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background-color: var(--color-primary);
+      margin: 5px 0;
+      transition: var(--transition-fast);
+    }
+
+    /* ==========================================================================
+       2. HERO SECTION
+       ========================================================================== */
+    .hero {
+      padding: 100px 0 80px 0;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .hero-content {
+      max-width: 580px;
+    }
+
+    .hero-content h1 {
+      font-size: 3.25rem;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-content p {
+      font-size: 1.125rem;
+      color: var(--color-text-muted);
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .hero-support-copy {
+      font-size: 0.9rem !important;
+      color: var(--color-text-main) !important;
+      margin-top: 14px;
+      line-height: 1.4 !important;
+      border-left: 3px solid var(--color-accent);
+      padding-left: 14px;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* CSS Mockup Dashboard */
+    .hero-mockup-wrapper {
+      position: relative;
+    }
+
+    .dashboard-mockup {
+      background-color: #0b1c15; /* Extremely dark premium green slate */
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--border-radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-lg), 0 30px 60px rgba(6, 78, 59, 0.15);
+      position: relative;
+    }
+
+    .mockup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .mockup-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .mockup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .mockup-dot:nth-child(1) { background-color: #ef4444; }
+    .mockup-dot:nth-child(2) { background-color: #fbbf24; }
+    .mockup-dot:nth-child(3) { background-color: #10b981; }
+
+    .mockup-header-title {
+      font-size: 0.72rem;
+      font-family: var(--font-accent);
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .mockup-column {
+      background-color: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: var(--border-radius-md);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mockup-col-title {
+      font-size: 0.75rem;
+      font-family: var(--font-heading);
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mockup-col-badge {
+      font-size: 0.62rem;
+      background-color: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.4);
+      padding: 1px 6px;
+      border-radius: 99px;
+    }
+
+    .mockup-card {
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: var(--transition-fast);
+    }
+
+    .mockup-card:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .mockup-card-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .mockup-card-tag {
+      align-self: flex-start;
+      font-size: 0.58rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tag-blue { background-color: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+    .tag-amber { background-color: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+    .tag-emerald { background-color: rgba(16, 185, 129, 0.1); color: #34d399; }
+    .tag-purple { background-color: rgba(139, 92, 246, 0.1); color: #a78bfa; }
+
+    .mockup-card-price {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-accent-light);
+      margin-top: 4px;
+    }
+
+    /* ==========================================================================
+       3. PROBLEM SECTION
+       ========================================================================== */
+    .problem {
+      background-color: #0b1c15; /* Dark Green contrast */
+      color: #ffffff;
+    }
+
+    .problem h2, .problem h3 {
+      color: #ffffff;
+    }
+
+    .problem-content {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .problem-left h2 {
+      font-size: 2.25rem;
+      margin-bottom: 20px;
+      line-height: 1.3;
+    }
+
+    .problem-left p {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.7;
+    }
+
+    .problem-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .problem-item {
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--border-radius-lg);
+      padding: 20px 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      transition: var(--transition-fast);
+    }
+
+    .problem-item:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .problem-icon-wrapper {
+      background-color: rgba(239, 68, 68, 0.1);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: #f87171;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    .problem-text h4 {
+      font-size: 1rem;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .problem-text p {
+      font-size: 0.88rem;
+      color: rgba(255, 255, 255, 0.55);
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       4. NEW BELIEF SECTION
+       ========================================================================== */
+    .belief-cards {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .belief-card {
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-lg);
+      padding: 36px;
+      position: relative;
+    }
+
+    .belief-card.old {
+      background-color: #f3ede2;
+      border-color: #e3dbc9;
+    }
+
+    .belief-card.new {
+      background-color: var(--color-primary);
+      color: var(--color-text-light);
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .belief-card.new h3 {
+      color: var(--color-text-light);
+    }
+
+    .belief-card-tag {
+      font-family: var(--font-accent);
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+
+    .belief-card.old .belief-card-tag {
+      background-color: rgba(0, 0, 0, 0.05);
+      color: var(--color-text-muted);
+    }
+
+    .belief-card.new .belief-card-tag {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--color-accent-light);
+    }
+
+    .belief-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      line-height: 1.35;
+    }
+
+    .belief-card p {
+      font-size: 0.95rem;
+    }
+
+    .belief-card.old p {
+      color: var(--color-text-muted);
+    }
+
+    .belief-card.new p {
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.6;
+    }
+
+    .belief-support {
+      max-width: 760px;
+      margin: 0 auto;
+      text-align: center;
+      font-size: 1.1rem;
+      color: var(--color-text-main);
+      line-height: 1.7;
+    }
+
+    /* ==========================================================================
+       5. UNIQUE MECHANISM SECTION
+       ========================================================================== */
+    .mechanism {
+      background-color: #f7f4ec;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .workflow-container {
+      overflow-x: auto;
+      padding: 20px 0;
+      margin-top: 40px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .workflow-scroll-hint {
+      display: none;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-bottom: 16px;
+    }
+
+    .workflow-track {
+      display: flex;
+      align-items: center;
+      min-width: 900px;
+      justify-content: space-between;
+      position: relative;
+      padding: 0 10px;
+    }
+
+    .workflow-track::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: repeating-linear-gradient(to right, var(--color-primary-light) 0, var(--color-primary-light) 6px, transparent 6px, transparent 12px);
+      z-index: 1;
+      transform: translateY(-50%);
+    }
+
+    .workflow-step {
+      background-color: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      padding: 12px 16px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-fast);
+    }
+
+    .workflow-step:hover {
+      border-color: var(--color-primary-light);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .workflow-step-num {
+      width: 18px;
+      height: 18px;
+      background-color: var(--color-primary-light);
+      color: #ffffff;
+      font-size: 0.62rem;
+      font-weight: 800;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
+    }
+
+    .workflow-step-title {
+      font-size: 0.8rem;
+      font-family: var(--font-heading);
+      font-weight: 800;
+      color: var(--color-primary);
+      white-space: nowrap;
+    }
+
+    /* ==========================================================================
+       6. ISI BUNDLE SECTION
+       ========================================================================== */
+    .bundle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    /* Special Featured Layout for Main App Card */
+    .bundle-card {
+      background-color: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bundle-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--color-primary-light);
+    }
+
+    .bundle-card.featured {
+      grid-column: span 2;
+      background-color: #064e3b;
+      color: #ffffff;
+      border-color: #064e3b;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 32px;
+    }
+
+    .bundle-card.featured h3, .bundle-card.featured h4 {
+      color: #ffffff;
+    }
+
+    .bundle-card-num {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--color-primary-light);
+      margin-bottom: 12px;
+      font-family: var(--font-accent);
+      display: block;
+    }
+
+    .bundle-card.featured .bundle-card-num {
+      color: var(--color-accent-light);
+    }
+
+    .bundle-card h3 {
+      font-size: 1.35rem;
+      margin-bottom: 12px;
+    }
+
+    .bundle-card p {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .bundle-card.featured p {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .bundle-card-list {
+      list-style: none;
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bundle-card-list li {
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--color-text-main);
+    }
+
+    .bundle-card.featured .bundle-card-list li {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .bundle-card-list li::before {
+      content: "✓";
+      color: var(--color-primary-light);
+      font-weight: 900;
+    }
+
+    .bundle-card.featured .bundle-card-list li::before {
+      color: var(--color-accent-light);
+    }
+
+    /* Embedded CSS Micro-mockup inside featured card */
+    .featured-preview-box {
+      background-color: rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--border-radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100%;
+      min-height: 180px;
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.65rem;
+      font-family: var(--font-accent);
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 8px;
+    }
+
+    .preview-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .preview-row-tag {
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+
+    /* ==========================================================================
+       7. VALUE SECTION
+       ========================================================================== */
+    .value-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .value-card {
+      background-color: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-fast);
+    }
+
+    .value-card:hover {
+      border-color: var(--color-accent-light);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .value-icon-wrapper {
+      background-color: var(--color-accent-bg);
+      color: var(--color-accent);
+      width: 44px;
+      height: 44px;
+      border-radius: var(--border-radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      font-family: var(--font-heading);
+    }
+
+    .value-card h3 {
+      font-size: 1.35rem;
+      margin-bottom: 12px;
+    }
+
+    .value-card p {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    /* ==========================================================================
+       8. BUKAN SEKADAR TEMPLATE SECTION
+       ========================================================================== */
+    .not-template {
+      background-color: #f7f4ec;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .not-template-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .not-template-left h2 {
+      font-size: 2.25rem;
+      margin-bottom: 20px;
+      line-height: 1.3;
+    }
+
+    .not-template-left p {
+      font-size: 1.1rem;
+      color: var(--color-text-main);
+      margin-bottom: 30px;
+    }
+
+    .not-template-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .not-template-item {
+      background-color: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-lg);
+      padding: 18px 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .not-template-num {
+      background-color: var(--color-primary-bg);
+      color: var(--color-primary-light);
+      font-family: var(--font-heading);
+      font-weight: 800;
+      font-size: 0.85rem;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .not-template-text h4 {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .not-template-text p {
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+      line-height: 1.4;
+    }
+
+    /* ==========================================================================
+       9. UNTUK SIAPA SECTION
+       ========================================================================== */
+    .audience-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .audience-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .audience-pill {
+      font-family: var(--font-accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      background-color: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      padding: 8px 20px;
+      border-radius: 99px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-fast);
+    }
+
+    .audience-pill:hover {
+      border-color: var(--color-primary-light);
+      background-color: var(--color-primary-bg);
+      transform: scale(1.05);
+    }
+
+    /* ==========================================================================
+       10. OBJECTION HANDLING SECTION
+       ========================================================================== */
+    .objections-list {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .objection-card {
+      background-color: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-lg);
+      padding: 24px 32px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .objection-card h3 {
+      font-size: 1.15rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .objection-card h3::before {
+      content: "?";
+      background-color: var(--color-accent-bg);
+      color: var(--color-accent);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .objection-card p {
+      font-size: 0.92rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+      border-left: 2px solid var(--color-primary-light);
+      padding-left: 16px;
+      margin-left: 8px;
+    }
+
+    /* ==========================================================================
+       11. OFFER STACK / PRICING SECTION
+       ========================================================================== */
+    .pricing {
+      background-color: #0b1c15; /* Dark background */
+      color: #ffffff;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .pricing h2 {
+      color: #ffffff;
+    }
+
+    .pricing-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--border-radius-lg);
+      padding: 40px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .value-table {
+      margin-bottom: 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 10px;
+    }
+
+    .value-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      font-size: 0.88rem;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.04);
+    }
+
+    .value-row:last-child {
+      border-bottom: none;
+    }
+
+    .value-label {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .value-price {
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: line-through;
+    }
+
+    .total-value-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      margin-bottom: 24px;
+    }
+
+    .total-value-label {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .total-value-price {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: line-through;
+    }
+
+    .final-offer-box {
+      background-color: rgba(6, 78, 59, 0.35);
+      border: 1px solid rgba(13, 148, 136, 0.25);
+      border-radius: var(--border-radius-md);
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .final-offer-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-accent-light);
+      margin-bottom: 6px;
+    }
+
+    .final-offer-price {
+      font-size: 2.5rem;
+      font-family: var(--font-heading);
+      font-weight: 900;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .final-offer-price span {
+      font-size: 1rem;
+      text-decoration: line-through;
+      color: rgba(255, 255, 255, 0.4);
+      margin-left: 8px;
+    }
+
+    .launch-badge {
+      display: inline-block;
+      background-color: var(--color-accent);
+      color: #ffffff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .pricing-microcopy {
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.45);
+      margin-top: 14px;
+      font-style: italic;
+    }
+
+    /* ==========================================================================
+       12. SAFE SCARCITY SECTION
+       ========================================================================== */
+    .scarcity {
+      background-color: var(--color-accent-bg);
+      border-top: 1px solid rgba(180, 83, 9, 0.1);
+      border-bottom: 1px solid rgba(180, 83, 9, 0.1);
+      padding: 40px 0;
+      text-align: center;
+    }
+
+    .scarcity-content {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .scarcity h3 {
+      font-size: 1.35rem;
+      color: var(--color-accent);
+      margin-bottom: 8px;
+    }
+
+    .scarcity p {
+      font-size: 0.92rem;
+      color: var(--color-accent);
+      opacity: 0.85;
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       13. FAQ SECTION
+       ========================================================================== */
+    .faq-container {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .faq-item {
+      background-color: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      overflow: hidden;
+      transition: var(--transition-fast);
+    }
+
+    .faq-trigger {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 20px 24px;
+      text-align: left;
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .faq-icon {
+      font-size: 1.15rem;
+      color: var(--color-primary-light);
+      transition: var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .faq-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+    }
+
+    .faq-content-inner {
+      padding: 0 24px 20px 24px;
+      font-size: 0.88rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    /* FAQ Active States */
+    .faq-item.active {
+      border-color: var(--color-primary-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .faq-item.active .faq-icon {
+      transform: rotate(45deg);
+    }
+
+    .faq-item.active .faq-content {
+      max-height: 1000px;
+      transition: max-height 0.4s ease-in-out;
+    }
+
+    /* ==========================================================================
+       14. FINAL CTA SECTION
+       ========================================================================== */
+    .final-cta {
+      text-align: center;
+      background-color: var(--color-primary-bg);
+      border-top: 1px solid var(--color-border);
+      padding: 100px 0;
+    }
+
+    .final-cta-content {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .final-cta h2 {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      line-height: 1.25;
+    }
+
+    .final-cta p {
+      font-size: 1.1rem;
+      color: var(--color-text-muted);
+      margin-bottom: 32px;
+    }
+
+    /* ==========================================================================
+       FOOTER
+       ========================================================================== */
+    footer {
+      background-color: #0b1c15;
+      color: rgba(255, 255, 255, 0.45);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 40px 0;
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 16px;
+    }
+
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.45);
+      text-decoration: none;
+      transition: var(--transition-fast);
+    }
+
+    .footer-links a:hover {
+      color: #ffffff;
+    }
+
+    /* ==========================================================================
+       STICKY BOTTOM MOBILE CTA
+       ========================================================================== */
+    .sticky-mobile-cta {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(251, 249, 244, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--color-border);
+      padding: 12px 24px;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 90;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    }
+
+    .sticky-price-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sticky-price-label {
+      font-size: 0.68rem;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .sticky-price-val {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--color-primary);
+      font-family: var(--font-heading);
+    }
+
+    /* ==========================================================================
+       RESPONSIVE MEDIA QUERIES
+       ========================================================================== */
+    @media (max-width: 1024px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        text-align: center;
+      }
+
+      .hero-content {
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .hero-ctas {
+        justify-content: center;
+      }
+
+      .hero-support-copy {
+        border-left: none;
+        border-top: 2px solid var(--color-accent);
+        padding-left: 0;
+        padding-top: 10px;
+        max-width: 460px;
+      }
+
+      .bundle-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .bundle-card.featured {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 840px) {
+      section {
+        padding: 60px 0;
+      }
+
+      .section-header h2 {
+        font-size: 1.85rem;
+      }
+
+      .problem-content {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+
+      .belief-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .not-template-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+
+      .value-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .workflow-scroll-hint {
+        display: block;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding-bottom: 74px; /* Give room for sticky mobile cta */
+      }
+
+      .navbar {
+        padding: 12px 0;
+      }
+
+      .nav-links {
+        display: none; /* Mobile menu hidden by default */
+      }
+
+      .mobile-menu-btn {
+        display: block;
+      }
+
+      .hero {
+        padding: 60px 0;
+      }
+
+      .hero-content h1 {
+        font-size: 2.25rem;
+      }
+
+      .bundle-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bundle-card.featured {
+        grid-column: span 1;
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .bundle-card.featured .featured-preview-box {
+        min-height: 150px;
+      }
+
+      .pricing-wrapper {
+        padding: 24px 16px;
+      }
+
+      .final-offer-price {
+        font-size: 2rem;
+      }
+
+      .sticky-mobile-cta {
+        display: flex; /* Active only on mobile viewports */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       1. NAVBAR
+       ========================================================================== -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="#" class="logo">
+        Freelancer Project OS <span class="logo-dot"></span>
+      </a>
+      <nav class="nav-links">
+        <a href="#problem">Problem</a>
+        <a href="#bundle">Isi Bundle</a>
+        <a href="#audience">Untuk Siapa</a>
+        <a href="#objections">Objection</a>
+        <a href="#checkout">Harga</a>
+        <a href="#faq">FAQ</a>
+        <a href="#checkout" class="btn btn-primary" style="padding: 8px 18px; font-size: 0.82rem;">Dapatkan Sekarang</a>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Toggle Menu" id="mobile-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       2. HERO SECTION
+       ========================================================================== -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <span class="eyebrow">Untuk freelancer digital Indonesia</span>
+        <h1>One-Stop Project Workflow Solution untuk Freelancer Digital</h1>
+        <p>Kelola brief, client, quotation, project tracking, revisi, invoice, payment, final delivery, sampai portfolio dalam satu sistem kerja yang lebih rapi.</p>
+        
+        <div class="hero-ctas">
+          <!-- HINT: Ganti placeholder link di bawah dengan link checkout langsung Anda -->
+          <a href="#checkout" class="btn btn-accent">Dapatkan Freelancer Project OS — Rp149.000</a>
+          <a href="#bundle" class="btn btn-secondary">Lihat Isi Bundle</a>
+        </div>
+        
+        <p class="hero-support-copy">
+          Bukan sekadar template. Bukan dashboard kosong. Ini adalah Client-to-Paid Operating System untuk membantu freelancer menjalankan project dengan alur yang lebih profesional dari awal sampai akhir.
+        </p>
+      </div>
+      
+      <div class="hero-mockup-wrapper">
+        <div class="dashboard-mockup">
+          <div class="mockup-header">
+            <div class="mockup-dots">
+              <span class="mockup-dot"></span>
+              <span class="mockup-dot"></span>
+              <span class="mockup-dot"></span>
+            </div>
+            <span class="mockup-header-title">Workspace Board Mockup</span>
+          </div>
+          
+          <div class="mockup-grid">
+            <!-- Col 1 -->
+            <div class="mockup-column">
+              <div class="mockup-col-title">
+                <span>Brief & Intake</span>
+                <span class="mockup-col-badge">2</span>
+              </div>
+              <div class="mockup-card">
+                <span class="mockup-card-tag tag-blue">Intake Form</span>
+                <span class="mockup-card-title">Client Intake Form</span>
+              </div>
+              <div class="mockup-card">
+                <span class="mockup-card-tag tag-purple">Quotation</span>
+                <span class="mockup-card-title">Quotation Sent</span>
+              </div>
+            </div>
+            
+            <!-- Col 2 -->
+            <div class="mockup-column">
+              <div class="mockup-col-title">
+                <span>Running</span>
+                <span class="mockup-col-badge">2</span>
+              </div>
+              <div class="mockup-card">
+                <span class="mockup-card-tag tag-amber">Tracking</span>
+                <span class="mockup-card-title">Revision Checklist</span>
+              </div>
+              <div class="mockup-card">
+                <span class="mockup-card-tag tag-purple">Billing</span>
+                <span class="mockup-card-title">Invoice Ledger</span>
+              </div>
+            </div>
+            
+            <!-- Col 3 -->
+            <div class="mockup-column">
+              <div class="mockup-col-title">
+                <span>Paid & Close</span>
+                <span class="mockup-col-badge">2</span>
+              </div>
+              <div class="mockup-card">
+                <span class="mockup-card-tag tag-emerald">Payment</span>
+                <span class="mockup-card-title">Payment Confirmed</span>
+                <span class="mockup-card-price">Rp4.500.000</span>
+              </div>
+              <div class="mockup-card">
+                <span class="mockup-card-tag tag-blue">Portfolio</span>
+                <span class="mockup-card-title">Portfolio Sandbox</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       3. PROBLEM SECTION
+       ========================================================================== -->
+  <section class="problem" id="problem">
+    <div class="container problem-content">
+      <div class="problem-left">
+        <span class="eyebrow" style="background-color: rgba(255,255,255,0.05); color: #34d399;">Workflow Tercecer</span>
+        <h2>Project freelance bisa cepat berantakan kalau semua masih tersebar.</h2>
+        <p>Awalnya mungkin terasa aman. Brief ada di WhatsApp. File ada di Google Drive. Harga ada di chat lama. Invoice dibuat manual. Revisi masuk dari banyak arah. Tapi begitu ada beberapa client, revisi, dan deadline, workflow yang tercecer mulai terasa melelahkan.</p>
+      </div>
+      
+      <div class="problem-right">
+        <div class="problem-list">
+          <div class="problem-item">
+            <div class="problem-icon-wrapper">!</div>
+            <div class="problem-text">
+              <h4>Brief tidak terdokumentasi jelas</h4>
+              <p>Detail project tercecer di riwayat chat WhatsApp yang bertumpuk.</p>
+            </div>
+          </div>
+          
+          <div class="problem-item">
+            <div class="problem-icon-wrapper">!</div>
+            <div class="problem-text">
+              <h4>Scope project melebar tanpa terasa</h4>
+              <p>Klien meminta fitur tambahan tanpa adanya quotation atau kesepakatan tertulis baru.</p>
+            </div>
+          </div>
+          
+          <div class="problem-item">
+            <div class="problem-icon-wrapper">!</div>
+            <div class="problem-text">
+              <h4>Revisi masuk tanpa batas yang rapi</h4>
+              <p>Revisi liar terus berulang karena tidak adanya checklist approval yang membatasi.</p>
+            </div>
+          </div>
+          
+          <div class="problem-item">
+            <div class="problem-icon-wrapper">!</div>
+            <div class="problem-text">
+              <h4>Invoice & payment perlu diingat sendiri</h4>
+              <p>Lupa mengirim pengingat pembayaran, menyebabkan kas Anda macet.</p>
+            </div>
+          </div>
+          
+          <div class="problem-item">
+            <div class="problem-icon-wrapper">!</div>
+            <div class="problem-text">
+              <h4>Project selesai, tapi tidak jadi portfolio</h4>
+              <p>Terlalu lelah membereskan revisi sampai lupa mencatat case study hasil kerja.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       4. NEW BELIEF SECTION
+       ========================================================================== -->
+  <section class="belief">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Mulai Rapi Sejak Dini</span>
+        <h2>Jangan tunggu project banyak baru mulai rapi.</h2>
+        <p>Kebiasaan kerja yang baik dibangun sejak langkah pertama, bukan setelah semuanya kewalahan.</p>
+      </div>
+      
+      <div class="belief-cards">
+        <div class="belief-card old">
+          <span class="belief-card-tag">Old Belief</span>
+          <h3>“Nanti aja bikin sistem kalau client sudah banyak.”</h3>
+          <p>Kenyataannya, tanpa sistem kerja yang rapi dari awal, Anda akan kewalahan mengelola 1-2 project saja. Pertambahan client tanpa sistem hanya akan memicu kelelahan mental (burnout) dan kualitas yang menurun.</p>
+        </div>
+        
+        <div class="belief-card new">
+          <span class="belief-card-tag">New Belief</span>
+          <h3>“Justru saat project masih sedikit adalah waktu terbaik untuk membangun workflow yang benar.”</h3>
+          <p>Dengan sistem yang siap dari awal, Anda melatih diri bersikap profesional di mata client. Saat project dan volume kerja Anda bertambah nantinya, Anda tidak perlu lagi panik atau mengubah kebiasaan dari nol.</p>
+        </div>
+      </div>
+      
+      <p class="belief-support">
+        Freelancer Project OS dibuat untuk membantu kamu mulai profesional sejak awal. Bukan setelah semuanya berantakan. Bukan setelah revisi menumpuk. Tapi sejak project pertama mulai masuk.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       5. UNIQUE MECHANISM SECTION
+       ========================================================================== -->
+  <section class="mechanism">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Unique Mechanism</span>
+        <h2>Client-to-Paid Operating System</h2>
+        <p>Sistem kerja yang membantu Anda melihat dan mengelola perjalanan project dari client pertama kali masuk sampai project selesai, dibayar, dan siap dijadikan portfolio.</p>
+      </div>
+      
+      <div class="workflow-scroll-hint">
+        ← Geser layar ke samping untuk melihat seluruh alur kerja →
+      </div>
+      
+      <div class="workflow-container">
+        <div class="workflow-track">
+          <div class="workflow-step">
+            <span class="workflow-step-num">1</span>
+            <div class="workflow-step-title">Client Masuk</div>
+          </div>
+          <div class="workflow-step">
+            <span class="workflow-step-num">2</span>
+            <div class="workflow-step-title">Intake & Brief</div>
+          </div>
+          <div class="workflow-step">
+            <span class="workflow-step-num">3</span>
+            <div class="workflow-step-title">Quotation Proposal</div>
+          </div>
+          <div class="workflow-step">
+            <span class="workflow-step-num">4</span>
+            <div class="workflow-step-title">Project Tracking</div>
+          </div>
+          <div class="workflow-step">
+            <span class="workflow-step-num">5</span>
+            <div class="workflow-step-title">Revisi & Feedback</div>
+          </div>
+          <div class="workflow-step">
+            <span class="workflow-step-num">6</span>
+            <div class="workflow-step-title">Invoice Sent</div>
+          </div>
+          <div class="workflow-step">
+            <span class="workflow-step-num">7</span>
+            <div class="workflow-step-title">DP & Payment</div>
+          </div>
+          <div class="workflow-step">
+            <span class="workflow-step-num">8</span>
+            <div class="workflow-step-title">Final Delivery</div>
+          </div>
+          <div class="workflow-step">
+            <span class="workflow-step-num">9</span>
+            <div class="workflow-step-title">Case Study Portfolio</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       6. ISI BUNDLE SECTION
+       ========================================================================== -->
+  <section class="bundle" id="bundle">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Isi Core Bundle</span>
+        <h2>Satu bundle untuk mengelola seluruh alur project freelance.</h2>
+        <p>Semua aset, dashboard, script, dan checklist dirancang spesifik untuk kebutuhan freelancer Indonesia.</p>
+      </div>
+      
+      <div class="bundle-grid">
+        <!-- 1. Featured Card: Freelancer Project OS -->
+        <div class="bundle-card featured">
+          <div>
+            <span class="bundle-card-num">01. Utama</span>
+            <h3>Freelancer Project OS</h3>
+            <p>Dashboard pusat operasi kerja Anda. Mengelola seluruh database secara terpusat untuk meminimalisasi pengerjaan manual.</p>
+            <ul class="bundle-card-list">
+              <li>Workspace Board (Kanban dashboard)</li>
+              <li>Client Hub & Database</li>
+              <li>Quotation & Invoice Ledger</li>
+              <li>Weekly Focus Journal & Portfolio Sandbox</li>
+              <li>Client View Preview Link</li>
+            </ul>
+          </div>
+          
+          <div class="featured-preview-box">
+            <div class="preview-header">
+              <span class="logo-dot"></span> App Preview
+            </div>
+            <div class="preview-row">
+              <span>Landing Page Copy</span>
+              <span class="preview-row-tag tag-blue" style="background-color:#0d9488; color:#ffffff;">In Progress</span>
+            </div>
+            <div class="preview-row">
+              <span>Brand Identity Design</span>
+              <span class="preview-row-tag tag-blue" style="background-color:#b45309; color:#ffffff;">Revision</span>
+            </div>
+            <div class="preview-row">
+              <span>AI Automation Setup</span>
+              <span class="preview-row-tag tag-blue" style="background-color:#10b981; color:#ffffff;">Completed</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 2. Start Here -->
+        <div class="bundle-card">
+          <span class="bundle-card-num">02. Guide</span>
+          <h3>Quick Start Guide</h3>
+          <p>Panduan langkah demi langkah yang ringkas agar pembeli tahu persis urutan menggunakan sistem operasi kerja ini tanpa bingung.</p>
+          <ul class="bundle-card-list">
+            <li>Langkah import data</li>
+            <li>Panduan setup workflow</li>
+            <li>Tips optimasi dashboard</li>
+          </ul>
+        </div>
+        
+        <!-- 3. Client Intake Form -->
+        <div class="bundle-card">
+          <span class="bundle-card-num">03. Form</span>
+          <h3>Client Intake Form</h3>
+          <p>Formulir siap kirim untuk mengumpulkan materi brief, aset, link referensi, dan budget klien sebelum masuk ke proses quotation.</p>
+          <ul class="bundle-card-list">
+            <li>Scope & Requirement Template</li>
+            <li>Aset Klien & Drive Folder</li>
+            <li>Notes Kickoff Project</li>
+          </ul>
+        </div>
+        
+        <!-- 4. Quotation Builder Pack -->
+        <div class="bundle-card">
+          <span class="bundle-card-num">04. Template</span>
+          <h3>Quotation Builder Pack</h3>
+          <p>Template penawaran harga itemized yang siap diedit untuk berbagai macam niche jasa freelancer agar terlihat lebih meyakinkan.</p>
+          <ul class="bundle-card-list">
+            <li>Design & Brand Quotation</li>
+            <li>Copywriting & Content Proposal</li>
+            <li>Website & App Dev Estimate</li>
+            <li>Video Editing & AI Consulting</li>
+          </ul>
+        </div>
+        
+        <!-- 5. Script Pack -->
+        <div class="bundle-card">
+          <span class="bundle-card-num">05. Script Pack</span>
+          <h3>Payment Follow-Up Script</h3>
+          <p>Kumpulan script komunikasi pesan WhatsApp/Email siap copy-paste untuk meminta pembayaran, DP, pengingat jatuh tempo, hingga tagihan overdue.</p>
+          <ul class="bundle-card-list">
+            <li>Quotation Follow-Up & DP request</li>
+            <li>Reminder jatuh tempo & Overdue</li>
+            <li>Final delivery & Testimonial request</li>
+          </ul>
+        </div>
+        
+        <!-- 6. Revision Control Checklist -->
+        <div class="bundle-card">
+          <span class="bundle-card-num">06. Control</span>
+          <h3>Revision Control Checklist</h3>
+          <p>Checklist khusus untuk membatasi ruang lingkup revisi klien. Mencegah klien meminta revisi tak terbatas atau di luar scope (out-of-scope).</p>
+          <ul class="bundle-card-list">
+            <li>Feedback template organizer</li>
+            <li>Minor vs Major Revision log</li>
+            <li>Client Approval checklist</li>
+          </ul>
+        </div>
+        
+        <!-- 7. Case Study Builder -->
+        <div class="bundle-card">
+          <span class="bundle-card-num">07. Marketing</span>
+          <h3>Portfolio Case Study Builder</h3>
+          <p>Template kerangka kerja untuk mendokumentasikan hasil project Anda menjadi studi kasus portfolio yang menarik bagi calon klien berikutnya.</p>
+          <ul class="bundle-card-list">
+            <li>Problem & Solution layout</li>
+            <li>Measurable metrics guide</li>
+            <li>Client testimonial compiler</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       7. VALUE SECTION
+       ========================================================================== -->
+  <section class="values">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Prinsip Kerja</span>
+        <h2>Less Risk × Faster × Less Effort</h2>
+        <p>Formula utama untuk menaikkan efisiensi bisnis freelance Anda tanpa menambah jam kerja.</p>
+      </div>
+      
+      <div class="value-cards">
+        <div class="value-card">
+          <div class="value-icon-wrapper">🛡️</div>
+          <h3>Less Risk</h3>
+          <p>Mengurangi risiko scope proyek melebar (scope creep), revisi liar yang berulang-ulang, payment terlambat dari klien, file penting tercecer, dan histori proyek yang tidak terdokumentasi.</p>
+        </div>
+        
+        <div class="value-card">
+          <div class="value-icon-wrapper">⚡</div>
+          <h3>Faster</h3>
+          <p>Anda bisa langsung mulai mengelola proyek baru hari ini juga. Tinggal gunakan dashboard, form intake klien, quotation builder, script komunikasi, checklist revisi, dan panduan siap pakai.</p>
+        </div>
+        
+        <div class="value-card">
+          <div class="value-icon-wrapper">⚙️</div>
+          <h3>Less Effort</h3>
+          <p>Tidak perlu membuang puluhan jam untuk membuat sistem operasi kerja ini dari nol. Cukup lakukan copy, sesuaikan nilainya, isi detail proyek Anda, dan gunakan secara langsung.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       8. BUKAN SEKADAR TEMPLATE SECTION
+       ========================================================================== -->
+  <section class="not-template" id="mechanism">
+    <div class="container not-template-grid">
+      <div class="not-template-left">
+        <span class="eyebrow">Alur Terintegrasi</span>
+        <h2>Ini bukan sekadar template. Ini sistem kerja yang saling terhubung.</h2>
+        <p>Template biasanya hanya membantu satu bagian kecil secara terpisah. Misalnya hanya untuk mencatat invoice, membuat quotation, atau tracking tugas. Freelancer Project OS Core Bundle menyambungkan setiap bagian penting tersebut dalam satu proses kerja utuh.</p>
+      </div>
+      
+      <div class="not-template-right">
+        <div class="not-template-list">
+          <div class="not-template-item">
+            <span class="not-template-num">1</span>
+            <div class="not-template-text">
+              <h4>Client Intake</h4>
+              <p>Membantu Anda mengumpulkan detail brief dari klien secara rapi.</p>
+            </div>
+          </div>
+          
+          <div class="not-template-item">
+            <span class="not-template-num">2</span>
+            <div class="not-template-text">
+              <h4>Quotation Builder</h4>
+              <p>Menyusun penawaran harga terperinci berdasarkan brief klien.</p>
+            </div>
+          </div>
+          
+          <div class="not-template-item">
+            <span class="not-template-num">3</span>
+            <div class="not-template-text">
+              <h4>Project OS</h4>
+              <p>Melihat dan memantau kemajuan pengerjaan proyek di papan Kanban.</p>
+            </div>
+          </div>
+          
+          <div class="not-template-item">
+            <span class="not-template-num">4</span>
+            <div class="not-template-text">
+              <h4>Revision Control & Invoices</h4>
+              <p>Mengatur feedback revisi klien dan mengirim tagihan invoice pembayaran tepat waktu.</p>
+            </div>
+          </div>
+          
+          <div class="not-template-item">
+            <span class="not-template-num">5</span>
+            <div class="not-template-text">
+              <h4>Portfolio Builder</h4>
+              <p>Mengubah proyek yang selesai dikerjakan menjadi studi kasus portfolio yang siap dipamerkan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       9. UNTUK SIAPA SECTION
+       ========================================================================== -->
+  <section class="audience" id="audience">
+    <div class="container audience-wrapper">
+      <span class="eyebrow">Target Pengguna</span>
+      <h2>Cocok untuk freelancer digital yang ingin workflow project lebih rapi.</h2>
+      <p>Terutama untuk Anda yang selama ini masih mengelola detail proyek secara acak lewat WhatsApp chat, Google Drive tercecer, spreadsheet manual, atau coretan catatan.</p>
+      
+      <div class="audience-pills">
+        <span class="audience-pill">Designer</span>
+        <span class="audience-pill">Copywriter</span>
+        <span class="audience-pill">Video Editor</span>
+        <span class="audience-pill">Web Developer</span>
+        <span class="audience-pill">Social Media Manager</span>
+        <span class="audience-pill">AI Workflow Service Provider</span>
+        <span class="audience-pill">Digital Consultant</span>
+        <span class="audience-pill">Freelancer Pemula & Intermediate</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       10. OBJECTION HANDLING SECTION
+       ========================================================================== -->
+  <section class="objections" id="objections">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Menjawab Keraguan</span>
+        <h2>Masih ragu karena project kamu belum banyak?</h2>
+        <p>Mari kita luruskan keraguan Anda mengenai penggunaan sistem alur kerja freelance ini.</p>
+      </div>
+      
+      <div class="objections-list">
+        <div class="objection-card">
+          <h3>“Project saya baru 1–2. Perlu pakai sistem seperti ini?”</h3>
+          <p>Justru iya. Saat project Anda masih sedikit, Anda belum terlalu kewalahan untuk mulai melatih dan membangun kebiasaan kerja yang profesional. Memperbaiki sistem kerja saat Anda sudah kebanjiran proyek akan terasa jauh lebih sulit.</p>
+        </div>
+        
+        <div class="objection-card">
+          <h3>“Saya belum punya banyak client saat ini.”</h3>
+          <p>Tidak masalah. Produk ini memang bukan dirancang untuk membantu Anda mencari klien baru secara instan. Produk ini fokus membantu mempersiapkan alur dan mekanisme kerja profesional Anda terlebih dahulu. Sehingga saat klien baru masuk, Anda sudah siap menyambut mereka dengan brief, quotation, invoice, dan revisi yang rapi.</p>
+        </div>
+        
+        <div class="objection-card">
+          <h3>“Apakah ini terlalu advance untuk freelancer pemula?”</h3>
+          <p>Sama sekali tidak. Desain sistem operasi ini dibuat modular dan ramah pemula. Anda tidak perlu langsung menggunakan semua bagian sekaligus. Mulailah dari Client Intake Form, Quotation Builder sederhana, Revision Checklist dasar, baru lanjut menggunakan bagian lain sesuai kenyamanan Anda.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       11. OFFER STACK / PRICING SECTION
+       ========================================================================== -->
+  <section class="pricing" id="checkout">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow" style="background-color: var(--color-accent-bg); color: var(--color-accent);">Penawaran Terbatas</span>
+        <h2>Dapatkan Freelancer Project OS Core Bundle</h2>
+        <p>Dapatkan seluruh sistem operasi kerja freelancer dan kumpulan pack pelengkap sekarang juga dengan harga launching.</p>
+      </div>
+      
+      <div class="pricing-wrapper">
+        <div class="value-table">
+          <div class="value-row">
+            <span class="value-label">Freelancer Project OS Dashboard</span>
+            <span class="value-price">Rp199.000</span>
+          </div>
+          <div class="value-row">
+            <span class="value-label">Quick Start Guide / Panduan Penggunaan</span>
+            <span class="value-price">Rp49.000</span>
+          </div>
+          <div class="value-row">
+            <span class="value-label">Client Intake Brief Form Template</span>
+            <span class="value-price">Rp49.000</span>
+          </div>
+          <div class="value-row">
+            <span class="value-label">Quotation Builder Pack (Berbagai Niche)</span>
+            <span class="value-price">Rp99.000</span>
+          </div>
+          <div class="value-row">
+            <span class="value-label">Invoice & Follow-Up WhatsApp Script Pack</span>
+            <span class="value-price">Rp99.000</span>
+          </div>
+          <div class="value-row">
+            <span class="value-label">Revision Control & Major/Minor Checklist</span>
+            <span class="value-price">Rp49.000</span>
+          </div>
+          <div class="value-row">
+            <span class="value-label">Portfolio Case Study Builder Framework</span>
+            <span class="value-price">Rp79.000</span>
+          </div>
+        </div>
+        
+        <div class="total-value-row">
+          <span class="total-value-label">Total Nilai Bundle:</span>
+          <span class="total-value-price">Rp623.000</span>
+        </div>
+        
+        <div class="final-offer-box">
+          <span class="launch-badge">Launching Price</span>
+          <div class="final-offer-title">Bayar Sekali, Gunakan Selamanya</div>
+          <div class="final-offer-price">Rp149.000 <span>Rp623.000</span></div>
+          
+          <div style="margin-top: 24px;">
+            <!-- HINT: Silakan ganti URL placeholder di bawah dengan link sistem pembayaran/checkout milik Anda -->
+            <a href="https://checkout-link-kamu.com" class="btn btn-accent" style="width: 100%; font-size: 1.1rem; padding: 18px 28px;">Dapatkan Core Bundle Sekarang</a>
+          </div>
+          
+          <p class="pricing-microcopy">
+            *Harga khusus launch untuk masa validasi awal dan pengembangan fitur/update pada versi berikutnya.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       12. SAFE SCARCITY SECTION
+       ========================================================================== -->
+  <section class="scarcity">
+    <div class="container scarcity-content">
+      <h3>⚠️ Harga Launch Berlaku Untuk Periode Awal</h3>
+      <p>Saat ini Freelancer Project OS Core Bundle tersedia dengan harga launch Rp149.000. Setelah peluncuran fase awal selesai, adanya tutorial tambahan, atau rilis update alur kerja baru berikutnya, harga bundle akan dinaikkan.</p>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       13. FAQ SECTION
+       ========================================================================== -->
+  <section class="faq" id="faq">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Tanya Jawab</span>
+        <h2>Pertanyaan yang Sering Diajukan</h2>
+        <p>Temukan jawaban cepat seputar penggunaan Freelancer Project OS Core Bundle.</p>
+      </div>
+      
+      <div class="faq-container">
+        <!-- FAQ 1 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Apakah ini template?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Bukan sekadar template biasa. Freelancer Project OS is one-stop project workflow solution yang menyatukan brief intake, quotation, project tracking, kontrol revisi, invoice, payment, delivery, dan portfolio sandbox dalam satu sistem kerja terpadu.
+            </div>
+          </div>
+        </div>
+        
+        <!-- FAQ 2 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Apakah produk ini menjamin saya mendapat client?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Tidak. Freelancer Project OS bukan program pencarian klien dan tidak menjanjikan kelulusan proyek atau tingkat penghasilan tertentu. Produk ini berfokus membantu Anda mengelola alur kerja proyek (workflow) dengan rapi secara internal saat proyek sedang berjalan.
+            </div>
+          </div>
+        </div>
+        
+        <!-- FAQ 3 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Apakah cocok untuk freelancer pemula?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Ya. Justru produk ini sangat ideal bagi freelancer pemula agar terbiasa mengelola jalannya proyek secara tertib dan terlihat profesional di mata klien sejak pertama kali bertransaksi.
+            </div>
+          </div>
+        </div>
+        
+        <!-- FAQ 4 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Kalau project saya baru satu, apakah masih relevan?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Sangat relevan. Mengelola satu proyek dengan rapi adalah momen terbaik untuk melatih kedisiplinan administrasi kerja sebelum Anda menerima volume proyek yang lebih banyak.
+            </div>
+          </div>
+        </div>
+        
+        <!-- FAQ 5 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Apakah bisa dipakai oleh semua jenis freelancer?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Produk ini paling optimal untuk freelancer digital berbasis proyek jasa kreatif/teknis, seperti designer, copywriter, video editor, web developer, social media manager, penyedia layanan integrasi AI, serta konsultan digital.
+            </div>
+          </div>
+        </div>
+        
+        <!-- FAQ 6 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Apakah quotation dan script-nya bisa diedit?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Bisa. Seluruh template penawaran, checklist revisi, dan draf pesan komunikasi dirancang dengan format modular agar Anda bisa mengubah bahasa, harga, serta cakupan jasa sesuai gaya bisnis Anda sendiri.
+            </div>
+          </div>
+        </div>
+        
+        <!-- FAQ 7 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Apakah invoice-nya sudah sesuai aturan pajak atau legal?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Bagian invoice ledger dan payment follow-up script ditujukan untuk pencatatan administrasi internal dan kelancaran komunikasi penagihan. Untuk kebutuhan kepatuhan perpajakan atau legalitas invoice resmi badan usaha, tetap sesuaikan dengan aturan hukum dagang yang berlaku.
+            </div>
+          </div>
+        </div>
+        
+        <!-- FAQ 8 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Apakah saya harus menggunakan semuanya?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Tidak perlu langsung sekaligus. Anda bisa mulai mengaplikasikan modul yang paling dibutuhkan terlebih dahulu, misalnya mulai dari Client Intake Form dan Revision Checklist, kemudian berkembang perlahan.
+            </div>
+          </div>
+        </div>
+        
+        <!-- FAQ 9 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Apakah ini cocok untuk agency?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Bisa digunakan untuk mengelola workflow tim berskala kecil. Namun, bundle ini secara optimal dirancang khusus untuk freelancer solo (*solopreneur*) atau penyedia jasa independen mandiri.
+            </div>
+          </div>
+        </div>
+        
+        <!-- FAQ 10 -->
+        <div class="faq-item">
+          <button class="faq-trigger">
+            Apakah ini akan membuat kerja saya jadi lebih ribet?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <div class="faq-content-inner">
+              Sebaliknya. Freelancer Project OS dibuat untuk menyederhanakan alur komunikasi dan dokumentasi Anda dengan klien. Anda akan memiliki satu dasbor pusat sehingga tidak perlu lagi mencari berkas yang terselip.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       14. FINAL CTA SECTION
+       ========================================================================== -->
+  <section class="final-cta">
+    <div class="container final-cta-content">
+      <h2>Mulai bangun workflow freelance yang lebih profesional dari project pertama.</h2>
+      <p>Jangan tunggu project menumpuk baru mulai rapi. Kelola client, project, revisi, invoice, payment, delivery, dan portfolio dalam satu alur yang lebih jelas.</p>
+      <a href="#checkout" class="btn btn-accent" style="padding: 16px 36px; font-size: 1.05rem;">Dapatkan Freelancer Project OS — Rp149.000</a>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       FOOTER
+       ========================================================================== -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="#problem">Problem</a>
+        <a href="#bundle">Isi Bundle</a>
+        <a href="#audience">Untuk Siapa</a>
+        <a href="#checkout">Harga</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <p>&copy; 2026 Freelancer Project OS Core Bundle. All rights reserved. Designed for Solopreneurs.</p>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       STICKY BOTTOM MOBILE CTA
+       ========================================================================== -->
+  <div class="sticky-mobile-cta" id="sticky-cta">
+    <div class="sticky-price-info">
+      <span class="sticky-price-label">Launch Price</span>
+      <span class="sticky-price-val">Rp149.000</span>
+    </div>
+    <a href="#checkout" class="btn btn-accent" style="padding: 10px 20px; font-size: 0.85rem;">Beli Sekarang</a>
+  </div>
+
+  <!-- ==========================================================================
+       JAVASCRIPT INTERACTIONS
+       ========================================================================== -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // 1. Mobile Menu Toggle Interaction
+      const toggleBtn = document.getElementById('mobile-toggle');
+      const navLinks = document.querySelector('.nav-links');
+      
+      if (toggleBtn && navLinks) {
+        toggleBtn.addEventListener('click', () => {
+          navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+          navLinks.style.flexDirection = 'column';
+          navLinks.style.position = 'absolute';
+          navLinks.style.top = '100%';
+          navLinks.style.left = '0';
+          navLinks.style.right = '0';
+          navLinks.style.backgroundColor = 'var(--color-bg)';
+          navLinks.style.padding = '20px';
+          navLinks.style.borderBottom = '1px solid var(--color-border)';
+          navLinks.style.gap = '16px';
+        });
+        
+        // Auto-close mobile links when link is clicked
+        navLinks.querySelectorAll('a').forEach(link => {
+          link.addEventListener('click', () => {
+            if (window.innerWidth <= 640) {
+              navLinks.style.display = 'none';
+            }
+          });
+        });
+      }
+
+      // 2. FAQ Accordion Interaction
+      const faqItems = document.querySelectorAll('.faq-item');
+      
+      faqItems.forEach(item => {
+        const trigger = item.querySelector('.faq-trigger');
+        trigger.addEventListener('click', () => {
+          const isActive = item.classList.contains('active');
+          
+          // Close all FAQ items first for smooth single-open accordion behavior
+          faqItems.forEach(el => el.classList.remove('active'));
+          
+          if (!isActive) {
+            item.classList.add('active');
+          }
+        });
+      });
+
+      // 3. Dynamic Display of Sticky Mobile CTA on Scroll
+      const stickyCta = document.getElementById('sticky-cta');
+      const checkoutSection = document.getElementById('checkout');
+      
+      window.addEventListener('scroll', () => {
+        if (!stickyCta || !checkoutSection) return;
+        
+        const checkoutOffset = checkoutSection.offsetTop;
+        const scrollPosition = window.scrollY + window.innerHeight;
+        
+        // Hide sticky cta when client views the actual pricing table to prevent visual clutter
+        if (window.scrollY > 300 && scrollPosition < checkoutOffset + 200) {
+          stickyCta.style.display = 'flex';
+        } else {
+          stickyCta.style.display = 'none';
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
