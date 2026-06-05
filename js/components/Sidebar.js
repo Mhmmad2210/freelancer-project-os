@@ -39,7 +39,7 @@ export class SidebarNav {
       <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
         <div class="sidebar-logo" style="gap: 8px;">
           ${getIcon('briefcase', 'logo-icon', 20)}
-          <span style="font-size: 1.02rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2;">Freelancer Project OS</span>
+          <span style="font-size: 1.02rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2;">AlurKarya</span>
         </div>
         <span style="font-size: 0.65rem; font-weight: 600; color: var(--text-muted); line-height: 1.3; font-family: sans-serif; display: block;">
           Manage freelance projects from lead to paid.
