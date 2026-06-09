@@ -1,0 +1,14 @@
+{
+  "name": "alurkarya",
+  "version": "0.1.0",
+  "description": "Client-to-Paid Operating System for Indonesian digital freelancers",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js .",
+    "build": "node build.js",
+    "preview": "node server.js dist"
+  },
+  "author": "Antigravity Studio",
+  "license": "MIT"
+}

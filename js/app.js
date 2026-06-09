@@ -13,6 +13,7 @@ import { InvoicesView } from './components/InvoicesView.js';
 import { PortfolioView } from './components/PortfolioView.js';
 import { QuotationsView } from './components/QuotationsView.js';
 import { ClientProjectView } from './components/ClientView.js';
+import { AccessGate } from './components/AccessGate.js';
 
 class FreelancerApp {
   constructor() {
@@ -71,6 +72,10 @@ class FreelancerApp {
           ${getIcon('upload', '', 14)} Import Backup
         </button>
         <input type="file" id="backup-file-picker" style="display: none;" accept=".json">
+        
+        <button class="btn btn-text" id="btn-access-reset" style="font-size: 0.8rem; color: var(--color-warning);" title="Reset access screen status">
+          Reset Akses
+        </button>
         
         <button class="btn btn-text text-danger" id="btn-workspace-reset" style="font-size: 0.8rem;" title="Reset workspace back to seed defaults">
           Wipe & Reset
@@ -253,6 +258,17 @@ class FreelancerApp {
       }
     });
 
+    // 3.5 Reset Access Password Status
+    const resetAccessBtn = document.getElementById('btn-access-reset');
+    if (resetAccessBtn) {
+      resetAccessBtn.addEventListener('click', () => {
+        if (confirm('Apakah Anda yakin ingin melakukan reset akses? Anda harus memasukkan password akses kembali.')) {
+          localStorage.removeItem('alurkarya_access_granted');
+          window.location.reload();
+        }
+      });
+    }
+
     // 4. Mobile Hamburger Button trigger
     const hamburger = document.getElementById('mobile-hamburger-btn');
     if (hamburger) {
@@ -306,6 +322,16 @@ class FreelancerApp {
 
 // Instantiate and launch app on DOM complete load
 document.addEventListener('DOMContentLoaded', () => {
-  window.app = new FreelancerApp();
-  window.app.init();
+  const isGranted = localStorage.getItem('alurkarya_access_granted') === 'true';
+  const root = document.getElementById('app-root');
+
+  if (isGranted) {
+    window.app = new FreelancerApp();
+    window.app.init();
+  } else {
+    const gate = new AccessGate(root, () => {
+      window.location.reload();
+    });
+    gate.render();
+  }
 });
