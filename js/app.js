@@ -26,6 +26,22 @@ class FreelancerApp {
     this.toastTimer = null;
   }
 
+  openMobileMenu() {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) sidebar.classList.add('active');
+    if (backdrop) backdrop.classList.add('active');
+    document.body.classList.add('no-scroll');
+  }
+
+  closeMobileMenu() {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) sidebar.classList.remove('active');
+    if (backdrop) backdrop.classList.remove('active');
+    document.body.classList.remove('no-scroll');
+  }
+
   init() {
     this.renderShell();
     this.mountViews();
@@ -42,6 +58,12 @@ class FreelancerApp {
     if (!root) return;
 
     root.className = 'app-container';
+    
+    // Mobile sidebar drawer backdrop element
+    const backdrop = document.createElement('div');
+    backdrop.id = 'sidebar-backdrop';
+    backdrop.className = 'sidebar-backdrop';
+    root.appendChild(backdrop);
     
     // 1. Lateral Sidebar Anchor
     const sidebarContainer = document.createElement('div');
@@ -132,8 +154,7 @@ class FreelancerApp {
     const headerTitle = document.getElementById('header-viewport-title');
 
     // Responsive Mobile sidebar toggle helpers
-    const sidebar = document.getElementById('app-sidebar');
-    if (sidebar) sidebar.classList.remove('active');
+    this.closeMobileMenu();
 
     // View switching router mapping
     switch (tabId) {
@@ -285,9 +306,28 @@ class FreelancerApp {
 
       hamburger.addEventListener('click', () => {
         const sidebar = document.getElementById('app-sidebar');
-        if (sidebar) sidebar.classList.toggle('active');
+        if (sidebar && sidebar.classList.contains('active')) {
+          this.closeMobileMenu();
+        } else {
+          this.openMobileMenu();
+        }
       });
     }
+
+    // 4.5 Mobile Backdrop click listener
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', () => {
+        this.closeMobileMenu();
+      });
+    }
+
+    // 4.6 Keyboard Escape key listener
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.closeMobileMenu();
+      }
+    });
   }
 
   /**

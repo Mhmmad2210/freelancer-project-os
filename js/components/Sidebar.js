@@ -76,8 +76,12 @@ export class SidebarNav {
         this.onTabChange(item.id);
         
         // Auto-close sidebar on mobile after clicking
-        const sidebar = document.getElementById('app-sidebar');
-        if (sidebar) sidebar.classList.remove('active');
+        if (window.app && typeof window.app.closeMobileMenu === 'function') {
+          window.app.closeMobileMenu();
+        } else {
+          const sidebar = document.getElementById('app-sidebar');
+          if (sidebar) sidebar.classList.remove('active');
+        }
       });
       menuEl.appendChild(btn);
     });
