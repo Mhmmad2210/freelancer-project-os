@@ -198,6 +198,27 @@ export class AccessGate {
         line-height: 1.4;
         margin-top: 10px;
       }
+      @media (max-width: 480px) {
+        .gate-card {
+          padding: 28px 20px;
+          gap: 16px;
+        }
+        .gate-brand {
+          font-size: 1.5rem;
+        }
+        .gate-subtitle {
+          font-size: 0.8rem;
+        }
+        .gate-text {
+          font-size: 0.75rem;
+        }
+        .gate-input {
+          padding: 12px 16px 12px 40px;
+        }
+        .gate-btn {
+          padding: 12px;
+        }
+      }
     `;
     gateWrapper.appendChild(styleEl);
 
