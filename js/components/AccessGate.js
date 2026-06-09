@@ -249,17 +249,26 @@ export class AccessGate {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Memverifikasi...';
 
-      const passwordVal = input.value;
+      const passwordVal = input.value ? input.value.trim() : '';
       const inputHash = await this.sha256(passwordVal);
 
-      // Determine active target hash
-      let activeTargetHash = this.targetHash;
+      // Determine active target hash and normalize it
+      let activeTargetHash = this.targetHash ? this.targetHash.trim() : '';
       if (activeTargetHash === '__VITE_ACCESS_PASSWORD_HASH__' || activeTargetHash === '') {
         // Fallback for raw local development without build
         activeTargetHash = this.devFallbackHash;
       }
 
-      if (inputHash === activeTargetHash) {
+      // Check if target hash is a valid 64-character hexadecimal SHA-256 string.
+      // If it isn't (e.g. the user entered a plain-text password in Render's env variable by mistake),
+      // we hash it on the fly so it matches the browser-side input hash!
+      const isHex64 = /^[0-9a-f]{64}$/i.test(activeTargetHash);
+      if (!isHex64 && activeTargetHash !== '') {
+        activeTargetHash = await this.sha256(activeTargetHash);
+      }
+
+      // Final comparison (case-insensitive comparison for safety)
+      if (inputHash.toLowerCase() === activeTargetHash.toLowerCase()) {
         // Correct password
         localStorage.setItem('alurkarya_access_granted', 'true');
         this.onAccessGranted();
