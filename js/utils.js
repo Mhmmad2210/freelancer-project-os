@@ -113,6 +113,63 @@ export function getDueDateStatus(dueDateStr) {
 }
 
 /**
+ * Determines localized urgency details for a given due date string.
+ * @param {string} dueDateStr - YYYY-MM-DD
+ * @returns {{status: string, text: string, isOverdue: boolean, daysDiff: number}}
+ */
+export function getLocalizedDueDateStatus(dueDateStr) {
+  if (!dueDateStr) {
+    return {
+      status: 'none',
+      text: 'Belum ada deadline',
+      isOverdue: false,
+      daysDiff: 999
+    };
+  }
+  
+  const [y, m, d] = dueDateStr.split('-').map(Number);
+  const due = new Date(y, m - 1, d);
+  due.setHours(0, 0, 0, 0);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const diffTime = due.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) {
+    return {
+      status: 'overdue',
+      text: 'Overdue',
+      isOverdue: true,
+      daysDiff: diffDays
+    };
+  } else if (diffDays === 0) {
+    return {
+      status: 'today',
+      text: 'Due today',
+      isOverdue: false,
+      daysDiff: 0
+    };
+  } else if (diffDays <= 3) {
+    return {
+      status: 'soon',
+      text: 'Due soon',
+      isOverdue: false,
+      daysDiff: diffDays
+    };
+  } else {
+    return {
+      status: 'normal',
+      text: formatDate(dueDateStr),
+      isOverdue: false,
+      daysDiff: diffDays
+    };
+  }
+}
+
+
+/**
  * Generates freelancer-friendly email reminder template for payment follow-up.
  * @param {object} invoice
  * @param {object} client

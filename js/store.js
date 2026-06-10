@@ -429,6 +429,28 @@ export class WorkspaceStore {
             p.quotationStatus = 'None';
             migrated = true;
           }
+          if (p.clientType === undefined) { p.clientType = 'General'; migrated = true; }
+          if (p.customClientName === undefined) { p.customClientName = ''; migrated = true; }
+          if (p.customCategory === undefined) { p.customCategory = ''; migrated = true; }
+          if (p.createdAt === undefined) { p.createdAt = new Date().toISOString(); migrated = true; }
+          if (p.revisionCount === undefined) { p.revisionCount = p.revisionRound !== undefined ? p.revisionRound : 0; migrated = true; }
+          if (p.maxRevision === undefined) { p.maxRevision = p.maxRevisionRounds !== undefined ? p.maxRevisionRounds : 3; migrated = true; }
+          if (p.clientApprovalStatus === undefined) { p.clientApprovalStatus = 'Pending Review'; migrated = true; }
+          if (p.invoiceNumber === undefined) { p.invoiceNumber = ''; migrated = true; }
+          if (p.invoiceDate === undefined) { p.invoiceDate = ''; migrated = true; }
+          if (p.invoiceDueDate === undefined) { p.invoiceDueDate = ''; migrated = true; }
+          if (p.invoiceAmount === undefined) { p.invoiceAmount = 0; migrated = true; }
+          if (p.invoiceFileLink === undefined) { p.invoiceFileLink = ''; migrated = true; }
+          if (p.paymentTerms === undefined) { p.paymentTerms = ''; migrated = true; }
+          if (p.paymentDueDate === undefined) { p.paymentDueDate = ''; migrated = true; }
+          if (p.paymentReceiptLink === undefined) { p.paymentReceiptLink = ''; migrated = true; }
+          if (p.lastFollowUpDate === undefined) { p.lastFollowUpDate = ''; migrated = true; }
+          if (p.nextFollowUpDate === undefined) { p.nextFollowUpDate = ''; migrated = true; }
+          if (p.rawFileDownloadLink === undefined) { p.rawFileDownloadLink = ''; migrated = true; }
+          if (p.isCompletedLocked === undefined) { p.isCompletedLocked = false; migrated = true; }
+          if (p.holdReason === undefined) { p.holdReason = ''; migrated = true; }
+          if (p.holdDate === undefined) { p.holdDate = ''; migrated = true; }
+          if (p.holdFollowUpDate === undefined) { p.holdFollowUpDate = ''; migrated = true; }
           return p;
         });
 
@@ -504,6 +526,48 @@ export class WorkspaceStore {
     this.saveState();
   }
 
+  addDemoProjectsNonDestructively() {
+    const seed = getInitialSeedData();
+
+    // 1. Add clients if they don't exist in the current store
+    seed.clients.forEach(c => {
+      const exists = this.clients.some(existing => existing.name === c.name || (c.email && existing.email === c.email));
+      if (!exists) {
+        this.clients.push({ ...c });
+      }
+    });
+
+    // 2. Add projects (with regenerated IDs to avoid conflicts)
+    seed.projects.forEach(p => {
+      const exists = this.projects.some(existing => existing.title === p.title && existing.clientName === p.clientName);
+      if (!exists) {
+        const newProjId = 'proj_' + Math.random().toString(36).substring(2, 9);
+        const newProj = { ...p, id: newProjId, invoices: [] };
+
+        // Duplicate and map related invoices
+        if (p.invoices && p.invoices.length > 0) {
+          newProj.invoices = p.invoices.map(inv => {
+            const newInvId = 'inv_' + Math.random().toString(36).substring(2, 9);
+            const newInv = { ...inv, id: newInvId, projectId: newProjId };
+            
+            // Push to global store invoices if invoice number is unique
+            const globalExists = this.invoices.some(existing => existing.invoiceNumber === inv.invoiceNumber);
+            if (!globalExists) {
+              this.invoices.push(newInv);
+            }
+            return newInv;
+          });
+        }
+
+        this.projects.push(newProj);
+      }
+    });
+
+    // 3. Save state and update UI listeners
+    this.saveState();
+    this.notifyListeners();
+  }
+
   /* --- Listeners (Observer Pattern) --- */
   subscribe(listener) {
     this.listeners.push(listener);
@@ -534,11 +598,17 @@ export class WorkspaceStore {
     const finalAmount = projectData.finalPaymentAmount !== undefined ? Number(projectData.finalPaymentAmount) : budget - dpAmount;
     const remBalance = projectData.remainingBalance !== undefined ? Number(projectData.remainingBalance) : budget - dpAmount;
 
+    const maxRevisionVal = projectData.maxRevisionRounds !== undefined ? Number(projectData.maxRevisionRounds) : 3;
+
     const newProject = {
       id: generateId(),
       title: projectData.title || 'Untitled Project',
-      clientId: projectData.clientId,
-      clientName: projectData.clientName || 'Independent Contract',
+      clientId: projectData.clientId || '',
+      clientName: projectData.clientName || '',
+      clientType: projectData.clientType || 'General',
+      customClientName: projectData.customClientName || '',
+      customCategory: projectData.customCategory || '',
+      createdAt: new Date().toISOString(),
       budget: budget,
       currency: projectData.currency || 'IDR', // Currency field default ready
       stage: projectData.stage || 'new_lead',
@@ -549,7 +619,7 @@ export class WorkspaceStore {
       assetLink: projectData.assetLink || '',
       tags: projectData.tags || ['Design'],
       revisionRound: 0,
-      maxRevisionRounds: Number(projectData.maxRevisionRounds) || 3,
+      maxRevisionRounds: maxRevisionVal,
       revisionNotes: '',
       paymentStatus: projectData.paymentStatus || 'None',
       nextAction: projectData.nextAction || 'Email client proposal draft',
@@ -584,7 +654,29 @@ export class WorkspaceStore {
 
       // Quotation link properties:
       quotationId: projectData.quotationId || '',
-      quotationStatus: projectData.quotationStatus || 'None'
+      quotationStatus: projectData.quotationStatus || 'None',
+
+      // Revision limits:
+      revisionCount: 0,
+      maxRevision: maxRevisionVal,
+
+      // Stage / Status Trackers:
+      clientApprovalStatus: 'Pending Review',
+      invoiceNumber: '',
+      invoiceDate: '',
+      invoiceDueDate: '',
+      invoiceAmount: 0,
+      invoiceFileLink: '',
+      paymentTerms: '',
+      paymentDueDate: '',
+      paymentReceiptLink: '',
+      lastFollowUpDate: '',
+      nextFollowUpDate: '',
+      rawFileDownloadLink: '',
+      isCompletedLocked: false,
+      holdReason: projectData.holdReason || '',
+      holdDate: projectData.holdDate || '',
+      holdFollowUpDate: projectData.holdFollowUpDate || ''
     };
     this.projects.push(newProject);
     this.saveState();
@@ -840,6 +932,9 @@ export class WorkspaceStore {
             p.quotationId = '';
             p.quotationStatus = 'None';
           }
+          if (p.holdReason === undefined) p.holdReason = '';
+          if (p.holdDate === undefined) p.holdDate = '';
+          if (p.holdFollowUpDate === undefined) p.holdFollowUpDate = '';
           return p;
         });
         this.invoices = this.invoices.map(inv => {

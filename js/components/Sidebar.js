@@ -36,12 +36,15 @@ export class SidebarNav {
     headerEl.style.padding = '20px 24px';
     headerEl.style.borderBottom = '1px solid var(--border-subtle)';
     headerEl.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
-        <div class="sidebar-logo" style="gap: 8px;">
-          ${getIcon('briefcase', 'logo-icon', 20)}
-          <span style="font-size: 1.02rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2;">AlurKarya</span>
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+        <div class="sidebar-logo" style="display: flex; align-items: center; gap: 10px;">
+          <svg width="24" height="20" viewBox="0 0 48 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: var(--text-primary); flex-shrink: 0;">
+            <path d="M16 0H32L16 40H0L16 0Z" fill="currentColor"/>
+            <path d="M26 20H35L48 40H20L26 20Z" fill="currentColor"/>
+          </svg>
+          <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.88rem; font-weight: 800; letter-spacing: 0.25em; color: var(--text-primary); text-transform: uppercase; line-height: 1; margin-left: 2px;">ΛLURKΛRYΛ</span>
         </div>
-        <span style="font-size: 0.65rem; font-weight: 600; color: var(--text-muted); line-height: 1.3; font-family: sans-serif; display: block;">
+        <span style="font-size: 0.62rem; font-weight: 500; color: var(--text-muted); line-height: 1.3; font-family: 'Plus Jakarta Sans', sans-serif; display: block; letter-spacing: 0.01em;">
           Manage freelance projects from lead to paid.
         </span>
       </div>
@@ -58,8 +61,7 @@ export class SidebarNav {
       { id: 'clients', label: 'Client Hub', icon: 'user' },
       { id: 'invoices', label: 'Invoice Ledger', icon: 'fileText' },
       { id: 'quotations', label: 'Quotations', icon: 'briefcase' },
-      { id: 'portfolio', label: 'Portfolio Sandbox', icon: 'folder' },
-      { id: 'client-view', label: 'Client View Preview', icon: 'externalLink' }
+      { id: 'portfolio', label: 'Portfolio Sandbox', icon: 'folder' }
     ];
 
     menuItems.forEach(item => {
@@ -86,18 +88,34 @@ export class SidebarNav {
       menuEl.appendChild(btn);
     });
 
-    // Footer section with profile summary
+    // Footer section with profile summary acting as Profile Freelancer
     const footerEl = document.createElement('div');
     footerEl.className = 'sidebar-footer';
+    footerEl.style.cursor = 'pointer';
     footerEl.innerHTML = `
-      <div class="user-profile">
+      <div class="user-profile ${this.activeTab === 'client-view' ? 'active' : ''}" style="transition: all var(--transition-fast); display: flex; align-items: center; width: 100%; border: 1px solid transparent; border-radius: var(--border-radius-md);">
         <div class="user-avatar">JD</div>
-        <div class="user-info">
+        <div class="user-info" style="flex: 1; margin-left: 12px;">
           <span class="user-name">Jane Doe</span>
           <span class="user-role">Creative Freelancer</span>
         </div>
+        <div class="profile-preview-btn" style="color: var(--text-secondary); display: flex; align-items: center; padding: 4px;" title="Preview Client View">
+          ${getIcon('externalLink', '', 14)}
+        </div>
       </div>
     `;
+
+    footerEl.querySelector('.user-profile').addEventListener('click', () => {
+      this.onTabChange('client-view');
+      
+      // Auto-close sidebar on mobile after clicking
+      if (window.app && typeof window.app.closeMobileMenu === 'function') {
+        window.app.closeMobileMenu();
+      } else {
+        const sidebar = document.getElementById('app-sidebar');
+        if (sidebar) sidebar.classList.remove('active');
+      }
+    });
 
     sidebarEl.appendChild(headerEl);
     sidebarEl.appendChild(menuEl);

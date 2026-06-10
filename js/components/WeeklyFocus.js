@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatDate, getDueDateStatus } from '../utils.js';
+import { formatCurrency, formatDate, getDueDateStatus, getLocalizedDueDateStatus } from '../utils.js';
 
 export class WeeklyFocusView {
   /**
@@ -32,7 +32,7 @@ export class WeeklyFocusView {
     introBox.className = 'portfolio-intro-box';
     introBox.innerHTML = `
       <h2>Weekly Focus</h2>
-      <p>See your priority projects, upcoming deadlines, pending revisions, and client follow-ups for this week.</p>
+      <p>Lihat prioritas project, tenggat waktu terdekat, revisi pending, dan pengingat follow-up klien minggu ini.</p>
     `;
     viewEl.appendChild(introBox);
 
@@ -50,39 +50,85 @@ export class WeeklyFocusView {
     const state = this.store.getState();
     const { projects, invoices, weeklyReflections } = state;
 
-    // 1. Top 3 Priorities: High priority, incomplete projects
-    const topPriorities = projects
-      .filter(p => p.stage !== 'completed' && p.priority === 'High')
-      .slice(0, 3);
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
 
-    // 2. Deadlines This Week: Due dates within next 7 days, or overdue, incomplete
-    const deadlinesThisWeek = projects.filter(p => {
+    // Determine selected week from localStorage
+    let selectedWeekStart = localStorage.getItem('alurkarya_selected_week');
+    if (!selectedWeekStart) {
+      const day = today.getDay();
+      const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+      const mon = new Date(today.setDate(diff));
+      mon.setHours(0,0,0,0);
+      selectedWeekStart = mon.toISOString().split('T')[0];
+      localStorage.setItem('alurkarya_selected_week', selectedWeekStart);
+    }
+    const weekStartObj = new Date(selectedWeekStart);
+    const weekEndObj = new Date(weekStartObj);
+    weekEndObj.setDate(weekStartObj.getDate() + 6);
+    weekEndObj.setHours(23, 59, 59, 999);
+    const weekEndStr = weekEndObj.toISOString().split('T')[0];
+
+    // Priority score calculator
+    const getPriorityScore = (p) => {
+      const isOverdue = p.dueDate && p.dueDate < todayStr;
+      const isDueThisWeek = p.dueDate && p.dueDate >= selectedWeekStart && p.dueDate <= weekEndStr;
+      const isHighUrgent = p.priority === 'High' || p.priority === 'Urgent';
+      const hasNextAction = !!p.nextAction;
+
+      if (isOverdue) return 100;
+      if (p.stage === 'on_hold') return 50; // On Hold follow up this week
+      if (isDueThisWeek) return 80;
+      if (isHighUrgent) return 60;
+      if (hasNextAction) return 40;
+      return 20;
+    };
+
+    // Filter projects for weekly focus main checklist
+    const focusProjects = projects.filter(p => {
       if (p.stage === 'completed') return false;
-      const status = getDueDateStatus(p.dueDate);
-      return status.isOverdue || (status.daysDiff >= 0 && status.daysDiff <= 7);
+
+      if (p.stage === 'on_hold') {
+        const isFollowUpThisWeek = p.holdFollowUpDate && p.holdFollowUpDate >= selectedWeekStart && p.holdFollowUpDate <= weekEndStr;
+        const isOverdue = p.dueDate && p.dueDate < todayStr;
+        return isFollowUpThisWeek || isOverdue;
+      }
+
+      return true;
     });
 
-    // 3. Waiting for Client Review: Projects in stage "client_review"
+    focusProjects.sort((a, b) => getPriorityScore(b) - getPriorityScore(a));
+
+    // Deadlines This Week: Due dates within selected week, or overdue, incomplete
+    const deadlinesThisWeek = projects.filter(p => {
+      if (p.stage === 'completed' || p.stage === 'on_hold') return false;
+      const status = getLocalizedDueDateStatus(p.dueDate);
+      const isOverdue = status.status === 'overdue';
+      const isThisWeek = p.dueDate && p.dueDate >= selectedWeekStart && p.dueDate <= weekEndStr;
+      return isOverdue || isThisWeek;
+    });
+
+    // Waiting for Client Review: Projects in stage "client_review"
     const clientReviews = projects.filter(p => p.stage === 'client_review');
 
-    // 4. Revisions to Finish: Projects in stage "revision"
+    // Revisions to Finish: Projects in stage "revision"
     const revisionsToComplete = projects.filter(p => p.stage === 'revision');
 
-    // 5. Invoices to Send: Projects in active stages (in_progress, client_review, revision) with NO invoices drafted or sent
+    // Invoices to Send: Projects in active stages (in_progress, client_review, revision) with NO invoices drafted or sent
     const invoicesToSend = projects.filter(p => 
       ['in_progress', 'client_review', 'revision'].includes(p.stage) && 
       (!p.invoices || p.invoices.length === 0)
     );
 
-    // 6. Payments to Follow Up: Invoices that are Sent or Overdue
+    // Payments to Follow Up: Invoices that are Sent or Overdue
     const overduePayments = invoices.filter(inv => ['Sent', 'Overdue'].includes(inv.status));
 
-    // 7. Stuck Projects: Projects overdue or in revision rounds exceeding max revision round limit
+    // Stuck Projects: Projects overdue or in revision rounds exceeding max revision round limit
     const stuckProjects = projects.filter(p => {
       if (p.stage === 'completed') return false;
-      const due = getDueDateStatus(p.dueDate);
+      const due = getLocalizedDueDateStatus(p.dueDate);
       const isRevisionStuck = p.stage === 'revision' && p.revisionRound >= p.maxRevisionRounds;
-      return due.isOverdue || isRevisionStuck;
+      return due.status === 'overdue' || isRevisionStuck;
     });
 
     // --- RENDER COLUMNS ---
@@ -93,33 +139,88 @@ export class WeeklyFocusView {
     colLeft.style.flexDirection = 'column';
     colLeft.style.gap = '20px';
 
-    // A. Priorities Widget
+    // A. Priorities Widget (Fokus Minggu Ini)
     const prioritiesBox = document.createElement('div');
     prioritiesBox.className = 'focus-module-box';
     prioritiesBox.innerHTML = `
-      <h3 style="font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-        ${getIcon('layers', 'text-danger', 18)} Top 3 Priority Projects
+      <h3 style="font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif;">
+        ${getIcon('layers', 'text-danger', 18)} Fokus Minggu Ini
       </h3>
-      <div class="focus-row-list" id="focus-priorities-list"></div>
+      <span class="stat-subtext" style="margin-top: -8px; display: block; margin-bottom: 12px; font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
+        💡 <strong>Tips Mentor:</strong> Weekly Focus membantumu memilah project mana yang harus disentuh duluan minggu ini agar cashflow tetap aman.
+      </span>
+      <div class="focus-row-list" id="focus-priorities-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
     `;
     const prioritiesList = prioritiesBox.querySelector('#focus-priorities-list');
     
-    if (topPriorities.length === 0) {
+    if (focusProjects.length === 0) {
       prioritiesList.innerHTML = `
         <span class="stat-subtext" style="display: block; padding: 16px 0; text-align: center;">
-          No high priority projects logged this week. Awesome job!
+          Tidak ada project aktif yang perlu diperhatikan minggu ini. Kerja bagus!
         </span>
       `;
     } else {
-      topPriorities.forEach(p => {
+      focusProjects.forEach(p => {
         const item = document.createElement('div');
         item.className = 'focus-item-row';
+        item.style.cssText = 'padding: 12px; border-radius: 8px; border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 8px; background: rgba(255,255,255,0.01);';
+        
+        const dueStatus = getLocalizedDueDateStatus(p.dueDate);
+        let dateWarningClass = 'text-muted';
+        if (dueStatus.status === 'overdue' || dueStatus.status === 'today') {
+          dateWarningClass = 'text-danger';
+        } else if (dueStatus.status === 'soon') {
+          dateWarningClass = 'text-warning';
+        }
+
+        const priorityVal = p.priority || 'TBD';
+        let priorityClass = 'priority-tbd';
+        if (priorityVal === 'Low') priorityClass = 'priority-low';
+        else if (priorityVal === 'Medium') priorityClass = 'priority-medium';
+        else if (priorityVal === 'High') priorityClass = 'priority-high';
+        else if (priorityVal === 'Urgent') priorityClass = 'priority-urgent';
+
+        // Set Next Action Label and hold followup notification
+        let nextActionLabel = p.nextAction || 'TBD';
+        if (p.stage === 'on_hold') {
+          const isFollowUpThisWeek = p.holdFollowUpDate && p.holdFollowUpDate >= selectedWeekStart && p.holdFollowUpDate <= weekEndStr;
+          if (isFollowUpThisWeek) {
+            nextActionLabel = 'Follow up On Hold Project';
+          }
+        }
+        
+        // Stage labeling
+        const stageMap = {
+          'new_lead': 'New Lead',
+          'proposal_sent': 'Proposal Sent',
+          'in_progress': 'In Progress',
+          'client_review': 'Client Review',
+          'revision': 'Revision',
+          'invoice_sent': 'Invoice Sent',
+          'waiting_payment': 'Waiting Payment',
+          'on_hold': 'On Hold'
+        };
+        const stageLabel = stageMap[p.stage] || p.stage;
+
         item.innerHTML = `
-          <div>
-            <span class="focus-item-title">${p.title}</span>
-            <span class="focus-item-meta">Client: ${p.clientName} | Budget: ${formatCurrency(p.budget, p.currency)}</span>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            <div>
+              <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">${p.title}</h4>
+              <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 2px;">Klien: ${p.clientName || 'Belum pilih client'} | Stage: ${stageLabel}</span>
+            </div>
+            <span class="priority-badge ${priorityClass}">${priorityVal}</span>
           </div>
-          <span class="priority-badge priority-high">High</span>
+          
+          <div style="font-size: 0.7rem; display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); padding: 8px; border-radius: 6px;">
+            <div>
+              <span class="manual-label" style="color: var(--color-primary);">NEXT:</span>
+              <span style="color: var(--text-secondary); font-weight: 500;">${nextActionLabel}</span>
+            </div>
+            <div style="margin-top: 2px; display: flex; align-items: center; gap: 4px;">
+              <span class="manual-label ${dateWarningClass}">DUE:</span>
+              <span class="${dateWarningClass}" style="font-weight: 600;">${dueStatus.text}</span>
+            </div>
+          </div>
         `;
         prioritiesList.appendChild(item);
       });
@@ -130,13 +231,13 @@ export class WeeklyFocusView {
     const reflectionsBox = document.createElement('div');
     reflectionsBox.className = 'focus-module-box';
     reflectionsBox.innerHTML = `
-      <h3 style="font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-        ${getIcon('edit', 'text-success', 18)} Weekly Reflection Notes
+      <h3 style="font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif;">
+        ${getIcon('edit', 'text-success', 18)} Catatan Refleksi Mingguan
       </h3>
       <span class="stat-subtext" style="margin-top: -8px; display: block;">
-        Journal your wins, challenges, and client learnings to grow your freelance business. (Auto-saves on blur)
+        Tulis keberhasilan, tantangan, dan pembelajaran klien minggu ini untuk mengembangkan bisnismu. (Auto-save)
       </span>
-      <textarea class="reflections-input" id="weekly-journal" placeholder="How is your freelance week going? Write down learnings, achievements...">${weeklyReflections}</textarea>
+      <textarea class="reflections-input" id="weekly-journal" placeholder="Bagaimana jalannya freelance minggu ini? Catat pembelajaran, pencapaian...">${weeklyReflections}</textarea>
     `;
     const journalTextarea = reflectionsBox.querySelector('#weekly-journal');
     
@@ -158,7 +259,7 @@ export class WeeklyFocusView {
       const box = document.createElement('div');
       box.className = 'focus-module-box';
       box.innerHTML = `
-        <h3 style="font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        <h3 style="font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif;">
           ${getIcon(icon, iconColorClass, 16)} ${title}
           <span class="column-badge" style="font-size: 0.65rem;">${listData.length}</span>
         </h3>
@@ -183,16 +284,21 @@ export class WeeklyFocusView {
 
     // 1. Deadlines widget
     const deadlinesMod = createFocusModule(
-      'Deadlines This Week',
+      'Tenggat Waktu Minggu Ini',
       'clock',
       deadlinesThisWeek,
-      'No tight project deadlines this week.',
+      'Tidak ada deadline project yang mendesak minggu ini.',
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
         row.style.padding = '8px 12px';
-        const dueStatus = getDueDateStatus(p.dueDate);
-        const warning = dueStatus.isOverdue ? 'text-danger' : 'text-warning';
+        const dueStatus = getLocalizedDueDateStatus(p.dueDate);
+        let warning = 'text-muted';
+        if (dueStatus.status === 'overdue' || dueStatus.status === 'today') {
+          warning = 'text-danger';
+        } else if (dueStatus.status === 'soon') {
+          warning = 'text-warning';
+        }
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${p.title}</span>
@@ -208,10 +314,10 @@ export class WeeklyFocusView {
 
     // 2. Client Review widget
     const reviewsMod = createFocusModule(
-      'Waiting for Client Review',
+      'Menunggu Review Client',
       'user',
       clientReviews,
-      'No deliverables waiting under client review.',
+      'Tidak ada deliverable yang sedang ditinjau klien.',
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -231,10 +337,10 @@ export class WeeklyFocusView {
 
     // 3. Revisions to Finish
     const revisionsMod = createFocusModule(
-      'Revisions to Finish',
+      'Revisi yang Harus Dikerjakan',
       'refresh',
       revisionsToComplete,
-      'Nice! No project revision notes logged.',
+      'Bagus! Tidak ada catatan revisi project saat ini.',
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -242,7 +348,7 @@ export class WeeklyFocusView {
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${p.title}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Notes: ${p.revisionNotes || 'Typography adjustments'}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">Notes: ${p.revisionNotes || 'Penyesuaian desain'}</span>
           </div>
           <span class="client-status-badge status-lead text-danger" style="font-size: 0.65rem;">Rev: ${p.revisionRound}/${p.maxRevisionRounds}</span>
         `;
@@ -254,10 +360,10 @@ export class WeeklyFocusView {
 
     // 4. Invoices to Send
     const invoicesToSendMod = createFocusModule(
-      'Invoices to Send',
+      'Invoice yang Perlu Dikirim',
       'fileText',
       invoicesToSend,
-      'All active projects are fully billed. Good tracking!',
+      'Semua project aktif telah ditagih. Pencatatan yang bagus!',
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -277,10 +383,10 @@ export class WeeklyFocusView {
 
     // 5. Payments to Follow Up
     const followUpPaymentsMod = createFocusModule(
-      'Payments to Follow Up',
+      'Follow Up Pembayaran',
       'fileText',
       overduePayments,
-      'No unpaid invoices overdue. Cashflow is clear!',
+      'Tidak ada tagihan yang terlambat. Arus kas lancar!',
       (inv) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -304,10 +410,10 @@ export class WeeklyFocusView {
 
     // 6. Stuck Projects
     const stuckMod = createFocusModule(
-      'Stuck Projects',
+      'Project yang Macet (Stuck)',
       'alert',
       stuckProjects,
-      'Awesome! No blocked projects.',
+      'Luar biasa! Tidak ada project yang terhambat.',
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -315,7 +421,7 @@ export class WeeklyFocusView {
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${p.title}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Next action: ${p.nextAction || 'Email client'}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">Next action: ${p.nextAction || 'Hubungi klien'}</span>
           </div>
           <span class="priority-badge priority-high">Stuck</span>
         `;
@@ -328,3 +434,4 @@ export class WeeklyFocusView {
     gridEl.appendChild(colRight);
   }
 }
+

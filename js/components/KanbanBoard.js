@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, getDueDateStatus } from '../utils.js';
+import { formatCurrency, getDueDateStatus, getLocalizedDueDateStatus, formatDate } from '../utils.js';
 
 export class KanbanBoard {
   /**
@@ -21,6 +21,83 @@ export class KanbanBoard {
     
     // Bind Drag & Drop contexts
     this.draggedCardId = null;
+    this.minimizedCardIds = new Set();
+  }
+
+  getProjectHealth(project) {
+    const dueDateMeta = getDueDateStatus(project.dueDate);
+    if (project.stage === 'completed' || project.paymentStatus === 'Paid') {
+      return { label: 'Paid', class: 'health-paid', color: 'var(--color-success)' };
+    }
+    if (dueDateMeta.isOverdue) {
+      return { label: 'Overdue', class: 'health-overdue', color: 'var(--color-danger)' };
+    }
+    if (['client_review', 'revision', 'waiting_payment'].includes(project.stage) || project.paymentStatus === 'Waiting payment') {
+      return { label: 'Waiting Client', class: 'health-waiting', color: 'var(--color-warning)' };
+    }
+    if (['new_lead', 'proposal_sent'].includes(project.stage) || project.paymentStatus === 'Invoice overdue') {
+      return { label: 'Need Action', class: 'health-need-action', color: 'var(--color-accent)' };
+    }
+    if (!project.paymentStatus || project.paymentStatus === 'None') {
+      return { label: 'Not Invoiced', class: 'health-not-invoiced', color: 'var(--text-muted)' };
+    }
+    return { label: 'On Track', class: 'health-on-track', color: 'var(--color-secondary)' };
+  }
+
+  createOnboardingSection() {
+    const onboardingEl = document.createElement('div');
+    onboardingEl.className = 'onboarding-panel';
+    onboardingEl.style.cssText = 'background: var(--glass-bg); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-lg); padding: 18px; margin-bottom: 16px;';
+    onboardingEl.innerHTML = `
+      <div class="onboarding-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.15rem;">💡</span>
+          <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">Mulai Mengatur Project Anda</h4>
+        </div>
+        <button class="onboarding-close-btn" style="color: var(--text-muted); background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 4px;">&times;</button>
+      </div>
+      <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 12px;">
+        Yuk, mulai tata project-mu! AlurKarya dirancang untuk membantumu melacak pekerjaan dari deal sampai lunas. Ini 4 langkah awal untuk memulai:
+      </p>
+      <div class="onboarding-steps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+        <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
+          <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">1</span>
+          <span class="step-text">Catat project barumu</span>
+        </div>
+        <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
+          <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">2</span>
+          <span class="step-text">Hubungkan dengan Klien & kontrak</span>
+        </div>
+        <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
+          <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">3</span>
+          <span class="step-text">Tulis Next Action konkret</span>
+        </div>
+        <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
+          <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">4</span>
+          <span class="step-text">Perbarui status tiap hari</span>
+        </div>
+      </div>
+      <div class="onboarding-footer" style="display: flex; justify-content: flex-start;">
+        <button class="btn btn-secondary btn-sm" id="btn-load-samples" style="padding: 6px 12px; font-size: 0.72rem; border-radius: var(--border-radius-sm); font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;">Isi dengan project contoh biar gak kosong</button>
+      </div>
+    `;
+
+    // Event listener for load samples (destructive with confirmation)
+    onboardingEl.querySelector('#btn-load-samples').addEventListener('click', () => {
+      if (confirm("Ini akan mengganti data saat ini dengan contoh project bawaan. Lanjutkan?")) {
+        this.store.resetToDefaults();
+        this.onTriggerToast("Workspace telah di-reset ke data contoh bawaan.", "text-success");
+        this.update();
+      }
+    });
+
+    // Close button event listener
+    onboardingEl.querySelector('.onboarding-close-btn').addEventListener('click', () => {
+      onboardingEl.style.display = 'none';
+      localStorage.setItem('alurkarya_onboarding_dismissed', 'true');
+    });
+
+    return onboardingEl;
   }
 
   update() {
@@ -38,11 +115,22 @@ export class KanbanBoard {
     const dashboardEl = document.createElement('div');
     dashboardEl.className = 'dashboard-viewport';
 
+    // Renders Onboarding Section if not dismissed
+    const onboardingDismissed = localStorage.getItem('alurkarya_onboarding_dismissed') === 'true';
+    if (!onboardingDismissed) {
+      const onboardingEl = this.createOnboardingSection();
+      dashboardEl.appendChild(onboardingEl);
+    }
+
     // Renders Stats Metrics Row
     const statsEl = this.createStatsSection();
     dashboardEl.appendChild(statsEl);
 
-    // Renders Action Control Ribbon (Search + Add)
+    // Renders Calendar Section
+    const calendarEl = this.createCalendarSection();
+    dashboardEl.appendChild(calendarEl);
+
+    // Renders Action Control Ribbon (Search + Add + View Mode Switcher)
     const controlRibbon = document.createElement('div');
     controlRibbon.className = 'grid-controls';
     
@@ -58,13 +146,63 @@ export class KanbanBoard {
       this.renderBoardOnly();
     });
 
+    const activeViewMode = localStorage.getItem('alurkarya_board_view_mode') || 'simple';
+    const activeSortMode = localStorage.getItem('alurkarya_board_sort_mode') || 'default';
+
+    const rightControls = document.createElement('div');
+    rightControls.className = 'right-controls';
+    rightControls.style.cssText = 'display: flex; align-items: center; gap: 12px; flex-wrap: wrap;';
+
+    const sortSelector = document.createElement('div');
+    sortSelector.className = 'sort-selector';
+    sortSelector.style.cssText = 'display: flex; align-items: center; gap: 6px;';
+    sortSelector.innerHTML = `
+      <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 600;">Urutkan:</span>
+      <select class="form-control" id="board-sort-select" style="font-size: 0.75rem; padding: 4px 10px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); color: var(--text-secondary); cursor: pointer; height: auto;">
+        <option value="default" ${activeSortMode === 'default' ? 'selected' : ''}>Default</option>
+        <option value="dueDate" ${activeSortMode === 'dueDate' ? 'selected' : ''}>Tenggat Waktu</option>
+        <option value="value" ${activeSortMode === 'value' ? 'selected' : ''}>Harga/Value</option>
+        <option value="submitDate" ${activeSortMode === 'submitDate' ? 'selected' : ''}>Tanggal Buat</option>
+      </select>
+    `;
+
+    sortSelector.querySelector('#board-sort-select').addEventListener('change', (e) => {
+      localStorage.setItem('alurkarya_board_sort_mode', e.target.value);
+      this.renderBoardOnly();
+    });
+
+    const viewModeSelector = document.createElement('div');
+    viewModeSelector.className = 'view-mode-selector';
+    viewModeSelector.innerHTML = `
+      <button class="view-mode-btn ${activeViewMode === 'simple' ? 'active' : ''}" id="view-mode-simple">Ringkas</button>
+      <button class="view-mode-btn ${activeViewMode === 'detail' ? 'active' : ''}" id="view-mode-detail">Lengkap</button>
+    `;
+
+    viewModeSelector.querySelector('#view-mode-simple').addEventListener('click', () => {
+      localStorage.setItem('alurkarya_board_view_mode', 'simple');
+      viewModeSelector.querySelector('#view-mode-simple').classList.add('active');
+      viewModeSelector.querySelector('#view-mode-detail').classList.remove('active');
+      this.renderBoardOnly();
+    });
+
+    viewModeSelector.querySelector('#view-mode-detail').addEventListener('click', () => {
+      localStorage.setItem('alurkarya_board_view_mode', 'detail');
+      viewModeSelector.querySelector('#view-mode-detail').classList.add('active');
+      viewModeSelector.querySelector('#view-mode-simple').classList.remove('active');
+      this.renderBoardOnly();
+    });
+
     const addBtn = document.createElement('button');
     addBtn.className = 'btn btn-primary';
     addBtn.innerHTML = `${getIcon('plus', '', 18)} Add Project`;
     addBtn.addEventListener('click', () => this.showNewProjectDrawer());
 
+    rightControls.appendChild(sortSelector);
+    rightControls.appendChild(viewModeSelector);
+    rightControls.appendChild(addBtn);
+
     controlRibbon.appendChild(searchWrapper);
-    controlRibbon.appendChild(addBtn);
+    controlRibbon.appendChild(rightControls);
     dashboardEl.appendChild(controlRibbon);
 
     // Scroll Hint Helper
@@ -84,6 +222,11 @@ export class KanbanBoard {
     boardWrapper.className = 'kanban-container';
     boardWrapper.id = 'kanban-board-canvas';
     dashboardEl.appendChild(boardWrapper);
+
+    // On Hold mount container
+    const onHoldMount = document.createElement('div');
+    onHoldMount.id = 'on-hold-projects-mount';
+    dashboardEl.appendChild(onHoldMount);
 
     this.container.appendChild(dashboardEl);
     
@@ -190,14 +333,24 @@ export class KanbanBoard {
     if (state.projects.length === 0) {
       canvas.style.display = 'block';
       canvas.innerHTML = `
-        <div class="empty-state-box" style="margin-top: 24px;">
-          ${getIcon('briefcase', '', 48)}
-          <h3>No projects yet</h3>
-          <p>Add your first freelance project and track it from lead to paid.</p>
-          <button class="btn btn-primary" id="btn-empty-add-project">${getIcon('plus', '', 16)} Create Project</button>
+        <div class="empty-state-box" style="margin-top: 24px; padding: 40px 20px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); backdrop-filter: var(--glass-backdrop);">
+          <div style="font-size: 2.5rem; margin-bottom: 16px; color: var(--color-primary-glow);">☕</div>
+          <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Wah, mejamu masih bersih!</h3>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 20px; max-width: 460px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+            Belum ada project aktif yang tercatat. Jangan khawatir, kamu bisa tambahkan project barumu sekarang atau muat data contoh untuk melihat bagaimana AlurKarya membantumu mengelola workflow dari deal sampai lunas.
+          </p>
+          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="btn-empty-add-project">${getIcon('plus', '', 16)} Tambah Project Baru</button>
+            <button class="btn btn-secondary" id="btn-empty-load-demo">${getIcon('layers', '', 16)} Muat Data Contoh</button>
+          </div>
         </div>
       `;
       canvas.querySelector('#btn-empty-add-project').addEventListener('click', () => this.showNewProjectDrawer());
+      canvas.querySelector('#btn-empty-load-demo').addEventListener('click', () => {
+        this.store.addDemoProjectsNonDestructively();
+        this.onTriggerToast('Demo project berhasil dimuat.', 'text-success');
+        this.update();
+      });
       return;
     }
 
@@ -212,8 +365,28 @@ export class KanbanBoard {
       );
     });
 
+    const activeSortMode = localStorage.getItem('alurkarya_board_sort_mode') || 'default';
+
     columns.forEach(col => {
-      const colProjects = filteredProjects.filter(p => p.stage === col.id);
+      let colProjects = filteredProjects.filter(p => p.stage === col.id);
+
+      // Apply sorting based on activeSortMode
+      if (activeSortMode === 'dueDate') {
+        colProjects.sort((a, b) => {
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate) - new Date(b.dueDate);
+        });
+      } else if (activeSortMode === 'value') {
+        colProjects.sort((a, b) => b.budget - a.budget);
+      } else if (activeSortMode === 'submitDate') {
+        colProjects.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+          const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+          return dateB - dateA;
+        });
+      }
+
       const colBudget = colProjects.reduce((sum, p) => sum + p.budget, 0);
 
       const colEl = document.createElement('div');
@@ -264,6 +437,14 @@ export class KanbanBoard {
         if (cardId) {
           const oldProject = state.projects.find(x => x.id === cardId);
           if (oldProject && oldProject.stage !== col.id) {
+            if (col.id === 'invoice_sent' && oldProject.clientApprovalStatus !== 'Approved') {
+              this.onTriggerToast('Invoice sebaiknya dikirim setelah pekerjaan disetujui oleh client.', 'text-danger');
+              return;
+            }
+            if (col.id === 'completed' && oldProject.paymentStatus !== 'Fully Paid' && oldProject.paymentStatus !== 'Paid') {
+              this.onTriggerToast('Project hanya dapat dipindahkan ke Completed jika pembayaran sudah lunas (Fully Paid).', 'text-danger');
+              return;
+            }
             const updates = { stage: col.id };
             if (col.id === 'completed') {
               updates.paymentStatus = 'Paid';
@@ -289,13 +470,24 @@ export class KanbanBoard {
         }
       }
     }, 100);
+
+    // Render On Hold Projects
+    this.renderOnHoldSection();
   }
 
   createProjectCard(project) {
     const card = document.createElement('div');
-    card.className = 'project-card';
+    const isMinimized = this.minimizedCardIds.has(project.id);
+    card.className = `project-card${isMinimized ? ' minimized' : ''}`;
     card.setAttribute('draggable', 'true');
     card.dataset.projectId = project.id;
+
+    // Load active view mode (simple or detail)
+    const viewMode = localStorage.getItem('alurkarya_board_view_mode') || 'simple';
+
+    // Apply Project Health left border
+    const health = this.getProjectHealth(project);
+    card.style.borderLeft = `4px solid ${health.color}`;
 
     // Progress Bar percentage math
     const totalChecklist = project.checklist ? project.checklist.length : 0;
@@ -305,76 +497,193 @@ export class KanbanBoard {
       : 0;
 
     // Due Date alert logic
-    const dueDateMeta = getDueDateStatus(project.dueDate);
-    const dateWarningClass = dueDateMeta.isOverdue ? 'due-soon text-danger' : '';
-    const dateIconMarkup = getIcon('clock', dueDateMeta.isOverdue ? 'text-danger' : 'text-muted', 12);
+    const dueDateMeta = getLocalizedDueDateStatus(project.dueDate);
+    let dateWarningClass = '';
+    let dateIconColor = 'text-muted';
+    if (dueDateMeta.status === 'overdue' || dueDateMeta.status === 'today') {
+      dateWarningClass = 'due-soon text-danger';
+      dateIconColor = 'text-danger';
+    } else if (dueDateMeta.status === 'soon') {
+      dateWarningClass = 'due-soon text-warning';
+      dateIconColor = 'text-warning';
+    } else if (dueDateMeta.status === 'none') {
+      dateWarningClass = 'text-muted';
+      dateIconColor = 'text-muted';
+    }
+    const dateIconMarkup = getIcon('clock', dateIconColor, 12);
 
     // Dynamic Tag Coloring
-    const primaryTag = project.tags[0] || 'Design';
+    const primaryTag = project.tags && project.tags[0] ? project.tags[0] : 'Design';
     const tagClass = primaryTag.toLowerCase();
 
-    // Priority badges layout
-    let priorityMarkup = '';
-    if (project.priority === 'High') priorityMarkup = `<span class="priority-badge priority-high">High</span>`;
-    if (project.priority === 'Medium') priorityMarkup = `<span class="priority-badge priority-medium">Medium</span>`;
-    if (project.priority === 'Low') priorityMarkup = `<span class="priority-badge priority-low">Low</span>`;
+    // Priority badges layout & styling
+    const priorityVal = project.priority || 'TBD';
+    let priorityClass = 'priority-tbd';
+    if (priorityVal === 'Low') priorityClass = 'priority-low';
+    else if (priorityVal === 'Medium') priorityClass = 'priority-medium';
+    else if (priorityVal === 'High') priorityClass = 'priority-high';
+    else if (priorityVal === 'Urgent') priorityClass = 'priority-urgent';
 
     // Payment Status colors
     let paymentPillClass = 'status-completed';
-    if (project.paymentStatus === 'Paid') paymentPillClass = 'status-active text-success';
-    if (project.paymentStatus === 'DP paid') paymentPillClass = 'status-active text-success';
-    if (project.paymentStatus === 'Invoice overdue') paymentPillClass = 'status-lead text-danger';
-    if (project.paymentStatus === 'Waiting payment') paymentPillClass = 'status-active text-warning';
+    if (project.paymentStatus === 'Paid' || project.paymentStatus === 'Fully Paid') paymentPillClass = 'status-active text-success';
+    else if (project.paymentStatus === 'DP paid' || project.paymentStatus === 'DP Paid') paymentPillClass = 'status-active text-success';
+    else if (project.paymentStatus === 'Invoice overdue' || project.paymentStatus === 'Overdue') paymentPillClass = 'status-lead text-danger';
+    else if (project.paymentStatus === 'Waiting payment' || project.paymentStatus === 'Waiting Payment') paymentPillClass = 'status-active text-warning';
 
     let displayPaymentStatus = project.paymentStatus || 'Not invoiced yet';
     if (displayPaymentStatus === 'None') displayPaymentStatus = 'Not invoiced yet';
 
-    card.innerHTML = `
-      <div class="card-header-tags">
-        <span class="card-tag ${tagClass}">${primaryTag}</span>
-        ${priorityMarkup}
+    // Map stages to Indonesian/English clean label
+    const stageMap = {
+      'new_lead': 'New Lead',
+      'proposal_sent': 'Proposal Sent',
+      'in_progress': 'In Progress',
+      'client_review': 'Client Review',
+      'revision': 'Revision',
+      'invoice_sent': 'Invoice Sent',
+      'waiting_payment': 'Waiting Payment',
+      'completed': 'Completed'
+    };
+    const colName = stageMap[project.stage || project.status] || project.stage || project.status || 'Unknown';
+
+    // Client Name & Type Fallback
+    const hasClient = !!(project.clientName || project.customClientName);
+    const clientNameStr = project.clientName || project.customClientName || 'Belum pilih client';
+    const clientTypeStr = (hasClient && project.clientType) ? ` · ${project.clientType}` : '';
+    const fullClientIdentity = `${clientNameStr}${clientTypeStr}`;
+
+    const projectTitleStr = project.title || project.name || 'Untitled Project';
+
+    let cardBody = '';
+
+    // Header segment
+    if (viewMode === 'detail') {
+      cardBody += `
+        <div class="card-header-tags" style="display: flex; gap: 6px; margin-bottom: 8px; justify-content: space-between; align-items: center;">
+          <span class="card-tag ${tagClass}">${primaryTag}</span>
+          <div style="display: flex; gap: 4px; align-items: center;">
+            <span class="health-indicator-dot" style="width: 6px; height: 6px; border-radius: 50%; background-color: ${health.color};" title="Health: ${health.label}"></span>
+            <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">${health.label}</span>
+          </div>
+        </div>
+      `;
+    } else {
+      cardBody += `
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <div style="display: flex; gap: 4px; align-items: center;">
+            <span class="health-indicator-dot" style="width: 6px; height: 6px; border-radius: 50%; background-color: ${health.color};"></span>
+            <span style="font-size: 0.62rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">${health.label}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // Title & Client with Minimize Toggle
+    cardBody += `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+        <h4 class="card-title" style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; font-family: 'Plus Jakarta Sans', sans-serif; flex: 1; margin-top: 0; line-height: 1.2;">${projectTitleStr}</h4>
+        <button type="button" class="card-minimize-btn" style="background: none; border: none; padding: 2px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all var(--transition-fast);" title="Minimize / Expand">
+          ${getIcon(isMinimized ? 'chevronRight' : 'chevronDown', '', 14)}
+        </button>
       </div>
       
-      <h4 class="card-title">${project.title}</h4>
-      
-      <div style="display: flex; flex-direction: column; gap: 4px;">
-        <div class="card-client">
-          ${getIcon('user', '', 11)}
-          <span>${project.clientName}</span>
-        </div>
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <span class="card-budget">${formatCurrency(project.budget)}</span>
-          <span class="client-status-badge ${paymentPillClass}" style="font-size: 0.65rem; padding: 1px 6px;">${displayPaymentStatus}</span>
-        </div>
+      <div class="card-client" style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; margin-bottom: 6px;">
+        <span class="manual-label">CLIENT:</span>
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">${fullClientIdentity}</span>
       </div>
+    `;
 
-      <div class="card-progress-section">
-        <div class="progress-info">
-          <span>Tasks</span>
-          <span>${completedChecklist}/${totalChecklist} (${progressPercent}%)</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-bar" style="width: ${progressPercent}%"></div>
-        </div>
-      </div>
+    // Collapsible Details wrapper
+    cardBody += `<div class="card-collapsible-details">`;
 
-      ${project.nextAction ? `
-        <div class="card-next-action" title="Next Action: ${project.nextAction}">
-          <strong>Next:</strong> ${project.nextAction}
+    // Priority & Status Table block
+    cardBody += `
+      <div class="card-meta-row" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 0.72rem; border-top: 1px solid rgba(255,255,255,0.02); padding-top: 6px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="manual-label">PRIORITY:</span>
+          <span class="priority-badge ${priorityClass}">${priorityVal}</span>
         </div>
-      ` : ''}
-
-      <div class="card-footer">
-        <div class="card-footer-item ${dateWarningClass}">
-          ${dateIconMarkup}
-          <span style="font-size: 0.68rem;">${dueDateMeta.text}</span>
-        </div>
-        <div class="card-footer-item revisions">
-          ${getIcon('refresh', '', 12)}
-          <span style="font-size: 0.68rem;">Rev: ${project.revisionRound}/${project.maxRevisionRounds}</span>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="manual-label">STAGE:</span>
+          <span style="font-weight: 600; color: var(--text-secondary); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.02em;">${colName}</span>
         </div>
       </div>
     `;
+
+    // Next Action
+    const displayNextAction = project.nextAction || 'Belum ada next action';
+    const isNextActionPlaceholder = !project.nextAction;
+    cardBody += `
+      <div class="card-next-action" style="font-size: 0.7rem; background: ${isNextActionPlaceholder ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)'}; border: 1px ${isNextActionPlaceholder ? 'dashed' : 'solid'} rgba(255,255,255,0.04); border-radius: 6px; padding: 6px 8px; color: var(--text-secondary); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Next: ${displayNextAction}">
+        <span class="manual-label" style="color: ${isNextActionPlaceholder ? 'var(--text-muted)' : 'var(--color-secondary)'};">NEXT:</span> ${displayNextAction}
+      </div>
+    `;
+
+    // Extra details (for Detail view mode)
+    if (viewMode === 'detail') {
+      // Progress Bar
+      cardBody += `
+        <div class="card-progress-section" style="margin-bottom: 8px; background: rgba(255,255,255,0.01); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.02);">
+          <div class="progress-info" style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px;">
+            <span>Tasks</span>
+            <span>${completedChecklist}/${totalChecklist} (${progressPercent}%)</span>
+          </div>
+          <div class="progress-track" style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+            <div class="progress-bar" style="width: ${progressPercent}%; height: 100%; background: var(--color-primary); transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+      `;
+
+      // Revision counts, meeting indicators, invoice logs count
+      const hasFiles = project.briefLink || project.rawFileLink || project.draftFileLink || project.finalDeliveryLink;
+      const hasMeeting = project.meetingLink;
+      const hasInvoice = project.invoiceNumber || (project.invoices && project.invoices.length > 0);
+      
+      let indicatorIcons = '';
+      if (hasFiles) indicatorIcons += `<span title="Has file links" style="color: var(--color-secondary); margin-left: 4px;">${getIcon('folder', '', 12)}</span>`;
+      if (hasMeeting) indicatorIcons += `<span title="Has meeting link" style="color: var(--color-accent); margin-left: 4px;">${getIcon('clock', '', 12)}</span>`;
+      if (hasInvoice) indicatorIcons += `<span title="Has invoices" style="color: var(--color-success); margin-left: 4px;">${getIcon('fileText', '', 12)}</span>`;
+
+      cardBody += `
+        <div class="card-indicators-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.7rem; color: var(--text-muted); background: rgba(255,255,255,0.01); padding: 4px 6px; border-radius: 4px;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            ${getIcon('refresh', '', 11)}
+            <span>Revisi: ${project.revisionCount || 0}/${project.maxRevision || 'TBD'}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 2px;">
+            ${indicatorIcons}
+          </div>
+        </div>
+      `;
+    }
+
+    // Budget and footer
+    let paymentLabel = project.paymentStatus || 'None';
+    if (paymentLabel === 'None') paymentLabel = 'Belum ditagih';
+    else if (paymentLabel === 'DP paid' || paymentLabel === 'DP Paid') paymentLabel = 'DP dibayar';
+    else if (paymentLabel === 'Invoice overdue' || paymentLabel === 'Overdue') paymentLabel = 'Tagihan terlambat';
+    else if (paymentLabel === 'Waiting payment' || paymentLabel === 'Waiting Payment') paymentLabel = 'Menunggu pembayaran';
+    else if (paymentLabel === 'Paid' || paymentLabel === 'Fully Paid') paymentLabel = 'Lunas';
+
+    cardBody += `
+      <div class="card-footer" style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 8px; margin-top: 4px; font-size: 0.68rem;">
+        <div class="card-footer-item ${dateWarningClass}" style="display: flex; align-items: center; gap: 4px; cursor: help;" title="Due Date">
+          <span class="manual-label" style="margin-right: 2px;">DUE:</span>
+          <span style="font-size: 0.68rem; font-weight: 600;">${dueDateMeta.text}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-weight: 700; color: var(--text-primary); font-size: 0.72rem; font-family: 'Plus Jakarta Sans', sans-serif; margin-right: 2px;">${formatCurrency(project.budget)}</span>
+          <span class="client-status-badge ${paymentPillClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">
+            ${paymentLabel}
+          </span>
+        </div>
+      </div>
+    `;
+
+    cardBody += `</div>`; // end of card-collapsible-details
+
+    card.innerHTML = cardBody;
 
     // HTML5 Drag Listeners
     card.addEventListener('dragstart', (e) => {
@@ -393,6 +702,22 @@ export class KanbanBoard {
     card.addEventListener('click', () => {
       this.onCardClick(project.id);
     });
+
+    // Handle card minimize button toggle
+    const minimizeBtn = card.querySelector('.card-minimize-btn');
+    if (minimizeBtn) {
+      minimizeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent opening the project modal
+        card.classList.toggle('minimized');
+        const nowMinimized = card.classList.contains('minimized');
+        if (nowMinimized) {
+          this.minimizedCardIds.add(project.id);
+        } else {
+          this.minimizedCardIds.delete(project.id);
+        }
+        minimizeBtn.innerHTML = getIcon(nowMinimized ? 'chevronRight' : 'chevronDown', '', 14);
+      });
+    }
 
     return card;
   }
@@ -426,7 +751,7 @@ export class KanbanBoard {
             <div class="form-group">
               <label for="p-client-select">Select Client</label>
               <select id="p-client-select" class="form-control">
-                <option value="">-- Select Client Directory --</option>
+                <option value="">-- Belum pilih client --</option>
                 ${clientOptions}
                 <option value="NEW_CLIENT">+ Register New Client</option>
               </select>
@@ -435,6 +760,14 @@ export class KanbanBoard {
             <div class="form-group d-none" id="new-client-name-group">
               <label for="p-new-client-name">New Client Name</label>
               <input type="text" id="p-new-client-name" class="form-control" placeholder="e.g. Sarah Connor">
+            </div>
+
+            <div class="form-group d-none" id="new-client-type-group">
+              <label for="p-new-client-type">Client Type</label>
+              <select id="p-new-client-type" class="form-control">
+                <option value="General">General (Freelancer / Perorangan)</option>
+                <option value="Corporate">Corporate (Perusahaan / Group)</option>
+              </select>
             </div>
 
             <div class="form-group d-none" id="new-client-business-group">
@@ -452,8 +785,9 @@ export class KanbanBoard {
               <input type="number" id="p-budget" class="form-control" placeholder="e.g. 5000000" min="0" required>
             </div>
 
-            <div class="form-group">
+            <div class="form-group tooltip-trigger">
               <label for="p-due">Deadline Date</label>
+              <span class="tooltip-box">Deadline terdekat agar project tidak lewat waktu.</span>
               <input type="date" id="p-due" class="form-control" required>
             </div>
 
@@ -463,6 +797,8 @@ export class KanbanBoard {
                 <option value="Low">Low Priority</option>
                 <option value="Medium" selected>Medium Priority</option>
                 <option value="High">High Priority</option>
+                <option value="Urgent">Urgent Priority</option>
+                <option value="TBD">TBD</option>
               </select>
             </div>
 
@@ -471,10 +807,17 @@ export class KanbanBoard {
               <select id="p-category" class="form-control">
                 <option value="Design">Design</option>
                 <option value="Development">Development</option>
+                <option value="Production">Production</option>
                 <option value="Marketing">Marketing</option>
                 <option value="Consulting">Consulting</option>
                 <option value="Copywriting">Copywriting</option>
+                <option value="CUSTOM_CATEGORY">Tambah kategori sendiri...</option>
               </select>
+            </div>
+
+            <div class="form-group d-none" id="custom-category-group">
+              <label for="p-custom-category">Custom Category</label>
+              <input type="text" id="p-custom-category" class="form-control" placeholder="e.g. Video Editing">
             </div>
 
             <div class="form-group">
@@ -482,8 +825,9 @@ export class KanbanBoard {
               <input type="number" id="p-revs" class="form-control" value="3" min="1" max="10" required>
             </div>
 
-            <div class="form-group">
+            <div class="form-group tooltip-trigger">
               <label for="p-action">Next Action Tag</label>
+              <span class="tooltip-box">Langkah berikutnya yang perlu kamu lakukan.</span>
               <input type="text" id="p-action" class="form-control" value="Draft and email proposal" required>
             </div>
 
@@ -503,20 +847,35 @@ export class KanbanBoard {
 
     const select = drawerOverlay.querySelector('#p-client-select');
     const newClientGroup = drawerOverlay.querySelector('#new-client-name-group');
+    const newClientTypeGroup = drawerOverlay.querySelector('#new-client-type-group');
     const newClientBusinessGroup = drawerOverlay.querySelector('#new-client-business-group');
     const newClientEmailGroup = drawerOverlay.querySelector('#new-client-email-group');
     
     select.addEventListener('change', (e) => {
       if (e.target.value === 'NEW_CLIENT') {
         newClientGroup.classList.remove('d-none');
+        newClientTypeGroup.classList.remove('d-none');
         newClientBusinessGroup.classList.remove('d-none');
         newClientEmailGroup.classList.remove('d-none');
         drawerOverlay.querySelector('#p-new-client-name').setAttribute('required', 'true');
       } else {
         newClientGroup.classList.add('d-none');
+        newClientTypeGroup.classList.add('d-none');
         newClientBusinessGroup.classList.add('d-none');
         newClientEmailGroup.classList.add('d-none');
         drawerOverlay.querySelector('#p-new-client-name').removeAttribute('required');
+      }
+    });
+
+    const categorySelect = drawerOverlay.querySelector('#p-category');
+    const customCategoryGroup = drawerOverlay.querySelector('#custom-category-group');
+    categorySelect.addEventListener('change', (e) => {
+      if (e.target.value === 'CUSTOM_CATEGORY') {
+        customCategoryGroup.classList.remove('d-none');
+        drawerOverlay.querySelector('#p-custom-category').setAttribute('required', 'true');
+      } else {
+        customCategoryGroup.classList.add('d-none');
+        drawerOverlay.querySelector('#p-custom-category').removeAttribute('required');
       }
     });
 
@@ -538,41 +897,55 @@ export class KanbanBoard {
       const budget = Number(form.querySelector('#p-budget').value);
       const dueDate = form.querySelector('#p-due').value;
       const priority = form.querySelector('#p-priority').value;
-      const category = form.querySelector('#p-category').value;
       const maxRevisions = Number(form.querySelector('#p-revs').value);
       const nextAction = form.querySelector('#p-action').value;
       const description = form.querySelector('#p-desc').value;
 
       let clientId = select.value;
       let clientName = '';
+      let clientType = 'General';
 
       if (clientId === 'NEW_CLIENT') {
-        const newName = form.querySelector('#p-new-client-name').value;
-        const newBusiness = form.querySelector('#p-new-client-business').value;
-        const newEmail = form.querySelector('#p-new-client-email').value;
+        const newName = form.querySelector('#p-new-client-name').value.trim();
+        const newType = form.querySelector('#p-new-client-type').value;
+        const newBusiness = form.querySelector('#p-new-client-business').value.trim();
+        const newEmail = form.querySelector('#p-new-client-email').value.trim();
         
         const client = this.store.addClient({
           name: newName,
           businessName: newBusiness,
           email: newEmail,
-          status: 'Active'
+          status: 'Active',
+          notes: `Type: ${newType}`
         });
+        client.clientType = newType;
+        this.store.saveState();
+
         clientId = client.id;
         clientName = client.name + (client.businessName ? ` (${client.businessName})` : '');
-      } else {
+        clientType = newType;
+      } else if (clientId) {
         const selectedClient = clients.find(c => c.id === clientId);
         if (selectedClient) {
           clientName = selectedClient.name + (selectedClient.businessName ? ` (${selectedClient.businessName})` : '');
-        } else {
-          clientId = '';
-          clientName = 'Independent Account';
+          clientType = selectedClient.clientType || 'General';
         }
+      }
+
+      let category = form.querySelector('#p-category').value;
+      let customCategory = '';
+      if (category === 'CUSTOM_CATEGORY') {
+        customCategory = form.querySelector('#p-custom-category').value.trim();
+        category = customCategory || 'Custom';
       }
 
       this.store.addProject({
         title,
         clientId,
         clientName,
+        clientType,
+        customClientName: clientId === 'NEW_CLIENT' ? form.querySelector('#p-new-client-name').value.trim() : '',
+        customCategory,
         budget,
         stage: 'new_lead',
         dueDate,
@@ -587,5 +960,474 @@ export class KanbanBoard {
       closeActions();
       this.update();
     });
+  }
+
+  createCalendarSection() {
+    const calendarSection = document.createElement('div');
+    calendarSection.className = 'calendar-section';
+    calendarSection.style.cssText = 'background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--border-radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: var(--glass-backdrop); margin-bottom: 24px;';
+
+    const mode = localStorage.getItem('alurkarya_calendar_view_mode') || 'week';
+    const today = new Date();
+
+    // Init week
+    let selectedWeekStart = localStorage.getItem('alurkarya_selected_week');
+    if (!selectedWeekStart) {
+      const day = today.getDay();
+      const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+      const mon = new Date(today.setDate(diff));
+      mon.setHours(0,0,0,0);
+      selectedWeekStart = mon.toISOString().split('T')[0];
+      localStorage.setItem('alurkarya_selected_week', selectedWeekStart);
+    }
+
+    // Init month
+    let selectedMonth = localStorage.getItem('alurkarya_selected_month');
+    if (!selectedMonth) {
+      selectedMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+      localStorage.setItem('alurkarya_selected_month', selectedMonth);
+    }
+
+    calendarSection.innerHTML = `
+      <div class="calendar-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <h3 style="margin: 0; font-size: 0.92rem; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 8px;">
+            📅 Kalender Perencanaan
+          </h3>
+          <div class="calendar-switch" style="display: flex; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 2px;">
+            <button class="cal-switch-btn ${mode === 'week' ? 'active' : ''}" id="cal-switch-week" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'week' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'week' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Mingguan</button>
+            <button class="cal-switch-btn ${mode === 'month' ? 'active' : ''}" id="cal-switch-month" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'month' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'month' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Bulanan</button>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="btn btn-secondary" id="cal-prev-btn" style="padding: 4px 8px; font-size: 0.75rem; height: auto;">&lt;</button>
+          <span id="cal-range-display" style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); min-width: 140px; text-align: center;"></span>
+          <button class="btn btn-secondary" id="cal-next-btn" style="padding: 4px 8px; font-size: 0.75rem; height: auto;">&gt;</button>
+        </div>
+      </div>
+      <div id="calendar-grid-container" style="flex: 1; min-height: 120px;"></div>
+      <div id="no-deadline-container" style="border-top: 1px solid rgba(255,255,255,0.03); padding-top: 10px; display: flex; flex-direction: column; gap: 6px;"></div>
+    `;
+
+    const rangeDisplay = calendarSection.querySelector('#cal-range-display');
+    const gridContainer = calendarSection.querySelector('#calendar-grid-container');
+
+    const state = this.store.getState();
+    const projects = state.projects;
+
+    if (mode === 'week') {
+      const getFormattedRange = (monStr) => {
+        const mon = new Date(monStr);
+        const sun = new Date(mon);
+        sun.setDate(mon.getDate() + 6);
+        const format = (d) => {
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+          return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        };
+        return `${format(mon)} - ${format(sun)}`;
+      };
+
+      rangeDisplay.textContent = getFormattedRange(selectedWeekStart);
+      this.renderCalendarWeekGrid(gridContainer, selectedWeekStart, projects);
+    } else {
+      const [y, m] = selectedMonth.split('-').map(Number);
+      const monthNames = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ];
+      rangeDisplay.textContent = `${monthNames[m - 1]} ${y}`;
+      this.renderCalendarMonthGrid(gridContainer, selectedMonth, projects);
+    }
+
+    // Switch event listeners
+    calendarSection.querySelector('#cal-switch-week').addEventListener('click', (e) => {
+      e.stopPropagation();
+      localStorage.setItem('alurkarya_calendar_view_mode', 'week');
+      this.update();
+    });
+
+    calendarSection.querySelector('#cal-switch-month').addEventListener('click', (e) => {
+      e.stopPropagation();
+      localStorage.setItem('alurkarya_calendar_view_mode', 'month');
+      this.update();
+    });
+
+    // Navigation event listeners
+    calendarSection.querySelector('#cal-prev-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (mode === 'week') {
+        const date = new Date(selectedWeekStart);
+        date.setDate(date.getDate() - 7);
+        localStorage.setItem('alurkarya_selected_week', date.toISOString().split('T')[0]);
+      } else {
+        const [y, m] = selectedMonth.split('-').map(Number);
+        const prevDate = new Date(y, m - 2, 1);
+        const prevMonthStr = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
+        localStorage.setItem('alurkarya_selected_month', prevMonthStr);
+      }
+      this.update();
+    });
+
+    calendarSection.querySelector('#cal-next-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (mode === 'week') {
+        const date = new Date(selectedWeekStart);
+        date.setDate(date.getDate() + 7);
+        localStorage.setItem('alurkarya_selected_week', date.toISOString().split('T')[0]);
+      } else {
+        const [y, m] = selectedMonth.split('-').map(Number);
+        const nextDate = new Date(y, m, 1);
+        const nextMonthStr = nextDate.getFullYear() + '-' + String(nextDate.getMonth() + 1).padStart(2, '0');
+        localStorage.setItem('alurkarya_selected_month', nextMonthStr);
+      }
+      this.update();
+    });
+
+    // Render no deadline projects
+    const activeProjects = projects.filter(p => p.stage !== 'completed');
+    const noDeadlineProjects = activeProjects.filter(p => !p.dueDate && !p.deadline && p.stage !== 'on_hold');
+    const noDeadlineBox = calendarSection.querySelector('#no-deadline-container');
+    if (noDeadlineBox) {
+      noDeadlineBox.innerHTML = '';
+      if (noDeadlineProjects.length > 0) {
+        noDeadlineBox.innerHTML = `
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">⚠️ Belum ada deadline (${noDeadlineProjects.length})</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="no-deadline-list"></div>
+        `;
+        const list = noDeadlineBox.querySelector('#no-deadline-list');
+        noDeadlineProjects.forEach(p => {
+          const badge = document.createElement('span');
+          badge.className = 'priority-badge priority-tbd';
+          badge.style.cssText = 'font-size: 0.68rem; padding: 2px 8px; border-radius: 4px; cursor: pointer;';
+          badge.textContent = p.title || p.name || 'Untitled Project';
+          badge.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            this.onCardClick(p.id);
+          });
+          list.appendChild(badge);
+        });
+      }
+    }
+
+    return calendarSection;
+  }
+
+  renderCalendarWeekGrid(container, selectedWeekStart, projects) {
+    container.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'calendar-week-grid';
+    grid.style.cssText = 'display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;';
+
+    const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+    
+    // Get dates for Monday to Sunday
+    const start = new Date(selectedWeekStart);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const dayDate = new Date(start);
+      dayDate.setDate(start.getDate() + i);
+      days.push(dayDate);
+    }
+
+    days.forEach((day, index) => {
+      const dayStr = day.toISOString().split('T')[0];
+      const dayCol = document.createElement('div');
+      dayCol.className = 'calendar-day-col';
+      dayCol.style.cssText = 'background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 8px; min-height: 120px; display: flex; flex-direction: column; gap: 6px;';
+
+      const isToday = new Date().toISOString().split('T')[0] === dayStr;
+      
+      dayCol.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px; margin-bottom: 4px;">
+          <span style="font-size: 0.72rem; font-weight: 700; color: ${isToday ? 'var(--color-primary)' : 'var(--text-secondary)'};">${dayNames[index]}</span>
+          <span style="font-size: 0.72rem; font-weight: 700; background: ${isToday ? 'var(--color-primary-glow)' : 'none'}; color: ${isToday ? 'var(--text-primary)' : 'var(--text-muted)'}; padding: 1px 4px; border-radius: 4px;">${day.getDate()}</span>
+        </div>
+        <div class="calendar-day-projects" style="display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto;"></div>
+      `;
+
+      const projectsContainer = dayCol.querySelector('.calendar-day-projects');
+
+      const activeProjects = projects.filter(p => p.stage !== 'completed');
+      
+      const dueProjects = activeProjects.filter(p => {
+        if (p.stage === 'on_hold') return false;
+        const pDue = p.dueDate || p.deadline;
+        return pDue === dayStr;
+      });
+
+      const holdProjects = activeProjects.filter(p => {
+        return p.stage === 'on_hold' && p.holdFollowUpDate === dayStr;
+      });
+
+      dueProjects.forEach(p => {
+        const item = this.createCalendarItemMarkup(p, false);
+        projectsContainer.appendChild(item);
+      });
+
+      holdProjects.forEach(p => {
+        const item = this.createCalendarItemMarkup(p, true);
+        projectsContainer.appendChild(item);
+      });
+
+      grid.appendChild(dayCol);
+    });
+
+    container.appendChild(grid);
+  }
+
+  createCalendarItemMarkup(project, isOnHoldFollowUp) {
+    const item = document.createElement('div');
+    item.className = 'calendar-project-item';
+    item.style.cssText = 'padding: 6px; border-radius: 6px; font-size: 0.68rem; cursor: pointer; transition: all var(--transition-fast); display: flex; flex-direction: column; gap: 2px;';
+
+    const title = project.title || project.name || 'Untitled Project';
+    const priority = project.priority || 'TBD';
+    const stage = project.stage || project.status || 'No status';
+
+    if (isOnHoldFollowUp) {
+      item.style.background = 'rgba(100, 116, 139, 0.08)';
+      item.style.border = '1px solid rgba(100, 116, 139, 0.2)';
+      item.innerHTML = `
+        <span style="font-weight: 700; color: var(--text-secondary); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.2);" title="${title}">${title}</span>
+        <span style="font-size: 0.58rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">On Hold Follow Up</span>
+      `;
+    } else {
+      let priorityClass = 'priority-tbd';
+      if (priority === 'Low') priorityClass = 'priority-low';
+      else if (priority === 'Medium') priorityClass = 'priority-medium';
+      else if (priority === 'High') priorityClass = 'priority-high';
+      else if (priority === 'Urgent') priorityClass = 'priority-urgent';
+
+      item.style.background = 'var(--bg-surface)';
+      item.style.border = '1px solid var(--border-subtle)';
+      item.innerHTML = `
+        <span style="font-weight: 700; color: var(--text-primary); text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="${title}">${title}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+          <span style="font-size: 0.58rem; color: var(--text-muted); text-transform: capitalize;">${stage.replace('_', ' ')}</span>
+          <span class="priority-badge ${priorityClass}" style="font-size: 0.55rem; padding: 0px 4px; transform: scale(0.95); transform-origin: right;">${priority}</span>
+        </div>
+      `;
+    }
+
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.onCardClick(project.id);
+    });
+
+    return item;
+  }
+
+  renderCalendarMonthGrid(container, selectedMonth, projects) {
+    container.innerHTML = '';
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const firstDay = new Date(year, month - 1, 1);
+    
+    let startDayIndex = firstDay.getDay();
+    startDayIndex = (startDayIndex === 0) ? 6 : startDayIndex - 1;
+
+    const numDays = new Date(year, month, 0).getDate();
+
+    const grid = document.createElement('div');
+    grid.className = 'calendar-month-grid';
+    grid.style.cssText = 'display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;';
+
+    const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    dayNames.forEach(name => {
+      const header = document.createElement('div');
+      header.style.cssText = 'text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); padding-bottom: 4px;';
+      header.textContent = name;
+      grid.appendChild(header);
+    });
+
+    for (let i = 0; i < startDayIndex; i++) {
+      const cell = document.createElement('div');
+      cell.style.cssText = 'background: rgba(255,255,255,0.002); border: 1px solid transparent; min-height: 80px;';
+      grid.appendChild(cell);
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const activeProjects = projects.filter(p => p.stage !== 'completed');
+
+    for (let d = 1; d <= numDays; d++) {
+      const cellDateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isToday = todayStr === cellDateStr;
+
+      const cell = document.createElement('div');
+      cell.style.cssText = `background: rgba(255,255,255,0.01); border: 1px solid ${isToday ? 'var(--color-primary)' : 'var(--border-subtle)'}; border-radius: var(--border-radius-sm); padding: 4px; min-height: 80px; display: flex; flex-direction: column; gap: 4px;`;
+
+      cell.innerHTML = `
+        <div style="text-align: right; font-size: 0.68rem; font-weight: 700; color: ${isToday ? 'var(--color-primary)' : 'var(--text-muted)'};">${d}</div>
+        <div class="month-cell-projects" style="display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto;"></div>
+      `;
+
+      const projectsContainer = cell.querySelector('.month-cell-projects');
+
+      const dueProjects = activeProjects.filter(p => {
+        if (p.stage === 'on_hold') return false;
+        const pDue = p.dueDate || p.deadline;
+        return pDue === cellDateStr;
+      });
+
+      const holdProjects = activeProjects.filter(p => {
+        return p.stage === 'on_hold' && p.holdFollowUpDate === cellDateStr;
+      });
+
+      dueProjects.forEach(p => {
+        const item = this.createCalendarItemMarkup(p, false);
+        item.style.fontSize = '0.6rem';
+        item.style.padding = '3px';
+        projectsContainer.appendChild(item);
+      });
+
+      holdProjects.forEach(p => {
+        const item = this.createCalendarItemMarkup(p, true);
+        item.style.fontSize = '0.6rem';
+        item.style.padding = '3px';
+        projectsContainer.appendChild(item);
+      });
+
+      grid.appendChild(cell);
+    }
+
+    container.appendChild(grid);
+  }
+
+  renderOnHoldSection() {
+    const onHoldMount = document.getElementById('on-hold-projects-mount');
+    if (!onHoldMount) return;
+
+    onHoldMount.innerHTML = '';
+
+    const state = this.store.getState();
+    const onHoldProjects = state.projects.filter(p => p.stage === 'on_hold');
+
+    if (onHoldProjects.length === 0) {
+      onHoldMount.style.display = 'none';
+      return;
+    }
+
+    onHoldMount.style.display = 'block';
+    
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'margin-top: 24px; background: rgba(30, 41, 59, 0.15); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 12px;';
+
+    const isCollapsed = localStorage.getItem('alurkarya_onhold_collapsed') === 'true';
+
+    wrapper.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;" id="onhold-header-toggle">
+        <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+          ⏸️ On Hold Project <span class="column-badge" style="font-size: 0.65rem;">${onHoldProjects.length}</span>
+        </h3>
+        <span style="font-size: 0.72rem; color: var(--text-muted);" id="onhold-toggle-label">${isCollapsed ? 'Lihat Detail' : 'Sembunyikan Detail'}</span>
+      </div>
+      <div id="onhold-projects-list-container" style="display: ${isCollapsed ? 'none' : 'flex'}; flex-direction: column; gap: 10px;">
+        <span class="stat-subtext" style="display: block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px;">
+          Project ini sedang ditunda sementara. Tambahkan alasan hold agar project tidak hilang dari tracking. Set follow-up date untuk mengingatkan kapan project perlu dicek kembali.
+        </span>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px;" id="onhold-grid"></div>
+      </div>
+    `;
+
+    const toggle = wrapper.querySelector('#onhold-header-toggle');
+    toggle.addEventListener('click', () => {
+      const container = wrapper.querySelector('#onhold-projects-list-container');
+      const label = wrapper.querySelector('#onhold-toggle-label');
+      const collapsed = container.style.display === 'none';
+      container.style.display = collapsed ? 'flex' : 'none';
+      label.textContent = collapsed ? 'Sembunyikan Detail' : 'Lihat Detail';
+      localStorage.setItem('alurkarya_onhold_collapsed', String(!collapsed));
+    });
+
+    const grid = wrapper.querySelector('#onhold-grid');
+
+    onHoldProjects.forEach(p => {
+      const card = this.createOnHoldCard(p);
+      grid.appendChild(card);
+    });
+
+    onHoldMount.appendChild(wrapper);
+  }
+
+  createOnHoldCard(project) {
+    const card = document.createElement('div');
+    card.className = 'focus-item-row';
+    card.style.cssText = 'padding: 14px; border-radius: var(--border-radius-md); background: var(--bg-surface); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: all var(--transition-fast);';
+
+    card.addEventListener('click', () => this.onCardClick(project.id));
+
+    const title = project.title || project.name || 'Untitled Project';
+    const clientName = project.clientName || project.customClientName || 'Belum pilih client';
+    const holdReason = project.holdReason || 'Belum ada alasan hold';
+    const holdDate = project.holdDate ? formatDate(project.holdDate) : 'TBD';
+    const holdFollowUpDate = project.holdFollowUpDate ? formatDate(project.holdFollowUpDate) : 'TBD';
+    const deadline = project.dueDate ? formatDate(project.dueDate) : 'Belum ada deadline';
+    const priority = project.priority || 'TBD';
+    
+    let priorityClass = 'priority-tbd';
+    if (priority === 'Low') priorityClass = 'priority-low';
+    else if (priority === 'Medium') priorityClass = 'priority-medium';
+    else if (priority === 'High') priorityClass = 'priority-high';
+    else if (priority === 'Urgent') priorityClass = 'priority-urgent';
+
+    let paymentLabel = project.paymentStatus || 'Belum ditagih';
+    if (paymentLabel === 'None') paymentLabel = 'Belum ditagih';
+    else if (paymentLabel === 'Paid' || paymentLabel === 'Fully Paid') paymentLabel = 'Lunas';
+    else if (paymentLabel === 'DP paid' || paymentLabel === 'DP Paid') paymentLabel = 'DP dibayar';
+    else if (paymentLabel === 'Invoice overdue' || paymentLabel === 'Overdue') paymentLabel = 'Tagihan terlambat';
+    else if (paymentLabel === 'Waiting payment' || paymentLabel === 'Waiting Payment') paymentLabel = 'Menunggu pembayaran';
+
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+        <div>
+          <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">${title}</h4>
+          <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Klien: ${clientName}</span>
+        </div>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <span class="priority-badge ${priorityClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">${priority}</span>
+        </div>
+      </div>
+
+      <div style="font-size: 0.72rem; color: var(--text-secondary); background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 4px;">
+        <div>
+          <strong style="color: var(--color-primary);">Alasan Hold:</strong>
+          <span style="color: var(--text-secondary); font-weight: 500;">${holdReason}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.02); padding-top: 4px;">
+          <div><strong style="color: var(--text-muted);">Tanggal Hold:</strong> <span style="color: var(--text-secondary);">${holdDate}</span></div>
+          <div><strong style="color: var(--text-muted);">Follow Up:</strong> <span style="color: var(--text-secondary);">${holdFollowUpDate}</span></div>
+          <div><strong style="color: var(--text-muted);">Deadline:</strong> <span style="color: var(--text-secondary);">${deadline}</span></div>
+          <div><strong style="color: var(--text-muted);">Pembayaran:</strong> <span style="color: var(--text-secondary);">${paymentLabel}</span></div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px;" class="onhold-actions-wrapper">
+        <button type="button" class="btn btn-primary btn-sm" id="btn-resume-project-card" style="flex: 1; padding: 4px; font-size: 0.72rem; justify-content: center; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
+          Resume Project
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-wait-client-project-card" style="flex: 1; padding: 4px; font-size: 0.72rem; justify-content: center;">
+          Waiting Client
+        </button>
+      </div>
+    `;
+
+    // Add action buttons logic
+    const resumeBtn = card.querySelector('#btn-resume-project-card');
+    const moveBtn = card.querySelector('#btn-wait-client-project-card');
+
+    resumeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.store.updateProject(project.id, { stage: 'in_progress' });
+      this.onTriggerToast('Project dilanjutkan (In Progress).', 'text-success');
+      this.update();
+    });
+
+    moveBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.store.updateProject(project.id, { stage: 'client_review' });
+      this.onTriggerToast('Project dipindahkan ke Client Review.', 'text-success');
+      this.update();
+    });
+
+    return card;
   }
 }

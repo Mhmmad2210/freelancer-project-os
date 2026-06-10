@@ -82,8 +82,11 @@ class FreelancerApp {
         <button class="btn btn-secondary d-none" id="mobile-hamburger-btn" style="padding: 8px;">
           ${getIcon('menu', '', 16)}
         </button>
-        <div class="header-title-container">
+        <div class="header-title-container" style="display: flex; align-items: center; gap: 10px;">
           <h1 id="header-viewport-title" style="font-size: 1.25rem; font-family: 'Space Grotesk', sans-serif;">Workspace Board</h1>
+          <button class="btn btn-text" id="btn-reopen-onboarding" style="font-size: 0.75rem; color: var(--text-secondary); padding: 4px 8px; display: none; align-items: center; gap: 4px; border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); background: var(--bg-surface);" title="Buka Panduan Quick Start">
+            ${getIcon('help', '', 12)} Lihat Panduan
+          </button>
         </div>
       </div>
       <div class="header-actions">
@@ -155,6 +158,16 @@ class FreelancerApp {
 
     // Responsive Mobile sidebar toggle helpers
     this.closeMobileMenu();
+
+    // Control onboarding guide helper button visibility
+    const reopenBtn = document.getElementById('btn-reopen-onboarding');
+    if (reopenBtn) {
+      if (tabId === 'kanban') {
+        reopenBtn.style.display = 'inline-flex';
+      } else {
+        reopenBtn.style.display = 'none';
+      }
+    }
 
     // View switching router mapping
     switch (tabId) {
@@ -328,6 +341,18 @@ class FreelancerApp {
         this.closeMobileMenu();
       }
     });
+
+    // 4.7 Reopen Onboarding Guide listener
+    const reopenOnboardingBtn = document.getElementById('btn-reopen-onboarding');
+    if (reopenOnboardingBtn) {
+      reopenOnboardingBtn.addEventListener('click', () => {
+        localStorage.removeItem('alurkarya_onboarding_dismissed');
+        this.triggerToast('Panduan onboarding dibuka kembali.');
+        if (this.activeTab === 'kanban' && this.currentView) {
+          this.currentView.update();
+        }
+      });
+    }
   }
 
   /**
