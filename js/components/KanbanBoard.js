@@ -21,7 +21,7 @@ export class KanbanBoard {
     
     // Bind Drag & Drop contexts
     this.draggedCardId = null;
-    this.expandedCardIds = new Set(JSON.parse(localStorage.getItem('alurkarya_expanded_cards') || '[]'));
+    this.minimizedCardIds = new Set(JSON.parse(localStorage.getItem('alurkarya_minimized_cards') || '[]'));
     
     // Columns collapsed state (default all collapsed/peek mode on load)
     this.collapsedColumns = new Set(['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed']);
@@ -475,45 +475,9 @@ export class KanbanBoard {
         // Render preview project
         const previewProj = this.getPreviewProject(colProjects);
         if (previewProj) {
-          const previewEl = document.createElement('div');
-          previewEl.className = 'column-preview-item';
-          previewEl.style.cssText = 'background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(255,255,255,0.04); border-radius: var(--border-radius-md); padding: 10px; cursor: pointer; margin-top: 10px; display: flex; flex-direction: column; gap: 4px; transition: border-color var(--transition-fast);';
-          
-          const health = this.getProjectHealth(previewProj);
-          const priorityVal = previewProj.priority || 'TBD';
-          const clientNameStr = previewProj.clientName || previewProj.customClientName || 'Belum pilih client';
-
-          previewEl.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div style="display: flex; align-items: center; gap: 4px;">
-                <span class="health-indicator-dot" style="width: 5px; height: 5px; border-radius: 50%; background-color: ${health.color};"></span>
-                <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">${health.label}</span>
-              </div>
-              <span class="priority-badge" style="font-size: 0.58rem; padding: 1px 4px; border-radius: 3px; transform: scale(0.9); transform-origin: right center;">${priorityVal}</span>
-            </div>
-            <strong style="font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;" title="${previewProj.title}">${previewProj.title}</strong>
-            <div style="font-size: 0.68rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${clientNameStr}">${clientNameStr}</div>
-            ${previewProj.dueDate ? `
-              <div style="font-size: 0.62rem; color: ${health.label === 'Overdue' ? 'var(--color-danger)' : 'var(--color-warning)'}; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                ${getIcon('clock', health.label === 'Overdue' ? 'text-danger' : 'text-warning', 10)} Due: ${formatDate(previewProj.dueDate)}
-              </div>
-            ` : ''}
-          `;
-
-          previewEl.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.onCardClick(previewProj.id);
-          });
-
-          // subtle hover border effect
-          previewEl.addEventListener('mouseenter', () => {
-            previewEl.style.borderColor = 'rgba(139, 92, 246, 0.2)';
-          });
-          previewEl.addEventListener('mouseleave', () => {
-            previewEl.style.borderColor = 'rgba(255,255,255,0.04)';
-          });
-
-          colEl.appendChild(previewEl);
+          const previewCard = this.createProjectCard(previewProj, true);
+          previewCard.style.marginTop = '10px';
+          colEl.appendChild(previewCard);
         } else {
           const emptyPreviewEl = document.createElement('div');
           emptyPreviewEl.style.cssText = 'border: 1px dashed rgba(255,255,255,0.03); border-radius: var(--border-radius-sm); padding: 10px; text-align: center; margin-top: 10px; font-size: 0.68rem; color: var(--text-muted);';
@@ -606,15 +570,15 @@ export class KanbanBoard {
     this.renderOnHoldSection();
   }
 
-  createProjectCard(project) {
+  createProjectCard(project, isPreview = false) {
     const card = document.createElement('div');
-    const isMinimized = !this.expandedCardIds.has(project.id);
-    card.className = `project-card${isMinimized ? ' minimized' : ''}`;
-    card.setAttribute('draggable', 'true');
+    const isMinimized = !isPreview && this.minimizedCardIds.has(project.id);
+    card.className = `project-card${isMinimized ? ' minimized' : ''}${isPreview ? ' column-preview-card' : ''}`;
+    card.setAttribute('draggable', isPreview ? 'false' : 'true');
     card.dataset.projectId = project.id;
 
     // Load active view mode (simple or detail)
-    const viewMode = localStorage.getItem('alurkarya_board_view_mode') || 'simple';
+    const viewMode = isPreview ? 'simple' : (localStorage.getItem('alurkarya_board_view_mode') || 'simple');
 
     // Apply Project Health left border
     const health = this.getProjectHealth(project);
@@ -714,7 +678,7 @@ export class KanbanBoard {
     cardBody += `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
         <h4 class="card-title" style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; font-family: 'Plus Jakarta Sans', sans-serif; flex: 1; margin-top: 0; line-height: 1.2;">${projectTitleStr}</h4>
-        <button type="button" class="card-minimize-btn" style="background: none; border: none; padding: 2px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all var(--transition-fast);" title="Minimize / Expand">
+        <button type="button" class="card-minimize-btn" style="background: none; border: none; padding: 2px; color: var(--text-muted); cursor: pointer; display: ${isPreview ? 'none' : 'flex'}; align-items: center; justify-content: center; border-radius: 4px; transition: all var(--transition-fast);" title="Minimize / Expand">
           ${getIcon(isMinimized ? 'chevronRight' : 'chevronDown', '', 14)}
         </button>
       </div>
@@ -735,10 +699,12 @@ export class KanbanBoard {
           <span class="manual-label">PRIORITY:</span>
           <span class="priority-badge ${priorityClass}">${priorityVal}</span>
         </div>
+        ${isPreview ? '' : `
         <div style="display: flex; align-items: center; gap: 6px;">
           <span class="manual-label">STAGE:</span>
           <span style="font-weight: 600; color: var(--text-secondary); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.02em;">${colName}</span>
         </div>
+        `}
       </div>
     `;
 
@@ -776,14 +742,32 @@ export class KanbanBoard {
       if (hasMeeting) indicatorIcons += `<span title="Has meeting link" style="color: var(--color-accent); margin-left: 4px;">${getIcon('clock', '', 12)}</span>`;
       if (hasInvoice) indicatorIcons += `<span title="Has invoices" style="color: var(--color-success); margin-left: 4px;">${getIcon('fileText', '', 12)}</span>`;
 
+      // Client Approval Status Badge
+      const approvalVal = project.clientApprovalStatus || 'Pending Review';
+      let approvalDotColor = 'var(--color-warning)';
+      let approvalTextColor = 'var(--text-secondary)';
+      if (approvalVal === 'Approved') {
+        approvalDotColor = 'var(--color-success)';
+        approvalTextColor = 'var(--text-success)';
+      } else if (approvalVal === 'Needs Revision') {
+        approvalDotColor = 'var(--color-danger)';
+        approvalTextColor = 'var(--color-danger)';
+      }
+
       cardBody += `
         <div class="card-indicators-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.7rem; color: var(--text-muted); background: rgba(255,255,255,0.01); padding: 4px 6px; border-radius: 4px;">
           <div style="display: flex; align-items: center; gap: 4px;">
             ${getIcon('refresh', '', 11)}
             <span>Revisi: ${project.revisionCount || 0}/${project.maxRevision || 'TBD'}</span>
           </div>
-          <div style="display: flex; align-items: center; gap: 2px;">
-            ${indicatorIcons}
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span class="client-status-badge" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px; color: ${approvalTextColor}; display: inline-flex; align-items: center;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background-color: ${approvalDotColor}; display: inline-block; margin-right: 4px; flex-shrink: 0;"></span>
+              ${approvalVal}
+            </span>
+            <div style="display: flex; align-items: center; gap: 2px; margin-left: 2px;">
+              ${indicatorIcons}
+            </div>
           </div>
         </div>
       `;
@@ -836,17 +820,17 @@ export class KanbanBoard {
 
     // Handle card minimize button toggle
     const minimizeBtn = card.querySelector('.card-minimize-btn');
-    if (minimizeBtn) {
+    if (minimizeBtn && !isPreview) {
       minimizeBtn.addEventListener('click', (e) => {
         e.stopPropagation(); // Prevent opening the project modal
         card.classList.toggle('minimized');
         const nowMinimized = card.classList.contains('minimized');
         if (nowMinimized) {
-          this.expandedCardIds.delete(project.id);
+          this.minimizedCardIds.add(project.id);
         } else {
-          this.expandedCardIds.add(project.id);
+          this.minimizedCardIds.delete(project.id);
         }
-        localStorage.setItem('alurkarya_expanded_cards', JSON.stringify(Array.from(this.expandedCardIds)));
+        localStorage.setItem('alurkarya_minimized_cards', JSON.stringify(Array.from(this.minimizedCardIds)));
         minimizeBtn.innerHTML = getIcon(nowMinimized ? 'chevronRight' : 'chevronDown', '', 14);
       });
     }

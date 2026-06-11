@@ -538,6 +538,25 @@ button {
   margin-bottom: 0px !important;
 }
 
+/* Column preview card adjustments to fit beautifully inside narrow collapsed columns */
+.project-card.column-preview-card {
+  padding: 10px !important;
+  gap: 6px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+
+.project-card.column-preview-card .card-footer {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+}
+
+.project-card.column-preview-card .card-footer > div {
+  width: 100% !important;
+  justify-content: space-between !important;
+  display: flex !important;
+}
+
 .card-minimize-btn:hover {
   background: rgba(255, 255, 255, 0.08) !important;
   color: var(--text-primary) !important;
