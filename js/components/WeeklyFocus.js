@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatDate, getDueDateStatus, getLocalizedDueDateStatus } from '../utils.js';
+import { formatCurrency, formatDate, getDueDateStatus, getLocalizedDueDateStatus, isOutsideWorkingHours } from '../utils.js';
 
 export class WeeklyFocusView {
   /**
@@ -73,28 +73,35 @@ export class WeeklyFocusView {
     const getPriorityScore = (p) => {
       const isOverdue = p.dueDate && p.dueDate < todayStr;
       const isDueThisWeek = p.dueDate && p.dueDate >= selectedWeekStart && p.dueDate <= weekEndStr;
+      const hasMeetingThisWeek = p.meetingDate && p.meetingDate >= selectedWeekStart && p.meetingDate <= weekEndStr;
+      const hasInvoiceFollowUpThisWeek = p.invoiceDueDate && p.invoiceDueDate >= selectedWeekStart && p.invoiceDueDate <= weekEndStr;
+      const isOnHoldFollowUpThisWeek = p.stage === 'on_hold' && p.holdFollowUpDate && p.holdFollowUpDate >= selectedWeekStart && p.holdFollowUpDate <= weekEndStr;
       const isHighUrgent = p.priority === 'High' || p.priority === 'Urgent';
       const hasNextAction = !!p.nextAction;
 
       if (isOverdue) return 100;
-      if (p.stage === 'on_hold') return 50; // On Hold follow up this week
-      if (isDueThisWeek) return 80;
-      if (isHighUrgent) return 60;
+      if (isDueThisWeek) return 90;
+      if (hasMeetingThisWeek) return 80;
+      if (hasInvoiceFollowUpThisWeek) return 70;
+      if (isOnHoldFollowUpThisWeek) return 60;
+      if (isHighUrgent) return 50;
       if (hasNextAction) return 40;
-      return 20;
+      return 10;
     };
 
     // Filter projects for weekly focus main checklist
     const focusProjects = projects.filter(p => {
       if (p.stage === 'completed') return false;
 
-      if (p.stage === 'on_hold') {
-        const isFollowUpThisWeek = p.holdFollowUpDate && p.holdFollowUpDate >= selectedWeekStart && p.holdFollowUpDate <= weekEndStr;
-        const isOverdue = p.dueDate && p.dueDate < todayStr;
-        return isFollowUpThisWeek || isOverdue;
-      }
+      const isOverdue = p.dueDate && p.dueDate < todayStr;
+      const isDueThisWeek = p.dueDate && p.dueDate >= selectedWeekStart && p.dueDate <= weekEndStr;
+      const hasMeetingThisWeek = p.meetingDate && p.meetingDate >= selectedWeekStart && p.meetingDate <= weekEndStr;
+      const hasInvoiceFollowUpThisWeek = p.invoiceDueDate && p.invoiceDueDate >= selectedWeekStart && p.invoiceDueDate <= weekEndStr;
+      const isOnHoldFollowUpThisWeek = p.stage === 'on_hold' && p.holdFollowUpDate && p.holdFollowUpDate >= selectedWeekStart && p.holdFollowUpDate <= weekEndStr;
+      const isHighUrgent = p.priority === 'High' || p.priority === 'Urgent';
+      const hasNextAction = !!p.nextAction;
 
-      return true;
+      return isOverdue || isDueThisWeek || hasMeetingThisWeek || hasInvoiceFollowUpThisWeek || isOnHoldFollowUpThisWeek || isHighUrgent || hasNextAction;
     });
 
     focusProjects.sort((a, b) => getPriorityScore(b) - getPriorityScore(a));
@@ -202,6 +209,35 @@ export class WeeklyFocusView {
         };
         const stageLabel = stageMap[p.stage] || p.stage;
 
+        let focusDetailsMarkup = '';
+        const availability = this.store.getState().availability;
+        if (p.meetingDate && p.meetingDate >= selectedWeekStart && p.meetingDate <= weekEndStr) {
+          const isOutside = isOutsideWorkingHours(p.meetingDate, p.meetingTime, availability);
+          const outsideWarning = isOutside ? ' <span style="color: var(--color-danger); font-size: 0.6rem; font-weight: 700; border: 1px solid var(--color-danger); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">Di luar jam kerja</span>' : '';
+          focusDetailsMarkup += `
+            <div style="margin-top: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; color: var(--color-secondary);">
+              <span class="manual-label" style="color: var(--color-secondary);">MEETING:</span>
+              <span style="font-weight: 600;">${formatDate(p.meetingDate)} at ${p.meetingTime || 'TBD'} (${p.meetingType || 'Meet'})${outsideWarning}</span>
+            </div>
+          `;
+        }
+        if (p.invoiceDueDate && p.invoiceDueDate >= selectedWeekStart && p.invoiceDueDate <= weekEndStr) {
+          focusDetailsMarkup += `
+            <div style="margin-top: 2px; display: flex; align-items: center; gap: 4px; color: var(--color-success);">
+              <span class="manual-label" style="color: var(--color-success);">INVOICE DUE:</span>
+              <span style="font-weight: 600;">${formatDate(p.invoiceDueDate)}</span>
+            </div>
+          `;
+        }
+        if (p.stage === 'on_hold' && p.holdFollowUpDate && p.holdFollowUpDate >= selectedWeekStart && p.holdFollowUpDate <= weekEndStr) {
+          focusDetailsMarkup += `
+            <div style="margin-top: 2px; display: flex; align-items: center; gap: 4px; color: var(--text-muted);">
+              <span class="manual-label" style="color: var(--text-muted);">ON HOLD FOLLOW UP:</span>
+              <span style="font-weight: 600;">${formatDate(p.holdFollowUpDate)}</span>
+            </div>
+          `;
+        }
+
         item.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
             <div>
@@ -220,6 +256,7 @@ export class WeeklyFocusView {
               <span class="manual-label ${dateWarningClass}">DUE:</span>
               <span class="${dateWarningClass}" style="font-weight: 600;">${dueStatus.text}</span>
             </div>
+            ${focusDetailsMarkup}
           </div>
         `;
         prioritiesList.appendChild(item);

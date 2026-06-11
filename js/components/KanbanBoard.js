@@ -126,9 +126,9 @@ export class KanbanBoard {
     const statsEl = this.createStatsSection();
     dashboardEl.appendChild(statsEl);
 
-    // Renders Calendar Section
-    const calendarEl = this.createCalendarSection();
-    dashboardEl.appendChild(calendarEl);
+    // Renders Dashboard Summary (Today, This Week, Upcoming Meeting, Due Soon, Follow-up Needed)
+    const summaryEl = this.createDashboardSummary();
+    dashboardEl.appendChild(summaryEl);
 
     // Renders Action Control Ribbon (Search + Add + View Mode Switcher)
     const controlRibbon = document.createElement('div');
@@ -962,334 +962,204 @@ export class KanbanBoard {
     });
   }
 
-  createCalendarSection() {
-    const calendarSection = document.createElement('div');
-    calendarSection.className = 'calendar-section';
-    calendarSection.style.cssText = 'background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--border-radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: var(--glass-backdrop); margin-bottom: 24px;';
+  createDashboardSummary() {
+    const summarySection = document.createElement('div');
+    summarySection.className = 'dashboard-summary-section';
+    summarySection.style.cssText = 'background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--border-radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: var(--glass-backdrop); margin-bottom: 24px;';
 
-    const mode = localStorage.getItem('alurkarya_calendar_view_mode') || 'week';
     const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
 
-    // Init week
-    let selectedWeekStart = localStorage.getItem('alurkarya_selected_week');
-    if (!selectedWeekStart) {
-      const day = today.getDay();
-      const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-      const mon = new Date(today.setDate(diff));
-      mon.setHours(0,0,0,0);
-      selectedWeekStart = mon.toISOString().split('T')[0];
-      localStorage.setItem('alurkarya_selected_week', selectedWeekStart);
-    }
+    // Calculate start/end of current week
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(today.setDate(diff));
+    startOfWeek.setHours(0,0,0,0);
+    const startOfWeekStr = startOfWeek.toISOString().split('T')[0];
 
-    // Init month
-    let selectedMonth = localStorage.getItem('alurkarya_selected_month');
-    if (!selectedMonth) {
-      selectedMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
-      localStorage.setItem('alurkarya_selected_month', selectedMonth);
-    }
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23,59,59,999);
+    const endOfWeekStr = endOfWeek.toISOString().split('T')[0];
 
-    calendarSection.innerHTML = `
-      <div class="calendar-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <h3 style="margin: 0; font-size: 0.92rem; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 8px;">
-            📅 Kalender Perencanaan
-          </h3>
-          <div class="calendar-switch" style="display: flex; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 2px;">
-            <button class="cal-switch-btn ${mode === 'week' ? 'active' : ''}" id="cal-switch-week" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'week' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'week' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Mingguan</button>
-            <button class="cal-switch-btn ${mode === 'month' ? 'active' : ''}" id="cal-switch-month" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'month' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'month' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Bulanan</button>
-          </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <button class="btn btn-secondary" id="cal-prev-btn" style="padding: 4px 8px; font-size: 0.75rem; height: auto;">&lt;</button>
-          <span id="cal-range-display" style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); min-width: 140px; text-align: center;"></span>
-          <button class="btn btn-secondary" id="cal-next-btn" style="padding: 4px 8px; font-size: 0.75rem; height: auto;">&gt;</button>
-        </div>
-      </div>
-      <div id="calendar-grid-container" style="flex: 1; min-height: 120px;"></div>
-      <div id="no-deadline-container" style="border-top: 1px solid rgba(255,255,255,0.03); padding-top: 10px; display: flex; flex-direction: column; gap: 6px;"></div>
-    `;
-
-    const rangeDisplay = calendarSection.querySelector('#cal-range-display');
-    const gridContainer = calendarSection.querySelector('#calendar-grid-container');
+    // Restore today date object
+    const currentToday = new Date();
 
     const state = this.store.getState();
-    const projects = state.projects;
+    const { projects = [], invoices = [] } = state;
 
-    if (mode === 'week') {
-      const getFormattedRange = (monStr) => {
-        const mon = new Date(monStr);
-        const sun = new Date(mon);
-        sun.setDate(mon.getDate() + 6);
-        const format = (d) => {
-          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-          return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-        };
-        return `${format(mon)} - ${format(sun)}`;
-      };
-
-      rangeDisplay.textContent = getFormattedRange(selectedWeekStart);
-      this.renderCalendarWeekGrid(gridContainer, selectedWeekStart, projects);
-    } else {
-      const [y, m] = selectedMonth.split('-').map(Number);
-      const monthNames = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-      ];
-      rangeDisplay.textContent = `${monthNames[m - 1]} ${y}`;
-      this.renderCalendarMonthGrid(gridContainer, selectedMonth, projects);
-    }
-
-    // Switch event listeners
-    calendarSection.querySelector('#cal-switch-week').addEventListener('click', (e) => {
-      e.stopPropagation();
-      localStorage.setItem('alurkarya_calendar_view_mode', 'week');
-      this.update();
-    });
-
-    calendarSection.querySelector('#cal-switch-month').addEventListener('click', (e) => {
-      e.stopPropagation();
-      localStorage.setItem('alurkarya_calendar_view_mode', 'month');
-      this.update();
-    });
-
-    // Navigation event listeners
-    calendarSection.querySelector('#cal-prev-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (mode === 'week') {
-        const date = new Date(selectedWeekStart);
-        date.setDate(date.getDate() - 7);
-        localStorage.setItem('alurkarya_selected_week', date.toISOString().split('T')[0]);
-      } else {
-        const [y, m] = selectedMonth.split('-').map(Number);
-        const prevDate = new Date(y, m - 2, 1);
-        const prevMonthStr = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
-        localStorage.setItem('alurkarya_selected_month', prevMonthStr);
-      }
-      this.update();
-    });
-
-    calendarSection.querySelector('#cal-next-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (mode === 'week') {
-        const date = new Date(selectedWeekStart);
-        date.setDate(date.getDate() + 7);
-        localStorage.setItem('alurkarya_selected_week', date.toISOString().split('T')[0]);
-      } else {
-        const [y, m] = selectedMonth.split('-').map(Number);
-        const nextDate = new Date(y, m, 1);
-        const nextMonthStr = nextDate.getFullYear() + '-' + String(nextDate.getMonth() + 1).padStart(2, '0');
-        localStorage.setItem('alurkarya_selected_month', nextMonthStr);
-      }
-      this.update();
-    });
-
-    // Render no deadline projects
+    // Filter projects & meetings & invoices
     const activeProjects = projects.filter(p => p.stage !== 'completed');
-    const noDeadlineProjects = activeProjects.filter(p => !p.dueDate && !p.deadline && p.stage !== 'on_hold');
-    const noDeadlineBox = calendarSection.querySelector('#no-deadline-container');
-    if (noDeadlineBox) {
-      noDeadlineBox.innerHTML = '';
-      if (noDeadlineProjects.length > 0) {
-        noDeadlineBox.innerHTML = `
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">⚠️ Belum ada deadline (${noDeadlineProjects.length})</span>
-          <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="no-deadline-list"></div>
-        `;
-        const list = noDeadlineBox.querySelector('#no-deadline-list');
-        noDeadlineProjects.forEach(p => {
-          const badge = document.createElement('span');
-          badge.className = 'priority-badge priority-tbd';
-          badge.style.cssText = 'font-size: 0.68rem; padding: 2px 8px; border-radius: 4px; cursor: pointer;';
-          badge.textContent = p.title || p.name || 'Untitled Project';
-          badge.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            this.onCardClick(p.id);
-          });
-          list.appendChild(badge);
+
+    // 1. Today
+    const todayItems = [];
+    activeProjects.forEach(p => {
+      if (p.dueDate === todayStr && p.stage !== 'on_hold') {
+        todayItems.push({ type: 'deadline', label: 'Deadline', title: p.title, projId: p.id });
+      }
+      if (p.meetingDate === todayStr) {
+        todayItems.push({ type: 'meeting', label: 'Meeting', title: `${p.title} (${p.meetingTime || 'TBD'})`, projId: p.id });
+      }
+    });
+    invoices.forEach(inv => {
+      if (inv.dueDate === todayStr && inv.status !== 'Paid') {
+        todayItems.push({ type: 'invoice', label: 'Invoice due', title: `${inv.invoiceNumber} (${inv.projectName})` });
+      }
+    });
+
+    // 2. This Week
+    const thisWeekItems = [];
+    activeProjects.forEach(p => {
+      if (p.dueDate && p.dueDate >= startOfWeekStr && p.dueDate <= endOfWeekStr && p.stage !== 'on_hold') {
+        thisWeekItems.push({ type: 'deadline', label: 'Deadline', title: p.title, projId: p.id });
+      }
+      if (p.meetingDate && p.meetingDate >= startOfWeekStr && p.meetingDate <= endOfWeekStr) {
+        thisWeekItems.push({ type: 'meeting', label: 'Meeting', title: `${p.title} (${p.meetingDate.split('-')[2]}/${p.meetingDate.split('-')[1]})`, projId: p.id });
+      }
+    });
+    invoices.forEach(inv => {
+      if (inv.dueDate && inv.dueDate >= startOfWeekStr && inv.dueDate <= endOfWeekStr && inv.status !== 'Paid') {
+        thisWeekItems.push({ type: 'invoice', label: 'Invoice due', title: `${inv.invoiceNumber}` });
+      }
+    });
+
+    // 3. Upcoming Meeting
+    const upcomingMeetings = [];
+    activeProjects.forEach(p => {
+      if (p.meetingDate && p.meetingDate >= todayStr) {
+        upcomingMeetings.push({
+          date: p.meetingDate,
+          time: p.meetingTime,
+          title: p.title,
+          projId: p.id,
+          desc: `${p.meetingDate.split('-')[2]}/${p.meetingDate.split('-')[1]} @ ${p.meetingTime || 'TBD'}`
         });
       }
-    }
+    });
+    upcomingMeetings.sort((a, b) => (a.date + 'T' + (a.time || '00:00')).localeCompare(b.date + 'T' + (b.time || '00:00')));
 
-    return calendarSection;
-  }
+    // 4. Due Soon
+    const dueSoonItems = [];
+    const sevenDaysLater = new Date(currentToday);
+    sevenDaysLater.setDate(currentToday.getDate() + 7);
+    const sevenDaysLaterStr = sevenDaysLater.toISOString().split('T')[0];
+    activeProjects.forEach(p => {
+      if (p.dueDate && p.dueDate >= todayStr && p.dueDate <= sevenDaysLaterStr && p.stage !== 'on_hold') {
+        dueSoonItems.push({
+          title: p.title,
+          projId: p.id,
+          desc: `Due ${p.dueDate.split('-')[2]}/${p.dueDate.split('-')[1]}`
+        });
+      }
+    });
 
-  renderCalendarWeekGrid(container, selectedWeekStart, projects) {
-    container.innerHTML = '';
-    const grid = document.createElement('div');
-    grid.className = 'calendar-week-grid';
-    grid.style.cssText = 'display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;';
+    // 5. Follow-up Needed
+    const followUpNeededItems = [];
+    // Overdue invoices
+    invoices.forEach(inv => {
+      if (inv.status === 'Overdue' || (inv.dueDate < todayStr && inv.status !== 'Paid')) {
+        followUpNeededItems.push({
+          type: 'invoice',
+          title: `Overdue: ${inv.invoiceNumber}`,
+          desc: `${inv.projectName}`
+        });
+      }
+    });
+    // On hold or projects with next follow up date overdue
+    activeProjects.forEach(p => {
+      if (p.stage === 'on_hold' && p.holdFollowUpDate && p.holdFollowUpDate <= todayStr) {
+        followUpNeededItems.push({
+          type: 'on_hold',
+          title: `Hold: ${p.title}`,
+          projId: p.id,
+          desc: `Follow-up was ${p.holdFollowUpDate.split('-')[2]}/${p.holdFollowUpDate.split('-')[1]}`
+        });
+      } else if (p.nextFollowUpDate && p.nextFollowUpDate <= todayStr) {
+        followUpNeededItems.push({
+          type: 'general',
+          title: `Follow-up: ${p.title}`,
+          projId: p.id,
+          desc: `Scheduled ${p.nextFollowUpDate.split('-')[2]}/${p.nextFollowUpDate.split('-')[1]}`
+        });
+      }
+    });
 
-    const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-    
-    // Get dates for Monday to Sunday
-    const start = new Date(selectedWeekStart);
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const dayDate = new Date(start);
-      dayDate.setDate(start.getDate() + i);
-      days.push(dayDate);
-    }
-
-    days.forEach((day, index) => {
-      const dayStr = day.toISOString().split('T')[0];
-      const dayCol = document.createElement('div');
-      dayCol.className = 'calendar-day-col';
-      dayCol.style.cssText = 'background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 8px; min-height: 120px; display: flex; flex-direction: column; gap: 6px;';
-
-      const isToday = new Date().toISOString().split('T')[0] === dayStr;
-      
-      dayCol.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px; margin-bottom: 4px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: ${isToday ? 'var(--color-primary)' : 'var(--text-secondary)'};">${dayNames[index]}</span>
-          <span style="font-size: 0.72rem; font-weight: 700; background: ${isToday ? 'var(--color-primary-glow)' : 'none'}; color: ${isToday ? 'var(--text-primary)' : 'var(--text-muted)'}; padding: 1px 4px; border-radius: 4px;">${day.getDate()}</span>
+    summarySection.innerHTML = `
+      <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 0.9rem; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 8px;">
+          📊 Ringkasan Agenda & Rencana Kerja
+        </h3>
+        <span style="font-size: 0.7rem; color: var(--text-muted);">Tips: Detail selengkapnya dapat diakses di tab Planner Hub.</span>
+      </div>
+      <div class="dashboard-summary-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 4px;">
+        <!-- Column 1: Today -->
+        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Hari Ini (${todayItems.length})</span>
+          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
+            ${todayItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Bebas agenda</span>' : todayItems.map(item => `
+              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: ${item.projId ? 'pointer' : 'default'};" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')"` : ''}>
+                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
+                <span style="font-size: 0.58rem; color: var(--text-muted); text-transform: uppercase;">${item.label}</span>
+              </div>
+            `).join('')}
+          </div>
         </div>
-        <div class="calendar-day-projects" style="display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto;"></div>
-      `;
 
-      const projectsContainer = dayCol.querySelector('.calendar-day-projects');
-
-      const activeProjects = projects.filter(p => p.stage !== 'completed');
-      
-      const dueProjects = activeProjects.filter(p => {
-        if (p.stage === 'on_hold') return false;
-        const pDue = p.dueDate || p.deadline;
-        return pDue === dayStr;
-      });
-
-      const holdProjects = activeProjects.filter(p => {
-        return p.stage === 'on_hold' && p.holdFollowUpDate === dayStr;
-      });
-
-      dueProjects.forEach(p => {
-        const item = this.createCalendarItemMarkup(p, false);
-        projectsContainer.appendChild(item);
-      });
-
-      holdProjects.forEach(p => {
-        const item = this.createCalendarItemMarkup(p, true);
-        projectsContainer.appendChild(item);
-      });
-
-      grid.appendChild(dayCol);
-    });
-
-    container.appendChild(grid);
-  }
-
-  createCalendarItemMarkup(project, isOnHoldFollowUp) {
-    const item = document.createElement('div');
-    item.className = 'calendar-project-item';
-    item.style.cssText = 'padding: 6px; border-radius: 6px; font-size: 0.68rem; cursor: pointer; transition: all var(--transition-fast); display: flex; flex-direction: column; gap: 2px;';
-
-    const title = project.title || project.name || 'Untitled Project';
-    const priority = project.priority || 'TBD';
-    const stage = project.stage || project.status || 'No status';
-
-    if (isOnHoldFollowUp) {
-      item.style.background = 'rgba(100, 116, 139, 0.08)';
-      item.style.border = '1px solid rgba(100, 116, 139, 0.2)';
-      item.innerHTML = `
-        <span style="font-weight: 700; color: var(--text-secondary); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.2);" title="${title}">${title}</span>
-        <span style="font-size: 0.58rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">On Hold Follow Up</span>
-      `;
-    } else {
-      let priorityClass = 'priority-tbd';
-      if (priority === 'Low') priorityClass = 'priority-low';
-      else if (priority === 'Medium') priorityClass = 'priority-medium';
-      else if (priority === 'High') priorityClass = 'priority-high';
-      else if (priority === 'Urgent') priorityClass = 'priority-urgent';
-
-      item.style.background = 'var(--bg-surface)';
-      item.style.border = '1px solid var(--border-subtle)';
-      item.innerHTML = `
-        <span style="font-weight: 700; color: var(--text-primary); text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="${title}">${title}</span>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
-          <span style="font-size: 0.58rem; color: var(--text-muted); text-transform: capitalize;">${stage.replace('_', ' ')}</span>
-          <span class="priority-badge ${priorityClass}" style="font-size: 0.55rem; padding: 0px 4px; transform: scale(0.95); transform-origin: right;">${priority}</span>
+        <!-- Column 2: This Week -->
+        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Minggu Ini (${thisWeekItems.length})</span>
+          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
+            ${thisWeekItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Tidak ada deadline</span>' : thisWeekItems.map(item => `
+              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: ${item.projId ? 'pointer' : 'default'};" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')"` : ''}>
+                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
+                <span style="font-size: 0.58rem; color: var(--text-muted); text-transform: uppercase;">${item.label}</span>
+              </div>
+            `).join('')}
+          </div>
         </div>
-      `;
-    }
 
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.onCardClick(project.id);
-    });
+        <!-- Column 3: Upcoming Meeting -->
+        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Meeting (${upcomingMeetings.length})</span>
+          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
+            ${upcomingMeetings.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Tidak ada meeting</span>' : upcomingMeetings.map(item => `
+              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: pointer;" onclick="window.app.projectModal.open('${item.projId}')">
+                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
+                <span style="font-size: 0.58rem; color: var(--color-secondary); text-transform: uppercase;">${item.desc}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
 
-    return item;
-  }
+        <!-- Column 4: Due Soon -->
+        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Segera Tenggat (${dueSoonItems.length})</span>
+          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
+            ${dueSoonItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Aman</span>' : dueSoonItems.map(item => `
+              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: pointer;" onclick="window.app.projectModal.open('${item.projId}')">
+                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
+                <span style="font-size: 0.58rem; color: var(--color-warning); text-transform: uppercase;">${item.desc}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
 
-  renderCalendarMonthGrid(container, selectedMonth, projects) {
-    container.innerHTML = '';
-    const [year, month] = selectedMonth.split('-').map(Number);
-    const firstDay = new Date(year, month - 1, 1);
-    
-    let startDayIndex = firstDay.getDay();
-    startDayIndex = (startDayIndex === 0) ? 6 : startDayIndex - 1;
+        <!-- Column 5: Follow-up Needed -->
+        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Butuh Follow-Up (${followUpNeededItems.length})</span>
+          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
+            ${followUpNeededItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Tidak ada pending</span>' : followUpNeededItems.map(item => `
+              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: ${item.projId ? 'pointer' : 'default'};" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')"` : ''}>
+                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
+                <span style="font-size: 0.58rem; color: var(--color-danger); text-transform: uppercase;">${item.desc}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
 
-    const numDays = new Date(year, month, 0).getDate();
-
-    const grid = document.createElement('div');
-    grid.className = 'calendar-month-grid';
-    grid.style.cssText = 'display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;';
-
-    const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-    dayNames.forEach(name => {
-      const header = document.createElement('div');
-      header.style.cssText = 'text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); padding-bottom: 4px;';
-      header.textContent = name;
-      grid.appendChild(header);
-    });
-
-    for (let i = 0; i < startDayIndex; i++) {
-      const cell = document.createElement('div');
-      cell.style.cssText = 'background: rgba(255,255,255,0.002); border: 1px solid transparent; min-height: 80px;';
-      grid.appendChild(cell);
-    }
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const activeProjects = projects.filter(p => p.stage !== 'completed');
-
-    for (let d = 1; d <= numDays; d++) {
-      const cellDateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const isToday = todayStr === cellDateStr;
-
-      const cell = document.createElement('div');
-      cell.style.cssText = `background: rgba(255,255,255,0.01); border: 1px solid ${isToday ? 'var(--color-primary)' : 'var(--border-subtle)'}; border-radius: var(--border-radius-sm); padding: 4px; min-height: 80px; display: flex; flex-direction: column; gap: 4px;`;
-
-      cell.innerHTML = `
-        <div style="text-align: right; font-size: 0.68rem; font-weight: 700; color: ${isToday ? 'var(--color-primary)' : 'var(--text-muted)'};">${d}</div>
-        <div class="month-cell-projects" style="display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto;"></div>
-      `;
-
-      const projectsContainer = cell.querySelector('.month-cell-projects');
-
-      const dueProjects = activeProjects.filter(p => {
-        if (p.stage === 'on_hold') return false;
-        const pDue = p.dueDate || p.deadline;
-        return pDue === cellDateStr;
-      });
-
-      const holdProjects = activeProjects.filter(p => {
-        return p.stage === 'on_hold' && p.holdFollowUpDate === cellDateStr;
-      });
-
-      dueProjects.forEach(p => {
-        const item = this.createCalendarItemMarkup(p, false);
-        item.style.fontSize = '0.6rem';
-        item.style.padding = '3px';
-        projectsContainer.appendChild(item);
-      });
-
-      holdProjects.forEach(p => {
-        const item = this.createCalendarItemMarkup(p, true);
-        item.style.fontSize = '0.6rem';
-        item.style.padding = '3px';
-        projectsContainer.appendChild(item);
-      });
-
-      grid.appendChild(cell);
-    }
-
-    container.appendChild(grid);
+    return summarySection;
   }
 
   renderOnHoldSection() {

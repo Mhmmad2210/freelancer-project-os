@@ -14,6 +14,7 @@ import { PortfolioView } from './components/PortfolioView.js';
 import { QuotationsView } from './components/QuotationsView.js';
 import { ClientProjectView } from './components/ClientView.js';
 import { AccessGate } from './components/AccessGate.js';
+import { PlannerHub } from './components/PlannerHub.js';
 
 class FreelancerApp {
   constructor() {
@@ -174,6 +175,15 @@ class FreelancerApp {
       case 'kanban':
         headerTitle.textContent = 'Workspace Board';
         this.currentView = new KanbanBoard(
+          viewportAnchor,
+          store,
+          (projId) => this.projectModal.open(projId),
+          (msg, c) => this.triggerToast(msg, c)
+        );
+        break;
+      case 'planner':
+        headerTitle.textContent = 'Planner Hub';
+        this.currentView = new PlannerHub(
           viewportAnchor,
           store,
           (projId) => this.projectModal.open(projId),

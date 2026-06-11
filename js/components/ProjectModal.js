@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatDate } from '../utils.js';
+import { formatCurrency, formatDate, isOutsideWorkingHours } from '../utils.js';
 
 export class ProjectModal {
   /**
@@ -30,6 +30,17 @@ export class ProjectModal {
       setTimeout(() => modalOverlay.remove(), 300);
     }
     this.activeProjectId = null;
+  }
+
+  checkMeetingAvailabilityWarning(projectId) {
+    const project = this.store.getState().projects.find(p => p.id === projectId);
+    if (!project) return;
+    const availability = this.store.getState().availability;
+    const warningEl = document.getElementById('m-p-meet-warning');
+    if (warningEl) {
+      const isOutside = isOutsideWorkingHours(project.meetingDate, project.meetingTime, availability);
+      warningEl.style.display = isOutside ? 'flex' : 'none';
+    }
   }
 
   render() {
@@ -137,6 +148,92 @@ export class ProjectModal {
                       <label>Link Folder Aset Referensi</label>
                       <input type="url" id="m-p-ref-url" class="form-control" value="${project.referenceFolderLink || ''}" placeholder="Link logo, panduan brand, folder referensi...">
                     </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Meeting & Client Notes (Collapsible) -->
+              <div class="collapsible-section collapsed" id="section-meeting-notes">
+                <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                  <span>${getIcon('calendar', '', 16)} Meeting & Client Notes</span>
+                  <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
+                </h4>
+                <div class="collapsible-content">
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                      <label>Tanggal Rapat</label>
+                      <input type="date" id="m-p-meet-date" class="form-control" value="${project.meetingDate || ''}">
+                    </div>
+                    <div class="form-group">
+                      <label>Waktu Rapat</label>
+                      <input type="time" id="m-p-meet-time" class="form-control" value="${project.meetingTime || ''}">
+                    </div>
+                    <div class="form-group">
+                      <label>Platform / Tipe Rapat</label>
+                      <input type="text" id="m-p-meet-type" class="form-control" value="${project.meetingType || 'Google Meet'}" placeholder="Google Meet, WA, dll...">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Link Ruang Rapat</label>
+                      <input type="url" id="m-p-meet-link-val" class="form-control" value="${project.meetingLink || ''}" placeholder="https://meet.google.com/abc-defg-hij">
+                    </div>
+                    <div class="form-group">
+                      <label>Zona Waktu Rapat</label>
+                      <input type="text" id="m-p-meet-timezone" class="form-control" value="${project.meetingTimezone || 'Asia/Jakarta'}" placeholder="WIB, Asia/Jakarta...">
+                    </div>
+                  </div>
+                  <div id="m-p-meet-warning" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); border-radius: var(--border-radius-sm); padding: 8px; font-size: 0.75rem; color: var(--color-danger); font-weight: 700; margin-bottom: 12px; align-items: center; gap: 6px;">
+                    ⚠️ Di luar jam kerja kamu.
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                      <label>Permintaan Klien (Client Request)</label>
+                      <textarea id="m-p-client-request" class="form-control" style="min-height: 80px;" placeholder="Catatan keinginan klien...">${project.clientRequest || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>Poin Utama Diskusi (Key Discussion)</label>
+                      <textarea id="m-p-key-discussion" class="form-control" style="min-height: 80px;" placeholder="Poin utama diskusi...">${project.keyDiscussionPoints || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>Keputusan Disepakati (Decisions Made)</label>
+                      <textarea id="m-p-decision-made" class="form-control" style="min-height: 80px;" placeholder="Keputusan yang disepakati...">${project.decisionMade || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>Action Items (Tugas Freelancer)</label>
+                      <textarea id="m-p-action-items" class="form-control" style="min-height: 80px;" placeholder="Tugas freelancer...">${project.actionItems || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>Kekhawatiran Klien (Client Concern)</label>
+                      <textarea id="m-p-client-concern" class="form-control" style="min-height: 80px;" placeholder="Kekhawatiran klien...">${project.clientConcern || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>Ekspektasi Klien (Client Expectation)</label>
+                      <textarea id="m-p-client-expectation" class="form-control" style="min-height: 80px;" placeholder="Ekspektasi klien...">${project.clientExpectation || ''}</textarea>
+                    </div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                      <label>Tenggat Follow-Up Berikutnya</label>
+                      <input type="date" id="m-p-next-followup" class="form-control" value="${project.nextFollowUpDate || ''}">
+                    </div>
+                    <div class="form-group">
+                      <label>Tanggal Client Review</label>
+                      <input type="date" id="m-p-client-review-date" class="form-control" value="${project.clientReviewDate || ''}">
+                    </div>
+                    <div class="form-group">
+                      <label>Tanggal Delivery Final</label>
+                      <input type="date" id="m-p-final-delivery-date" class="form-control" value="${project.finalDeliveryDate || ''}">
+                    </div>
+                  </div>
+
+                  <div style="margin-top: 16px; border-top: 1px solid var(--border-subtle); padding-top: 12px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">
+                      🎙️ Real AI Notetaker & Transkripsi (TODO_AFTER_LAUNCH)
+                    </span>
+                    <button type="button" class="btn btn-secondary" id="btn-generate-ai-prompt" style="font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
+                      ${getIcon('fileText', '', 14)} Salin AI Summary Prompt
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1222,9 +1319,65 @@ export class ProjectModal {
           el.disabled = true;
           el.style.cursor = 'not-allowed';
           el.style.opacity = '0.7';
-        }
       });
     }
+
+    // Meeting Notes inputs blur/change listeners
+    const fieldsToBind = [
+      '#m-p-meet-date', '#m-p-meet-time', '#m-p-meet-type', '#m-p-meet-link-val',
+      '#m-p-meet-timezone', '#m-p-client-request', '#m-p-key-discussion',
+      '#m-p-decision-made', '#m-p-action-items', '#m-p-client-concern',
+      '#m-p-client-expectation', '#m-p-client-review-date', '#m-p-final-delivery-date'
+    ];
+
+    fieldsToBind.forEach(sel => {
+      addListener(sel, 'blur', () => {
+        this.saveGeneralMetadata();
+        this.checkMeetingAvailabilityWarning(project.id);
+      });
+      addListener(sel, 'change', () => {
+        this.saveGeneralMetadata();
+        this.checkMeetingAvailabilityWarning(project.id);
+      });
+    });
+
+    // AI summary prompt generator copy listener
+    addListener('#btn-generate-ai-prompt', 'click', () => {
+      const p = this.store.getState().projects.find(x => x.id === project.id) || project;
+      const template = `Bantu saya merangkum catatan meeting client berikut menjadi format kerja freelancer.
+
+Tolong hasilkan:
+1. Ringkasan meeting
+2. Kebutuhan utama client
+3. Keputusan yang sudah disepakati
+4. Action items untuk freelancer (Saya)
+5. Action items untuk client
+6. Potensi scope creep atau hal yang perlu diklarifikasi
+7. Next action paling penting
+8. Draft follow-up message ke client
+
+Catatan meeting:
+- Project: ${p.title}
+- Tanggal/Waktu Rapat: ${p.meetingDate || 'TBD'} ${p.meetingTime || ''} (${p.meetingTimezone || 'Asia/Jakarta'})
+- Jenis Rapat: ${p.meetingType || 'Google Meet'}
+- Permintaan Klien: ${p.clientRequest || 'TBD'}
+- Poin Utama Diskusi: ${p.keyDiscussionPoints || 'TBD'}
+- Keputusan Disepakati: ${p.decisionMade || 'TBD'}
+- Kekhawatiran Klien: ${p.clientConcern || 'TBD'}
+- Ekspektasi Klien: ${p.clientExpectation || 'TBD'}
+
+Gunakan bahasa Indonesia yang profesional, jelas, dan sopan.
+Jangan membuat klaim atau keputusan yang tidak ada di catatan.`;
+
+      navigator.clipboard.writeText(template).then(() => {
+        this.onTriggerToast('AI Summary Prompt berhasil disalin ke clipboard!', 'text-success');
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        alert(template);
+      });
+    });
+
+    this.checkMeetingAvailabilityWarning(project.id);
   }
 
   saveGeneralMetadata() {
@@ -1320,6 +1473,21 @@ export class ProjectModal {
     const holdDate = getVal('#m-p-hold-date', project.holdDate || '');
     const holdFollowUpDate = getVal('#m-p-hold-followup', project.holdFollowUpDate || '');
 
+    // Planner Hub fields
+    const meetDate = getVal('#m-p-meet-date', project.meetingDate || '');
+    const meetTime = getVal('#m-p-meet-time', project.meetingTime || '');
+    const meetType = getVal('#m-p-meet-type', project.meetingType || 'Google Meet');
+    const meetLinkVal = getVal('#m-p-meet-link-val', getVal('#m-p-meet-link', project.meetingLink || ''));
+    const meetTimezone = getVal('#m-p-meet-timezone', project.meetingTimezone || 'Asia/Jakarta');
+    const clientRequest = getVal('#m-p-client-request', project.clientRequest || '');
+    const keyDiscussion = getVal('#m-p-key-discussion', project.keyDiscussionPoints || '');
+    const decisionMade = getVal('#m-p-decision-made', project.decisionMade || '');
+    const actionItems = getVal('#m-p-action-items', project.actionItems || '');
+    const clientConcern = getVal('#m-p-client-concern', project.clientConcern || '');
+    const clientExpectation = getVal('#m-p-client-expectation', project.clientExpectation || '');
+    const clientReviewDate = getVal('#m-p-client-review-date', project.clientReviewDate || '');
+    const finalDeliveryDate = getVal('#m-p-final-delivery-date', project.finalDeliveryDate || '');
+
     const updates = {
       title: titleVal,
       description: descVal,
@@ -1339,7 +1507,7 @@ export class ProjectModal {
       holdDate,
       holdFollowUpDate,
       meetingPlatform: meetPlatform,
-      meetingLink: meetLink,
+      meetingLink: meetLinkVal,
       meetingNotes: meetNotes,
       downPaymentPercent: dpPct,
       downPaymentAmount: dpAmt,
@@ -1363,7 +1531,19 @@ export class ProjectModal {
       paymentReceiptLink,
       lastFollowUpDate,
       nextFollowUpDate,
-      rawFileDownloadLink
+      rawFileDownloadLink,
+      meetingDate: meetDate,
+      meetingTime: meetTime,
+      meetingType: meetType,
+      meetingTimezone: meetTimezone,
+      clientRequest,
+      keyDiscussionPoints: keyDiscussion,
+      decisionMade,
+      actionItems,
+      clientConcern,
+      clientExpectation,
+      clientReviewDate,
+      finalDeliveryDate
     };
 
     const showcase = overlay.querySelector('#m-p-portfolio');

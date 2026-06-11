@@ -375,6 +375,7 @@ export class WorkspaceStore {
         this.invoices = parsed.invoices || [];
         this.quotations = parsed.quotations || [];
         this.weeklyReflections = parsed.weeklyReflections || this.getDefaultReflections();
+        this.availability = parsed.availability || this.getDefaultAvailability();
 
         let migrated = false;
 
@@ -398,6 +399,7 @@ export class WorkspaceStore {
           this.invoices = seed.invoices;
           this.quotations = seed.quotations;
           this.weeklyReflections = this.getDefaultReflections();
+          this.availability = this.getDefaultAvailability();
           migrated = true;
         }
 
@@ -451,6 +453,18 @@ export class WorkspaceStore {
           if (p.holdReason === undefined) { p.holdReason = ''; migrated = true; }
           if (p.holdDate === undefined) { p.holdDate = ''; migrated = true; }
           if (p.holdFollowUpDate === undefined) { p.holdFollowUpDate = ''; migrated = true; }
+          if (p.meetingDate === undefined) { p.meetingDate = ''; migrated = true; }
+          if (p.meetingTime === undefined) { p.meetingTime = ''; migrated = true; }
+          if (p.meetingType === undefined) { p.meetingType = 'Google Meet'; migrated = true; }
+          if (p.meetingTimezone === undefined) { p.meetingTimezone = 'Asia/Jakarta'; migrated = true; }
+          if (p.clientRequest === undefined) { p.clientRequest = ''; migrated = true; }
+          if (p.keyDiscussionPoints === undefined) { p.keyDiscussionPoints = ''; migrated = true; }
+          if (p.decisionMade === undefined) { p.decisionMade = ''; migrated = true; }
+          if (p.actionItems === undefined) { p.actionItems = ''; migrated = true; }
+          if (p.clientConcern === undefined) { p.clientConcern = ''; migrated = true; }
+          if (p.clientExpectation === undefined) { p.clientExpectation = ''; migrated = true; }
+          if (p.clientReviewDate === undefined) { p.clientReviewDate = ''; migrated = true; }
+          if (p.finalDeliveryDate === undefined) { p.finalDeliveryDate = ''; migrated = true; }
           return p;
         });
 
@@ -477,6 +491,7 @@ export class WorkspaceStore {
         this.invoices = seed.invoices;
         this.quotations = seed.quotations;
         this.weeklyReflections = this.getDefaultReflections();
+        this.availability = this.getDefaultAvailability();
         this.saveState();
       }
     } catch (e) {
@@ -487,6 +502,7 @@ export class WorkspaceStore {
       this.invoices = seed.invoices;
       this.quotations = seed.quotations;
       this.weeklyReflections = this.getDefaultReflections();
+      this.availability = this.getDefaultAvailability();
     }
   }
 
@@ -504,7 +520,8 @@ export class WorkspaceStore {
         clients: this.clients,
         invoices: this.invoices,
         quotations: this.quotations,
-        weeklyReflections: this.weeklyReflections
+        weeklyReflections: this.weeklyReflections,
+        availability: this.availability
       };
       localStorage.setItem('freelancer_os_workspace', JSON.stringify(bundle));
       this.notifyListeners();
@@ -523,6 +540,7 @@ export class WorkspaceStore {
     this.invoices = seed.invoices;
     this.quotations = seed.quotations;
     this.weeklyReflections = this.getDefaultReflections();
+    this.availability = this.getDefaultAvailability();
     this.saveState();
   }
 
@@ -586,7 +604,8 @@ export class WorkspaceStore {
       clients: this.clients,
       invoices: this.invoices,
       quotations: this.quotations,
-      weeklyReflections: this.weeklyReflections
+      weeklyReflections: this.weeklyReflections,
+      availability: this.availability
     };
   }
 
@@ -897,7 +916,8 @@ export class WorkspaceStore {
       clients: this.clients,
       invoices: this.invoices,
       quotations: this.quotations,
-      weeklyReflections: this.weeklyReflections
+      weeklyReflections: this.weeklyReflections,
+      availability: this.availability
     };
     return JSON.stringify(bundle, null, 2);
   }
@@ -911,6 +931,7 @@ export class WorkspaceStore {
         this.invoices = parsed.invoices;
         this.quotations = parsed.quotations || [];
         this.weeklyReflections = parsed.weeklyReflections || this.getDefaultReflections();
+        this.availability = parsed.availability || this.getDefaultAvailability();
         
         this.projects = this.projects.map(p => {
           if (p.budget < 1000000) p.budget *= 1000;
@@ -935,6 +956,18 @@ export class WorkspaceStore {
           if (p.holdReason === undefined) p.holdReason = '';
           if (p.holdDate === undefined) p.holdDate = '';
           if (p.holdFollowUpDate === undefined) p.holdFollowUpDate = '';
+          if (p.meetingDate === undefined) p.meetingDate = '';
+          if (p.meetingTime === undefined) p.meetingTime = '';
+          if (p.meetingType === undefined) p.meetingType = 'Google Meet';
+          if (p.meetingTimezone === undefined) p.meetingTimezone = 'Asia/Jakarta';
+          if (p.clientRequest === undefined) p.clientRequest = '';
+          if (p.keyDiscussionPoints === undefined) { p.keyDiscussionPoints = ''; }
+          if (p.decisionMade === undefined) { p.decisionMade = ''; }
+          if (p.actionItems === undefined) { p.actionItems = ''; }
+          if (p.clientConcern === undefined) { p.clientConcern = ''; }
+          if (p.clientExpectation === undefined) { p.clientExpectation = ''; }
+          if (p.clientReviewDate === undefined) { p.clientReviewDate = ''; }
+          if (p.finalDeliveryDate === undefined) { p.finalDeliveryDate = ''; }
           return p;
         });
         this.invoices = this.invoices.map(inv => {
@@ -956,6 +989,22 @@ export class WorkspaceStore {
   updateWeeklyReflections(text) {
     this.weeklyReflections = text;
     this.saveState();
+  }
+
+  getDefaultAvailability() {
+    return {
+      workingDays: [1, 2, 3, 4, 5], // Monday to Friday
+      workingHoursStart: '09:00',
+      workingHoursEnd: '17:00',
+      timezone: 'Asia/Jakarta',
+      unavailableDates: []
+    };
+  }
+
+  updateAvailability(updates) {
+    this.availability = { ...this.availability, ...updates };
+    this.saveState();
+    this.notifyListeners();
   }
 }
 export const store = new WorkspaceStore();

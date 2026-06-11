@@ -57,6 +57,7 @@ export class SidebarNav {
 
     const menuItems = [
       { id: 'kanban', label: 'Workspace Board', icon: 'layers' },
+      { id: 'planner', label: 'Planner Hub', icon: 'calendar' },
       { id: 'focus', label: 'Weekly Focus', icon: 'clock' },
       { id: 'clients', label: 'Client Hub', icon: 'user' },
       { id: 'invoices', label: 'Invoice Ledger', icon: 'fileText' },

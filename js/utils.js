@@ -195,3 +195,40 @@ export function generateEmailReminder(invoice, client, project) {
   
   return { subject, body };
 }
+
+/**
+ * Checks if a scheduled meeting is outside of the freelancer's working availability hours.
+ * @param {string} dateStr - YYYY-MM-DD
+ * @param {string} timeStr - HH:MM
+ * @param {object} availability
+ * @returns {boolean}
+ */
+export function isOutsideWorkingHours(dateStr, timeStr, availability) {
+  if (!dateStr || !availability) return false;
+
+  const { workingDays = [1,2,3,4,5], workingHoursStart = '09:00', workingHoursEnd = '17:00', unavailableDates = [] } = availability;
+
+  // 1. Check if the date is in the list of unavailable dates
+  if (unavailableDates.includes(dateStr)) {
+    return true;
+  }
+
+  // 2. Check if the day of week is a working day
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  if (isNaN(dateObj.getTime())) return false;
+
+  const day = dateObj.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  if (!workingDays.includes(day)) {
+    return true;
+  }
+
+  // 3. Check if the time falls within working hours
+  if (timeStr) {
+    if (timeStr < workingHoursStart || timeStr > workingHoursEnd) {
+      return true;
+    }
+  }
+
+  return false;
+}
