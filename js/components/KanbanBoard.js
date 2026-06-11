@@ -21,7 +21,7 @@ export class KanbanBoard {
     
     // Bind Drag & Drop contexts
     this.draggedCardId = null;
-    this.minimizedCardIds = new Set();
+    this.expandedCardIds = new Set(JSON.parse(localStorage.getItem('alurkarya_expanded_cards') || '[]'));
   }
 
   getProjectHealth(project) {
@@ -477,7 +477,7 @@ export class KanbanBoard {
 
   createProjectCard(project) {
     const card = document.createElement('div');
-    const isMinimized = this.minimizedCardIds.has(project.id);
+    const isMinimized = !this.expandedCardIds.has(project.id);
     card.className = `project-card${isMinimized ? ' minimized' : ''}`;
     card.setAttribute('draggable', 'true');
     card.dataset.projectId = project.id;
@@ -711,10 +711,11 @@ export class KanbanBoard {
         card.classList.toggle('minimized');
         const nowMinimized = card.classList.contains('minimized');
         if (nowMinimized) {
-          this.minimizedCardIds.add(project.id);
+          this.expandedCardIds.delete(project.id);
         } else {
-          this.minimizedCardIds.delete(project.id);
+          this.expandedCardIds.add(project.id);
         }
+        localStorage.setItem('alurkarya_expanded_cards', JSON.stringify(Array.from(this.expandedCardIds)));
         minimizeBtn.innerHTML = getIcon(nowMinimized ? 'chevronRight' : 'chevronDown', '', 14);
       });
     }
