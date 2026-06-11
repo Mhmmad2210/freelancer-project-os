@@ -1319,6 +1319,7 @@ export class ProjectModal {
           el.disabled = true;
           el.style.cursor = 'not-allowed';
           el.style.opacity = '0.7';
+        }
       });
     }
 
