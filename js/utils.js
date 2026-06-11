@@ -121,7 +121,7 @@ export function getLocalizedDueDateStatus(dueDateStr) {
   if (!dueDateStr) {
     return {
       status: 'none',
-      text: 'Belum ada deadline',
+      text: 'No deadline',
       isOverdue: false,
       daysDiff: 999
     };

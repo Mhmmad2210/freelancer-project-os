@@ -231,27 +231,27 @@ export class AccessGate {
         <span class="gate-brand">AlurKarya</span>
       </div>
       <div class="gate-meta">
-        <span class="gate-subtitle">Client-to-Paid Operating System untuk Freelancer Digital Indonesia</span>
-        <span class="gate-text">Masukkan password akses yang Anda terima setelah pembelian.</span>
+        <span class="gate-subtitle">Client-to-Paid Operating System for Digital Freelancers</span>
+        <span class="gate-text">Enter the access password you received after purchase.</span>
       </div>
       <div class="gate-error" id="gate-error-message">
         <span style="margin-top: 2px;">${getIcon('alert', '', 14)}</span>
-        <span>Password akses belum sesuai. Silakan cek kembali email pembelian Anda.</span>
+        <span>Incorrect access password. Please check your purchase email again.</span>
       </div>
       <form class="gate-form" id="gate-access-form">
         <div class="gate-form-group">
-          <label class="gate-label" for="gate-password-input">Password Akses</label>
+          <label class="gate-label" for="gate-password-input">Access Password</label>
           <div class="gate-input-wrapper">
             <span class="gate-input-icon">${getIcon('lock', '', 16)}</span>
             <input type="password" id="gate-password-input" class="gate-input" placeholder="••••••••" required autocomplete="current-password">
           </div>
         </div>
         <button type="submit" class="gate-btn" id="gate-submit-btn">
-          Masuk ke AlurKarya
+          Enter AlurKarya
         </button>
       </form>
       <div class="gate-footer-note">
-        Soft Buyer Access Gate. Konfigurasi password tersimpan aman secara terenkripsi.
+        Buyer Access Gate. Password configuration is securely stored.
       </div>
     `;
 
@@ -268,7 +268,7 @@ export class AccessGate {
       e.preventDefault();
       errorBox.classList.remove('active');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Memverifikasi...';
+      submitBtn.textContent = 'Verifying...';
 
       const passwordVal = input.value ? input.value.trim() : '';
       const inputHash = await this.sha256(passwordVal);
@@ -299,7 +299,7 @@ export class AccessGate {
         input.value = '';
         input.focus();
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Masuk ke AlurKarya';
+        submitBtn.textContent = 'Enter AlurKarya';
       }
     });
   }

@@ -95,7 +95,7 @@ export class ClientProjectView {
     let statusClass = 'status-completed';
     let statusLabel = 'In Progress';
     if (activeProject.stage === 'new_lead') { statusClass = 'status-lead'; statusLabel = 'New Lead'; }
-    if (activeProject.stage === 'proposal_sent') { statusClass = 'status-active'; statusLabel = 'Proposal Sent'; }
+    if (activeProject.stage === 'proposal_sent') { statusClass = 'status-active'; statusLabel = 'Queue'; }
     if (activeProject.stage === 'in_progress') { statusClass = 'status-completed'; statusLabel = 'In Progress'; }
     if (activeProject.stage === 'client_review') { statusClass = 'status-active'; statusLabel = 'Ready for client review'; }
     if (activeProject.stage === 'revision') { statusClass = 'status-lead text-danger'; statusLabel = 'Revision in progress'; }
@@ -157,7 +157,7 @@ export class ClientProjectView {
     
     const steps = [
       { id: 'new_lead', label: 'Lead Setup' },
-      { id: 'proposal_sent', label: 'Proposal' },
+      { id: 'proposal_sent', label: 'Queue' },
       { id: 'in_progress', label: 'Development' },
       { id: 'client_review', label: 'Client Feedback' },
       { id: 'revision', label: 'Revisions' },

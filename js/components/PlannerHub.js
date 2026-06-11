@@ -93,13 +93,13 @@ export class PlannerHub {
       <div class="calendar-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px; margin-bottom: 16px;">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
           <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 8px;">
-            📅 Kalender Perencanaan
+            📅 Planner Calendar
           </h3>
           <div class="calendar-switch" style="display: flex; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 2px;">
-            <button class="cal-switch-btn ${mode === 'week' ? 'active' : ''}" id="cal-switch-week" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'week' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'week' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Mingguan</button>
-            <button class="cal-switch-btn ${mode === 'month' ? 'active' : ''}" id="cal-switch-month" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'month' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'month' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Bulanan</button>
+            <button class="cal-switch-btn ${mode === 'week' ? 'active' : ''}" id="cal-switch-week" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'week' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'week' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Weekly</button>
+            <button class="cal-switch-btn ${mode === 'month' ? 'active' : ''}" id="cal-switch-month" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'month' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'month' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Monthly</button>
           </div>
-          <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 4px 8px; cursor: not-allowed; opacity: 0.5; height: auto; display: flex; align-items: center; gap: 4px;" title="Integrasi Google Calendar (TODO_AFTER_LAUNCH)" disabled>
+          <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 4px 8px; cursor: not-allowed; opacity: 0.5; height: auto; display: flex; align-items: center; gap: 4px;" title="Google Calendar Integration (TODO_AFTER_LAUNCH)" disabled>
             <span>🔄 Sync GCal (TODO_AFTER_LAUNCH)</span>
           </button>
         </div>
@@ -125,7 +125,7 @@ export class PlannerHub {
         const sun = new Date(mon);
         sun.setDate(mon.getDate() + 6);
         const format = (d) => {
-          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
         };
         return `${format(mon)} - ${format(sun)}`;
@@ -136,8 +136,8 @@ export class PlannerHub {
     } else {
       const [y, m] = selectedMonth.split('-').map(Number);
       const monthNames = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
       ];
       rangeDisplay.textContent = `${monthNames[m - 1]} ${y}`;
       this.renderMonthGrid(gridContainer, selectedMonth, projects, invoices);
@@ -197,7 +197,7 @@ export class PlannerHub {
     const grid = document.createElement('div');
     grid.style.cssText = 'display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;';
 
-    const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     
     const start = new Date(selectedWeekStart);
     const days = [];
@@ -250,7 +250,7 @@ export class PlannerHub {
     const grid = document.createElement('div');
     grid.style.cssText = 'display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;';
 
-    const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     dayNames.forEach(name => {
       const header = document.createElement('div');
       header.style.cssText = 'text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); padding-bottom: 4px;';
@@ -448,14 +448,14 @@ export class PlannerHub {
         ${getIcon('calendar', 'text-success', 16)} Upcoming Meetings (${upcomingMeetings.length})
       </h3>
       <div style="display: flex; flex-direction: column; gap: 8px;" class="widget-list">
-        ${upcomingMeetings.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">Tidak ada meeting terjadwal</span>' : upcomingMeetings.map(p => {
+        ${upcomingMeetings.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">No scheduled meetings</span>' : upcomingMeetings.map(p => {
           const isOutside = isOutsideWorkingHours(p.meetingDate, p.meetingTime, availability);
-          const outsideWarning = isOutside ? `<div style="color: var(--color-danger); font-size: 0.65rem; font-weight: 700; margin-top: 2px;">⚠️ Di luar jam kerja kamu</div>` : '';
+          const outsideWarning = isOutside ? `<div style="color: var(--color-danger); font-size: 0.65rem; font-weight: 700; margin-top: 2px;">⚠️ Outside your working hours</div>` : '';
           return `
             <div class="focus-item-row" style="padding: 10px; cursor: pointer;" onclick="window.app.projectModal.open('${p.id}')">
               <div style="flex: 1; min-width: 0;">
                 <strong style="font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.title}</strong>
-                <span style="font-size: 0.7rem; color: var(--text-muted);">${formatDate(p.meetingDate)} pukul ${p.meetingTime || 'TBD'} (${p.meetingType})</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">${formatDate(p.meetingDate)} at ${p.meetingTime || 'TBD'} (${p.meetingType})</span>
                 ${outsideWarning}
               </div>
               ${p.meetingLink ? `
@@ -478,7 +478,7 @@ export class PlannerHub {
         ${getIcon('clock', 'text-warning', 16)} Follow-up Needed (${followUps.length})
       </h3>
       <div style="display: flex; flex-direction: column; gap: 8px;" class="widget-list">
-        ${followUps.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">Semua tindak lanjut aman</span>' : followUps.map(item => `
+        ${followUps.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">All follow-ups up to date</span>' : followUps.map(item => `
           <div class="focus-item-row" style="padding: 10px; cursor: ${item.pId ? 'pointer' : 'default'};" ${item.pId ? `onclick="window.app.projectModal.open('${item.pId}')"` : ''}>
             <div style="flex: 1; min-width: 0;">
               <strong style="font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
@@ -499,7 +499,7 @@ export class PlannerHub {
         ${getIcon('alert', 'text-danger', 16)} Due Soon (${dueSoon.length})
       </h3>
       <div style="display: flex; flex-direction: column; gap: 8px;" class="widget-list">
-        ${dueSoon.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">Tidak ada deadline mendesak</span>' : dueSoon.map(p => `
+        ${dueSoon.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">No urgent deadlines</span>' : dueSoon.map(p => `
           <div class="focus-item-row" style="padding: 10px; cursor: pointer;" onclick="window.app.projectModal.open('${p.id}')">
             <div style="flex: 1; min-width: 0;">
               <strong style="font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.title}</strong>
@@ -520,7 +520,7 @@ export class PlannerHub {
         ${getIcon('layers', 'text-muted', 16)} On Hold Follow-up (${onHolds.length})
       </h3>
       <div style="display: flex; flex-direction: column; gap: 8px;" class="widget-list">
-        ${onHolds.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">Tidak ada proyek hold dengan follow-up</span>' : onHolds.map(p => `
+        ${onHolds.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">No hold projects with follow-ups</span>' : onHolds.map(p => `
           <div class="focus-item-row" style="padding: 10px; cursor: pointer;" onclick="window.app.projectModal.open('${p.id}')">
             <div style="flex: 1; min-width: 0;">
               <strong style="font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.title}</strong>
@@ -538,17 +538,17 @@ export class PlannerHub {
     notesWidget.className = 'focus-module-box';
     notesWidget.innerHTML = `
       <h3 style="font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-        ${getIcon('fileText', 'text-secondary', 16)} Ringkasan Meeting Notes (${notesSummary.length})
+        ${getIcon('fileText', 'text-secondary', 16)} Meeting Notes Summary (${notesSummary.length})
       </h3>
       <div style="display: flex; flex-direction: column; gap: 10px;" class="widget-list">
-        ${notesSummary.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">Belum ada catatan rapat</span>' : notesSummary.map(p => {
+        ${notesSummary.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">No meeting notes logged</span>' : notesSummary.map(p => {
           const notesText = p.actionItems || p.decisionMade || p.keyDiscussionPoints || p.clientRequest || p.meetingNotes || '';
           const snippet = notesText.length > 80 ? notesText.substring(0, 80) + '...' : notesText;
           return `
             <div class="focus-item-row" style="padding: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; cursor: pointer;" onclick="window.app.projectModal.open('${p.id}')">
               <strong style="font-size: 0.8rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.title}</strong>
-              <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0; line-height: 1.45; width: 100%;">${snippet || '<span style="font-style: italic;">Tidak ada ringkasan teks</span>'}</p>
-              <span style="font-size: 0.58rem; color: var(--color-primary); font-weight: 700; text-transform: uppercase;">Buka Catatan Lengkap &rarr;</span>
+              <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0; line-height: 1.45; width: 100%;">${snippet || '<span style="font-style: italic;">No summary text</span>'}</p>
+              <span style="font-size: 0.58rem; color: var(--color-primary); font-weight: 700; text-transform: uppercase;">Open Full Notes &rarr;</span>
             </div>
           `;
         }).join('')}
@@ -570,43 +570,43 @@ export class PlannerHub {
 
     box.innerHTML = `
       <h3 style="font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-        ${getIcon('clock', '', 16)} Jam Kerja & Ketersediaan (Availability)
+        ${getIcon('clock', '', 16)} Working Hours & Availability
       </h3>
       <span class="stat-subtext" style="display: block; margin-top: -8px; font-size: 0.72rem; color: var(--text-muted);">
-        Atur hari dan jam kerja freelance kamu di sini. Pertemuan di luar jam kerja ini akan memicu peringatan warning otomatis.
+        Configure your freelancing working days and hours here. Meetings scheduled outside these hours will trigger an automatic warning.
       </span>
       <form id="availability-form" style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
         <div>
-          <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">Hari Kerja</label>
+          <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">Working Days</label>
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
-            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="1" ${isChecked(1)}> Sen</label>
-            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="2" ${isChecked(2)}> Sel</label>
-            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="3" ${isChecked(3)}> Rab</label>
-            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="4" ${isChecked(4)}> Kam</label>
-            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="5" ${isChecked(5)}> Jum</label>
-            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="6" ${isChecked(6)}> Sab</label>
-            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="0" ${isChecked(0)}> Min</label>
+            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="1" ${isChecked(1)}> Mon</label>
+            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="2" ${isChecked(2)}> Tue</label>
+            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="3" ${isChecked(3)}> Wed</label>
+            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="4" ${isChecked(4)}> Thu</label>
+            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="5" ${isChecked(5)}> Fri</label>
+            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="6" ${isChecked(6)}> Sat</label>
+            <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;"><input type="checkbox" name="day" value="0" ${isChecked(0)}> Sun</label>
           </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <div class="form-group">
-            <label style="font-size: 0.72rem;">Jam Mulai Kerja</label>
+            <label style="font-size: 0.72rem;">Start Time</label>
             <input type="time" name="start" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${availability.workingHoursStart || '09:00'}">
           </div>
           <div class="form-group">
-            <label style="font-size: 0.72rem;">Jam Selesai Kerja</label>
+            <label style="font-size: 0.72rem;">End Time</label>
             <input type="time" name="end" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${availability.workingHoursEnd || '17:00'}">
           </div>
         </div>
         <div class="form-group">
-          <label style="font-size: 0.72rem;">Zona Waktu (Timezone)</label>
+          <label style="font-size: 0.72rem;">Timezone</label>
           <input type="text" name="tz" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${availability.timezone || 'Asia/Jakarta'}" placeholder="Asia/Jakarta">
           <span style="font-size: 0.62rem; color: var(--text-muted); display: block; margin-top: 2px;">
             * Advanced timezone conversion (TODO_AFTER_LAUNCH)
           </span>
         </div>
         <div style="border-top: 1px solid rgba(255,255,255,0.03); padding-top: 10px;">
-          <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tanggal Libur / Unavailable</label>
+          <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 4px;">Unavailable Dates / Holidays</label>
           <div id="unavailable-dates-list" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;">
             ${(availability.unavailableDates || []).map(d => `
               <span class="card-tag" style="font-size: 0.62rem; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--color-danger);">
@@ -616,7 +616,7 @@ export class PlannerHub {
           </div>
           <div style="display: flex; gap: 6px;">
             <input type="date" id="add-unavailable-date" class="form-control" style="font-size: 0.75rem; padding: 4px 6px; flex: 1;">
-            <button type="button" class="btn btn-secondary" id="btn-add-unavailable-date" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px;">Tambah</button>
+            <button type="button" class="btn btn-secondary" id="btn-add-unavailable-date" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px;">Add</button>
           </div>
         </div>
       </form>

@@ -3,7 +3,6 @@
    ========================================================================== */
 
 /* --- Fonts & Typography --- */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* --- Design Tokens / Core Variables --- */
 :root {
@@ -41,7 +40,7 @@
   /* Glassmorphism & Shadow Tokens */
   --glass-bg: rgba(11, 17, 32, 0.42);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-backdrop: blur(18px);
+  --glass-backdrop: blur(10px);
   --shadow-premium: 0 16px 48px 0 rgba(0, 0, 0, 0.5);
   --shadow-inset: inset 0 1px 1px rgba(255, 255, 255, 0.05);
   
@@ -91,27 +90,26 @@ body::before, body::after {
   content: '';
   position: fixed;
   border-radius: 50%;
-  filter: blur(160px);
   z-index: -1;
   pointer-events: none;
-  opacity: 0.12;
+  opacity: 0.8;
   transition: opacity var(--transition-normal);
 }
 
 body::before {
-  width: 400px;
-  height: 400px;
-  top: 10%;
-  left: 15%;
-  background: var(--color-primary);
+  width: 600px;
+  height: 600px;
+  top: -100px;
+  left: -100px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
 }
 
 body::after {
-  width: 500px;
-  height: 500px;
-  bottom: 10%;
-  right: 15%;
-  background: var(--color-secondary);
+  width: 700px;
+  height: 700px;
+  bottom: -150px;
+  right: -150px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
 }
 
 img, svg, video {

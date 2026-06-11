@@ -85,8 +85,8 @@ class FreelancerApp {
         </button>
         <div class="header-title-container" style="display: flex; align-items: center; gap: 10px;">
           <h1 id="header-viewport-title" style="font-size: 1.25rem; font-family: 'Space Grotesk', sans-serif;">Workspace Board</h1>
-          <button class="btn btn-text" id="btn-reopen-onboarding" style="font-size: 0.75rem; color: var(--text-secondary); padding: 4px 8px; display: none; align-items: center; gap: 4px; border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); background: var(--bg-surface);" title="Buka Panduan Quick Start">
-            ${getIcon('help', '', 12)} Lihat Panduan
+          <button class="btn btn-text" id="btn-reopen-onboarding" style="font-size: 0.75rem; color: var(--text-secondary); padding: 4px 8px; display: none; align-items: center; gap: 4px; border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); background: var(--bg-surface);" title="Open Quick Start Guide">
+            ${getIcon('help', '', 12)} View Guide
           </button>
         </div>
       </div>
@@ -100,7 +100,7 @@ class FreelancerApp {
         <input type="file" id="backup-file-picker" style="display: none;" accept=".json">
         
         <button class="btn btn-text" id="btn-access-reset" style="font-size: 0.8rem; color: var(--color-warning);" title="Reset access screen status">
-          Reset Akses
+          Reset Access
         </button>
         
         <button class="btn btn-text text-danger" id="btn-workspace-reset" style="font-size: 0.8rem;" title="Reset workspace back to seed defaults">
@@ -306,7 +306,7 @@ class FreelancerApp {
     const resetAccessBtn = document.getElementById('btn-access-reset');
     if (resetAccessBtn) {
       resetAccessBtn.addEventListener('click', () => {
-        if (confirm('Apakah Anda yakin ingin melakukan reset akses? Anda harus memasukkan password akses kembali.')) {
+        if (confirm('Are you sure you want to reset access? You will need to enter the access password again.')) {
           localStorage.removeItem('alurkarya_access_granted');
           window.location.reload();
         }
@@ -357,7 +357,7 @@ class FreelancerApp {
     if (reopenOnboardingBtn) {
       reopenOnboardingBtn.addEventListener('click', () => {
         localStorage.removeItem('alurkarya_onboarding_dismissed');
-        this.triggerToast('Panduan onboarding dibuka kembali.');
+        this.triggerToast('Onboarding guide reopened.');
         if (this.activeTab === 'kanban' && this.currentView) {
           this.currentView.update();
         }

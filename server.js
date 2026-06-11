@@ -31,9 +31,12 @@ const server = http.createServer((req, res) => {
     filePath = path.join(filePath, 'index.html');
   }
 
-  // SPA fallback rewrite: if file doesn't exist, serve root level index.html
+  // SPA fallback rewrite: if file doesn't exist and has no extension (or is .html), serve root level index.html
   if (!fs.existsSync(filePath)) {
-    filePath = path.join(path.resolve(BASE_DIR), 'index.html');
+    const ext = path.extname(urlPath);
+    if (!ext || ext === '.html') {
+      filePath = path.join(path.resolve(BASE_DIR), 'index.html');
+    }
   }
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {

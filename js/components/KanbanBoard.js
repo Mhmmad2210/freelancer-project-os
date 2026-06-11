@@ -88,41 +88,41 @@ export class KanbanBoard {
       <div class="onboarding-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 1.15rem;">💡</span>
-          <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">Mulai Mengatur Project Anda</h4>
+          <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">Start Organizing Your Projects</h4>
         </div>
         <button class="onboarding-close-btn" style="color: var(--text-muted); background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 4px;">&times;</button>
       </div>
       <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 12px;">
-        Yuk, mulai tata project-mu! AlurKarya dirancang untuk membantumu melacak pekerjaan dari deal sampai lunas. Ini 4 langkah awal untuk memulai:
+        Let's organize your projects! AlurKarya is designed to help you track work from deal to payment. Here are 4 quick steps to start:
       </p>
       <div class="onboarding-steps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
         <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
           <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">1</span>
-          <span class="step-text">Catat project barumu</span>
+          <span class="step-text">Create your first project</span>
         </div>
         <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
           <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">2</span>
-          <span class="step-text">Hubungkan dengan Klien & kontrak</span>
+          <span class="step-text">Link with client & terms</span>
         </div>
         <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
           <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">3</span>
-          <span class="step-text">Tulis Next Action konkret</span>
+          <span class="step-text">Write concrete next actions</span>
         </div>
         <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
           <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">4</span>
-          <span class="step-text">Perbarui status tiap hari</span>
+          <span class="step-text">Update project stages daily</span>
         </div>
       </div>
       <div class="onboarding-footer" style="display: flex; justify-content: flex-start;">
-        <button class="btn btn-secondary btn-sm" id="btn-load-samples" style="padding: 6px 12px; font-size: 0.72rem; border-radius: var(--border-radius-sm); font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;">Isi dengan project contoh biar gak kosong</button>
+        <button class="btn btn-secondary btn-sm" id="btn-load-samples" style="padding: 6px 12px; font-size: 0.72rem; border-radius: var(--border-radius-sm); font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;">Load sample projects to get started</button>
       </div>
     `;
 
     // Event listener for load samples (destructive with confirmation)
     onboardingEl.querySelector('#btn-load-samples').addEventListener('click', () => {
-      if (confirm("Ini akan mengganti data saat ini dengan contoh project bawaan. Lanjutkan?")) {
+      if (confirm("This will replace current data with the default sample projects. Proceed?")) {
         this.store.resetToDefaults();
-        this.onTriggerToast("Workspace telah di-reset ke data contoh bawaan.", "text-success");
+        this.onTriggerToast("Workspace reset to default sample data.", "text-success");
         this.update();
       }
     });
@@ -193,12 +193,12 @@ export class KanbanBoard {
     sortSelector.className = 'sort-selector';
     sortSelector.style.cssText = 'display: flex; align-items: center; gap: 6px;';
     sortSelector.innerHTML = `
-      <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 600;">Urutkan:</span>
+      <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 600;">Sort by:</span>
       <select class="form-control" id="board-sort-select" style="font-size: 0.75rem; padding: 4px 10px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); color: var(--text-secondary); cursor: pointer; height: auto;">
         <option value="default" ${activeSortMode === 'default' ? 'selected' : ''}>Default</option>
-        <option value="dueDate" ${activeSortMode === 'dueDate' ? 'selected' : ''}>Tenggat Waktu</option>
-        <option value="value" ${activeSortMode === 'value' ? 'selected' : ''}>Harga/Value</option>
-        <option value="submitDate" ${activeSortMode === 'submitDate' ? 'selected' : ''}>Tanggal Buat</option>
+        <option value="dueDate" ${activeSortMode === 'dueDate' ? 'selected' : ''}>Due Date</option>
+        <option value="value" ${activeSortMode === 'value' ? 'selected' : ''}>Value</option>
+        <option value="submitDate" ${activeSortMode === 'submitDate' ? 'selected' : ''}>Submit Date</option>
       </select>
     `;
 
@@ -210,8 +210,8 @@ export class KanbanBoard {
     const viewModeSelector = document.createElement('div');
     viewModeSelector.className = 'view-mode-selector';
     viewModeSelector.innerHTML = `
-      <button class="view-mode-btn ${activeViewMode === 'simple' ? 'active' : ''}" id="view-mode-simple">Ringkas</button>
-      <button class="view-mode-btn ${activeViewMode === 'detail' ? 'active' : ''}" id="view-mode-detail">Lengkap</button>
+      <button class="view-mode-btn ${activeViewMode === 'simple' ? 'active' : ''}" id="view-mode-simple">Simple</button>
+      <button class="view-mode-btn ${activeViewMode === 'detail' ? 'active' : ''}" id="view-mode-detail">Detailed</button>
     `;
 
     viewModeSelector.querySelector('#view-mode-simple').addEventListener('click', () => {
@@ -375,7 +375,7 @@ export class KanbanBoard {
     // Freelancer 8-stage pipeline
     const columns = [
       { id: 'new_lead', label: 'New Lead' },
-      { id: 'proposal_sent', label: 'Proposal Sent' },
+      { id: 'proposal_sent', label: 'Queue' },
       { id: 'in_progress', label: 'In Progress' },
       { id: 'client_review', label: 'Client Review' },
       { id: 'revision', label: 'Revision' },
@@ -392,20 +392,20 @@ export class KanbanBoard {
       canvas.innerHTML = `
         <div class="empty-state-box" style="margin-top: 24px; padding: 40px 20px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); backdrop-filter: var(--glass-backdrop);">
           <div style="font-size: 2.5rem; margin-bottom: 16px; color: var(--color-primary-glow);">☕</div>
-          <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Wah, mejamu masih bersih!</h3>
+          <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">No projects yet</h3>
           <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 20px; max-width: 460px; margin-left: auto; margin-right: auto; line-height: 1.5;">
-            Belum ada project aktif yang tercatat. Jangan khawatir, kamu bisa tambahkan project barumu sekarang atau muat data contoh untuk melihat bagaimana AlurKarya membantumu mengelola workflow dari deal sampai lunas.
+            No active projects found. You can add a new project now or load demo data to see how AlurKarya helps you manage your workflow from deal to payment.
           </p>
           <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-            <button class="btn btn-primary" id="btn-empty-add-project">${getIcon('plus', '', 16)} Tambah Project Baru</button>
-            <button class="btn btn-secondary" id="btn-empty-load-demo">${getIcon('layers', '', 16)} Muat Data Contoh</button>
+            <button class="btn btn-primary" id="btn-empty-add-project">${getIcon('plus', '', 16)} Add Project</button>
+            <button class="btn btn-secondary" id="btn-empty-load-demo">${getIcon('layers', '', 16)} Load Demo Data</button>
           </div>
         </div>
       `;
       canvas.querySelector('#btn-empty-add-project').addEventListener('click', () => this.showNewProjectDrawer());
       canvas.querySelector('#btn-empty-load-demo').addEventListener('click', () => {
         this.store.addDemoProjectsNonDestructively();
-        this.onTriggerToast('Demo project berhasil dimuat.', 'text-success');
+        this.onTriggerToast('Demo projects loaded successfully.', 'text-success');
         this.update();
       });
       return;
@@ -451,6 +451,16 @@ export class KanbanBoard {
       colEl.className = `kanban-column${isColCollapsed ? ' collapsed' : ''}`;
       colEl.dataset.stageId = col.id;
 
+      const isPaymentStage = ['invoice_sent', 'waiting_payment', 'completed'].includes(col.id);
+      let budgetMarkup = '';
+      if (isPaymentStage) {
+        let suffix = '';
+        if (col.id === 'invoice_sent') suffix = ' pending';
+        else if (col.id === 'waiting_payment') suffix = ' awaiting payment';
+        else if (col.id === 'completed') suffix = ' paid';
+        budgetMarkup = `<span class="column-budget-sum" style="font-size: 0.65rem; color: var(--text-secondary);">${formatCurrency(colBudget)}${suffix}</span>`;
+      }
+
       colEl.innerHTML = `
         <div class="column-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <div class="column-title-box" style="display: flex; align-items: center; gap: 8px;">
@@ -458,7 +468,7 @@ export class KanbanBoard {
             <span class="column-badge">${colProjects.length}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="column-budget-sum" style="font-size: 0.65rem; color: var(--text-secondary);">${formatCurrency(colBudget)}</span>
+            ${budgetMarkup}
             <button type="button" class="col-toggle-btn" style="background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all var(--transition-fast);" title="${isColCollapsed ? 'Expand column' : 'Collapse column'}">
               ${getIcon(isColCollapsed ? 'chevronRight' : 'chevronDown', '', 14)}
             </button>
@@ -481,7 +491,7 @@ export class KanbanBoard {
         } else {
           const emptyPreviewEl = document.createElement('div');
           emptyPreviewEl.style.cssText = 'border: 1px dashed rgba(255,255,255,0.03); border-radius: var(--border-radius-sm); padding: 10px; text-align: center; margin-top: 10px; font-size: 0.68rem; color: var(--text-muted);';
-          emptyPreviewEl.textContent = 'Kosong';
+          emptyPreviewEl.textContent = 'Empty';
           colEl.appendChild(emptyPreviewEl);
         }
       } else {
@@ -533,11 +543,11 @@ export class KanbanBoard {
           const oldProject = state.projects.find(x => x.id === cardId);
           if (oldProject && oldProject.stage !== col.id) {
             if (col.id === 'invoice_sent' && oldProject.clientApprovalStatus !== 'Approved') {
-              this.onTriggerToast('Invoice sebaiknya dikirim setelah pekerjaan disetujui oleh client.', 'text-danger');
+              this.onTriggerToast('Invoice should be sent after the work is approved by the client.', 'text-danger');
               return;
             }
             if (col.id === 'completed' && oldProject.paymentStatus !== 'Fully Paid' && oldProject.paymentStatus !== 'Paid') {
-              this.onTriggerToast('Project hanya dapat dipindahkan ke Completed jika pembayaran sudah lunas (Fully Paid).', 'text-danger');
+              this.onTriggerToast('Projects can only be moved to Completed if payment status is fully paid.', 'text-danger');
               return;
             }
             const updates = { stage: col.id };
@@ -578,7 +588,7 @@ export class KanbanBoard {
     card.dataset.projectId = project.id;
 
     // Load active view mode (simple or detail)
-    const viewMode = isPreview ? 'simple' : (localStorage.getItem('alurkarya_board_view_mode') || 'simple');
+    const viewMode = localStorage.getItem('alurkarya_board_view_mode') || 'simple';
 
     // Apply Project Health left border
     const health = this.getProjectHealth(project);
@@ -626,13 +636,13 @@ export class KanbanBoard {
     else if (project.paymentStatus === 'Invoice overdue' || project.paymentStatus === 'Overdue') paymentPillClass = 'status-lead text-danger';
     else if (project.paymentStatus === 'Waiting payment' || project.paymentStatus === 'Waiting Payment') paymentPillClass = 'status-active text-warning';
 
-    let displayPaymentStatus = project.paymentStatus || 'Not invoiced yet';
-    if (displayPaymentStatus === 'None') displayPaymentStatus = 'Not invoiced yet';
+    let displayPaymentStatus = project.paymentStatus || 'Not Invoiced';
+    if (displayPaymentStatus === 'None') displayPaymentStatus = 'Not Invoiced';
 
     // Map stages to Indonesian/English clean label
     const stageMap = {
       'new_lead': 'New Lead',
-      'proposal_sent': 'Proposal Sent',
+      'proposal_sent': 'Queue',
       'in_progress': 'In Progress',
       'client_review': 'Client Review',
       'revision': 'Revision',
@@ -644,7 +654,7 @@ export class KanbanBoard {
 
     // Client Name & Type Fallback
     const hasClient = !!(project.clientName || project.customClientName);
-    const clientNameStr = project.clientName || project.customClientName || 'Belum pilih client';
+    const clientNameStr = project.clientName || project.customClientName || 'No client selected';
     const clientTypeStr = (hasClient && project.clientType) ? ` · ${project.clientType}` : '';
     const fullClientIdentity = `${clientNameStr}${clientTypeStr}`;
 
@@ -709,7 +719,7 @@ export class KanbanBoard {
     `;
 
     // Next Action
-    const displayNextAction = project.nextAction || 'Belum ada next action';
+    const displayNextAction = project.nextAction || 'No next action';
     const isNextActionPlaceholder = !project.nextAction;
     cardBody += `
       <div class="card-next-action" style="font-size: 0.7rem; background: ${isNextActionPlaceholder ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)'}; border: 1px ${isNextActionPlaceholder ? 'dashed' : 'solid'} rgba(255,255,255,0.04); border-radius: 6px; padding: 6px 8px; color: var(--text-secondary); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Next: ${displayNextAction}">
@@ -758,7 +768,7 @@ export class KanbanBoard {
         <div class="card-indicators-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.7rem; color: var(--text-muted); background: rgba(255,255,255,0.01); padding: 4px 6px; border-radius: 4px;">
           <div style="display: flex; align-items: center; gap: 4px;">
             ${getIcon('refresh', '', 11)}
-            <span>Revisi: ${project.revisionCount || 0}/${project.maxRevision || 'TBD'}</span>
+            <span>Revision: ${project.revisionCount || 0}/${project.maxRevision || 'TBD'}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 4px;">
             <span class="client-status-badge" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px; color: ${approvalTextColor}; display: inline-flex; align-items: center;">
@@ -775,11 +785,42 @@ export class KanbanBoard {
 
     // Budget and footer
     let paymentLabel = project.paymentStatus || 'None';
-    if (paymentLabel === 'None') paymentLabel = 'Belum ditagih';
-    else if (paymentLabel === 'DP paid' || paymentLabel === 'DP Paid') paymentLabel = 'DP dibayar';
-    else if (paymentLabel === 'Invoice overdue' || paymentLabel === 'Overdue') paymentLabel = 'Tagihan terlambat';
-    else if (paymentLabel === 'Waiting payment' || paymentLabel === 'Waiting Payment') paymentLabel = 'Menunggu pembayaran';
-    else if (paymentLabel === 'Paid' || paymentLabel === 'Fully Paid') paymentLabel = 'Lunas';
+    if (paymentLabel === 'None' || paymentLabel === 'Not invoiced') paymentLabel = 'Not Invoiced';
+    else if (paymentLabel === 'DP paid' || paymentLabel === 'DP Paid') paymentLabel = 'DP Paid';
+    else if (paymentLabel === 'Invoice overdue' || paymentLabel === 'Overdue') paymentLabel = 'Overdue';
+    else if (paymentLabel === 'Waiting payment' || paymentLabel === 'Waiting Payment') paymentLabel = 'Waiting Payment';
+    else if (paymentLabel === 'Paid' || paymentLabel === 'Fully Paid') paymentLabel = 'Paid';
+
+    const isPaymentStage = ['invoice_sent', 'waiting_payment', 'completed'].includes(project.stage);
+    let footerRightMarkup = '';
+
+    if (isPaymentStage) {
+      if (project.stage === 'completed') {
+        footerRightMarkup = `
+          <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: normal; margin-right: 2px;">Paid: ${formatCurrency(project.budget)}</span>
+          <span class="client-status-badge ${paymentPillClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">
+            ${paymentLabel}
+          </span>
+        `;
+      } else {
+        const amountToDisplay = project.invoiceAmount || project.budget;
+        const amountLabel = project.stage === 'invoice_sent' ? 'Invoice' : 'Due';
+        footerRightMarkup = `
+          <span style="font-weight: 700; color: var(--text-primary); font-size: 0.72rem; font-family: 'Plus Jakarta Sans', sans-serif; margin-right: 2px;">${amountLabel}: ${formatCurrency(amountToDisplay)}</span>
+          <span class="client-status-badge ${paymentPillClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">
+            ${paymentLabel}
+          </span>
+        `;
+      }
+    } else {
+      if (viewMode === 'detail') {
+        footerRightMarkup = `
+          <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: normal; margin-right: 2px;">Est: ${formatCurrency(project.budget)}</span>
+        `;
+      } else {
+        footerRightMarkup = '';
+      }
+    }
 
     cardBody += `
       <div class="card-footer" style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 8px; margin-top: 4px; font-size: 0.68rem;">
@@ -788,10 +829,7 @@ export class KanbanBoard {
           <span style="font-size: 0.68rem; font-weight: 600;">${dueDateMeta.text}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="font-weight: 700; color: var(--text-primary); font-size: 0.72rem; font-family: 'Plus Jakarta Sans', sans-serif; margin-right: 2px;">${formatCurrency(project.budget)}</span>
-          <span class="client-status-badge ${paymentPillClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">
-            ${paymentLabel}
-          </span>
+          ${footerRightMarkup}
         </div>
       </div>
     `;
@@ -867,7 +905,7 @@ export class KanbanBoard {
             <div class="form-group">
               <label for="p-client-select">Select Client</label>
               <select id="p-client-select" class="form-control">
-                <option value="">-- Belum pilih client --</option>
+                <option value="">-- Choose Client --</option>
                 ${clientOptions}
                 <option value="NEW_CLIENT">+ Register New Client</option>
               </select>
@@ -881,8 +919,8 @@ export class KanbanBoard {
             <div class="form-group d-none" id="new-client-type-group">
               <label for="p-new-client-type">Client Type</label>
               <select id="p-new-client-type" class="form-control">
-                <option value="General">General (Freelancer / Perorangan)</option>
-                <option value="Corporate">Corporate (Perusahaan / Group)</option>
+                <option value="General">General (Freelancer / Individual)</option>
+                <option value="Corporate">Corporate (Company / Group)</option>
               </select>
             </div>
 
@@ -903,7 +941,7 @@ export class KanbanBoard {
 
             <div class="form-group tooltip-trigger">
               <label for="p-due">Deadline Date</label>
-              <span class="tooltip-box">Deadline terdekat agar project tidak lewat waktu.</span>
+              <span class="tooltip-box">Nearest deadline to keep project on track.</span>
               <input type="date" id="p-due" class="form-control" required>
             </div>
 
@@ -927,7 +965,7 @@ export class KanbanBoard {
                 <option value="Marketing">Marketing</option>
                 <option value="Consulting">Consulting</option>
                 <option value="Copywriting">Copywriting</option>
-                <option value="CUSTOM_CATEGORY">Tambah kategori sendiri...</option>
+                <option value="CUSTOM_CATEGORY">Add custom category...</option>
               </select>
             </div>
 
@@ -943,7 +981,7 @@ export class KanbanBoard {
 
             <div class="form-group tooltip-trigger">
               <label for="p-action">Next Action Tag</label>
-              <span class="tooltip-box">Langkah berikutnya yang perlu kamu lakukan.</span>
+              <span class="tooltip-box">Next action you need to perform.</span>
               <input type="text" id="p-action" class="form-control" value="Draft and email proposal" required>
             </div>
 
@@ -1200,19 +1238,19 @@ export class KanbanBoard {
       }
     });
 
-    summarySection.innerHTML = `
+      summarySection.innerHTML = `
       <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
         <h3 style="margin: 0; font-size: 0.9rem; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 8px;">
-          📊 Ringkasan Agenda & Rencana Kerja
+          📊 Agenda & Schedule Summary
         </h3>
-        <span style="font-size: 0.7rem; color: var(--text-muted);">Tips: Detail selengkapnya dapat diakses di tab Planner Hub.</span>
+        <span style="font-size: 0.7rem; color: var(--text-muted);">Tip: More details can be accessed in the Planner Hub tab.</span>
       </div>
       <div class="dashboard-summary-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 4px;">
         <!-- Column 1: Today -->
         <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Hari Ini (${todayItems.length})</span>
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Today (${todayItems.length})</span>
           <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${todayItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Bebas agenda</span>' : todayItems.map(item => `
+            ${todayItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : todayItems.map(item => `
               <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: ${item.projId ? 'pointer' : 'default'};" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')"` : ''}>
                 <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
                 <span style="font-size: 0.58rem; color: var(--text-muted); text-transform: uppercase;">${item.label}</span>
@@ -1223,9 +1261,9 @@ export class KanbanBoard {
 
         <!-- Column 2: This Week -->
         <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Minggu Ini (${thisWeekItems.length})</span>
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">This Week (${thisWeekItems.length})</span>
           <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${thisWeekItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Tidak ada deadline</span>' : thisWeekItems.map(item => `
+            ${thisWeekItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">No deadlines</span>' : thisWeekItems.map(item => `
               <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: ${item.projId ? 'pointer' : 'default'};" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')"` : ''}>
                 <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
                 <span style="font-size: 0.58rem; color: var(--text-muted); text-transform: uppercase;">${item.label}</span>
@@ -1236,9 +1274,9 @@ export class KanbanBoard {
 
         <!-- Column 3: Upcoming Meeting -->
         <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Meeting (${upcomingMeetings.length})</span>
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Meetings (${upcomingMeetings.length})</span>
           <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${upcomingMeetings.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Tidak ada meeting</span>' : upcomingMeetings.map(item => `
+            ${upcomingMeetings.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">No meetings</span>' : upcomingMeetings.map(item => `
               <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: pointer;" onclick="window.app.projectModal.open('${item.projId}')">
                 <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
                 <span style="font-size: 0.58rem; color: var(--color-secondary); text-transform: uppercase;">${item.desc}</span>
@@ -1249,9 +1287,9 @@ export class KanbanBoard {
 
         <!-- Column 4: Due Soon -->
         <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Segera Tenggat (${dueSoonItems.length})</span>
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Due Soon (${dueSoonItems.length})</span>
           <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${dueSoonItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Aman</span>' : dueSoonItems.map(item => `
+            ${dueSoonItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : dueSoonItems.map(item => `
               <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: pointer;" onclick="window.app.projectModal.open('${item.projId}')">
                 <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
                 <span style="font-size: 0.58rem; color: var(--color-warning); text-transform: uppercase;">${item.desc}</span>
@@ -1262,9 +1300,9 @@ export class KanbanBoard {
 
         <!-- Column 5: Follow-up Needed -->
         <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Butuh Follow-Up (${followUpNeededItems.length})</span>
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Follow-up Needed (${followUpNeededItems.length})</span>
           <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${followUpNeededItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Tidak ada pending</span>' : followUpNeededItems.map(item => `
+            ${followUpNeededItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : followUpNeededItems.map(item => `
               <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: ${item.projId ? 'pointer' : 'default'};" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')"` : ''}>
                 <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
                 <span style="font-size: 0.58rem; color: var(--color-danger); text-transform: uppercase;">${item.desc}</span>
@@ -1302,13 +1340,13 @@ export class KanbanBoard {
     wrapper.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;" id="onhold-header-toggle">
         <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-          ⏸️ On Hold Project <span class="column-badge" style="font-size: 0.65rem;">${onHoldProjects.length}</span>
+          ⏸️ On Hold Projects <span class="column-badge" style="font-size: 0.65rem;">${onHoldProjects.length}</span>
         </h3>
-        <span style="font-size: 0.72rem; color: var(--text-muted);" id="onhold-toggle-label">${isCollapsed ? 'Lihat Detail' : 'Sembunyikan Detail'}</span>
+        <span style="font-size: 0.72rem; color: var(--text-muted);" id="onhold-toggle-label">${isCollapsed ? 'View Details' : 'Hide Details'}</span>
       </div>
       <div id="onhold-projects-list-container" style="display: ${isCollapsed ? 'none' : 'flex'}; flex-direction: column; gap: 10px;">
         <span class="stat-subtext" style="display: block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px;">
-          Project ini sedang ditunda sementara. Tambahkan alasan hold agar project tidak hilang dari tracking. Set follow-up date untuk mengingatkan kapan project perlu dicek kembali.
+          This project is temporarily on hold. Add a hold reason so the project does not get lost from tracking. Set a follow-up date to remind you when the project needs to be checked again.
         </span>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px;" id="onhold-grid"></div>
       </div>
@@ -1320,7 +1358,7 @@ export class KanbanBoard {
       const label = wrapper.querySelector('#onhold-toggle-label');
       const collapsed = container.style.display === 'none';
       container.style.display = collapsed ? 'flex' : 'none';
-      label.textContent = collapsed ? 'Sembunyikan Detail' : 'Lihat Detail';
+      label.textContent = collapsed ? 'Hide Details' : 'View Details';
       localStorage.setItem('alurkarya_onhold_collapsed', String(!collapsed));
     });
 
@@ -1342,11 +1380,11 @@ export class KanbanBoard {
     card.addEventListener('click', () => this.onCardClick(project.id));
 
     const title = project.title || project.name || 'Untitled Project';
-    const clientName = project.clientName || project.customClientName || 'Belum pilih client';
-    const holdReason = project.holdReason || 'Belum ada alasan hold';
+    const clientName = project.clientName || project.customClientName || 'No client selected';
+    const holdReason = project.holdReason || 'No hold reason';
     const holdDate = project.holdDate ? formatDate(project.holdDate) : 'TBD';
     const holdFollowUpDate = project.holdFollowUpDate ? formatDate(project.holdFollowUpDate) : 'TBD';
-    const deadline = project.dueDate ? formatDate(project.dueDate) : 'Belum ada deadline';
+    const deadline = project.dueDate ? formatDate(project.dueDate) : 'No deadline';
     const priority = project.priority || 'TBD';
     
     let priorityClass = 'priority-tbd';
@@ -1355,18 +1393,18 @@ export class KanbanBoard {
     else if (priority === 'High') priorityClass = 'priority-high';
     else if (priority === 'Urgent') priorityClass = 'priority-urgent';
 
-    let paymentLabel = project.paymentStatus || 'Belum ditagih';
-    if (paymentLabel === 'None') paymentLabel = 'Belum ditagih';
-    else if (paymentLabel === 'Paid' || paymentLabel === 'Fully Paid') paymentLabel = 'Lunas';
-    else if (paymentLabel === 'DP paid' || paymentLabel === 'DP Paid') paymentLabel = 'DP dibayar';
-    else if (paymentLabel === 'Invoice overdue' || paymentLabel === 'Overdue') paymentLabel = 'Tagihan terlambat';
-    else if (paymentLabel === 'Waiting payment' || paymentLabel === 'Waiting Payment') paymentLabel = 'Menunggu pembayaran';
+    let paymentLabel = project.paymentStatus || 'None';
+    if (paymentLabel === 'None' || paymentLabel === 'Not invoiced') paymentLabel = 'Not Invoiced';
+    else if (paymentLabel === 'Paid' || paymentLabel === 'Fully Paid') paymentLabel = 'Paid';
+    else if (paymentLabel === 'DP paid' || paymentLabel === 'DP Paid') paymentLabel = 'DP Paid';
+    else if (paymentLabel === 'Invoice overdue' || paymentLabel === 'Overdue') paymentLabel = 'Overdue';
+    else if (paymentLabel === 'Waiting payment' || paymentLabel === 'Waiting Payment') paymentLabel = 'Waiting Payment';
 
     card.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
         <div>
           <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">${title}</h4>
-          <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Klien: ${clientName}</span>
+          <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Client: ${clientName}</span>
         </div>
         <div style="display: flex; gap: 4px; align-items: center;">
           <span class="priority-badge ${priorityClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">${priority}</span>
@@ -1375,14 +1413,14 @@ export class KanbanBoard {
 
       <div style="font-size: 0.72rem; color: var(--text-secondary); background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 4px;">
         <div>
-          <strong style="color: var(--color-primary);">Alasan Hold:</strong>
+          <strong style="color: var(--color-primary);">Hold Reason:</strong>
           <span style="color: var(--text-secondary); font-weight: 500;">${holdReason}</span>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.02); padding-top: 4px;">
-          <div><strong style="color: var(--text-muted);">Tanggal Hold:</strong> <span style="color: var(--text-secondary);">${holdDate}</span></div>
+          <div><strong style="color: var(--text-muted);">Hold Date:</strong> <span style="color: var(--text-secondary);">${holdDate}</span></div>
           <div><strong style="color: var(--text-muted);">Follow Up:</strong> <span style="color: var(--text-secondary);">${holdFollowUpDate}</span></div>
           <div><strong style="color: var(--text-muted);">Deadline:</strong> <span style="color: var(--text-secondary);">${deadline}</span></div>
-          <div><strong style="color: var(--text-muted);">Pembayaran:</strong> <span style="color: var(--text-secondary);">${paymentLabel}</span></div>
+          <div><strong style="color: var(--text-muted);">Payment:</strong> <span style="color: var(--text-secondary);">${paymentLabel}</span></div>
         </div>
       </div>
 
@@ -1403,14 +1441,14 @@ export class KanbanBoard {
     resumeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.store.updateProject(project.id, { stage: 'in_progress' });
-      this.onTriggerToast('Project dilanjutkan (In Progress).', 'text-success');
+      this.onTriggerToast('Project resumed (In Progress).', 'text-success');
       this.update();
     });
 
     moveBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.store.updateProject(project.id, { stage: 'client_review' });
-      this.onTriggerToast('Project dipindahkan ke Client Review.', 'text-success');
+      this.onTriggerToast('Project moved to Client Review.', 'text-success');
       this.update();
     });
 

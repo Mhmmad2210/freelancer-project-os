@@ -55,7 +55,7 @@ export class ProjectModal {
     let categoryOptions = defaultCategories
       .map(tag => `<option value="${tag}" ${projectCategory === tag ? 'selected' : ''}>${tag}</option>`)
       .join('');
-    categoryOptions += `<option value="CUSTOM_CATEGORY" ${isCustomCategory ? 'selected' : ''}>Tambah kategori sendiri...</option>`;
+    categoryOptions += `<option value="CUSTOM_CATEGORY" ${isCustomCategory ? 'selected' : ''}>Add custom category...</option>`;
 
     const clients = state.clients || [];
     const clientOptions = clients.map(c => `<option value="${c.id}" ${project.clientId === c.id ? 'selected' : ''}>${c.name} (${c.businessName || 'Personal'})</option>`).join('');
@@ -88,15 +88,15 @@ export class ProjectModal {
               <!-- Category and Priority Row -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <div class="form-group">
-                  <label>Kategori Project</label>
+                  <label>Project Category</label>
                   <select class="form-control" id="m-p-category">${categoryOptions}</select>
                 </div>
                 <div class="form-group ${isCustomCategory ? '' : 'd-none'}" id="m-p-custom-category-group">
-                  <label>Kategori Kustom</label>
+                  <label>Custom Category</label>
                   <input type="text" id="m-p-custom-category" class="form-control" value="${isCustomCategory ? projectCategory : ''}" placeholder="e.g. Video Editing">
                 </div>
                 <div class="form-group">
-                  <label>Prioritas (Priority)</label>
+                  <label>Priority</label>
                   <select class="form-control" id="m-p-priority">
                     <option value="Low" ${project.priority === 'Low' ? 'selected' : ''}>Low Priority</option>
                     <option value="Medium" ${project.priority === 'Medium' ? 'selected' : ''}>Medium Priority</option>
@@ -110,12 +110,12 @@ export class ProjectModal {
               <!-- Scope Description & Notes (Collapsible) -->
               <div class="collapsible-section" id="section-description">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>${getIcon('fileText', '', 16)} Deskripsi & Scope Pekerjaan</span>
+                  <span>${getIcon('fileText', '', 16)} Description & Scope of Work</span>
                   <span class="toggle-icon">${getIcon('chevronDown', '', 14)}</span>
                 </h4>
                 <div class="collapsible-content">
                   <div class="form-group" style="margin: 0;">
-                    <textarea class="form-control" id="m-p-desc" style="min-height: 80px;" placeholder="Tulis rincian scope, brief, atau deskripsi pekerjaan...">${project.description || ''}</textarea>
+                    <textarea class="form-control" id="m-p-desc" style="min-height: 80px;" placeholder="Write details of scope, brief, or job description...">${project.description || ''}</textarea>
                   </div>
                 </div>
               </div>
@@ -123,30 +123,30 @@ export class ProjectModal {
               <!-- File & Delivery Links (Collapsible) -->
               <div class="collapsible-section" id="section-files">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>${getIcon('folder', '', 16)} Link File & Pengiriman (Delivery)</span>
+                  <span>${getIcon('folder', '', 16)} Files & Delivery Links</span>
                   <span class="toggle-icon">${getIcon('chevronDown', '', 14)}</span>
                 </h4>
                 <div class="collapsible-content">
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
-                      <label>Link Brief / Spesifikasi</label>
-                      <input type="url" id="m-p-brief-url" class="form-control" value="${project.briefLink || ''}" placeholder="Link Figma, dokumen brief, dll...">
+                      <label>Brief / Specification Link</label>
+                      <input type="url" id="m-p-brief-url" class="form-control" value="${project.briefLink || ''}" placeholder="Link to Figma, brief document, etc...">
                     </div>
                     <div class="form-group">
-                      <label>Link Folder Source / Raw</label>
-                      <input type="url" id="m-p-raw-url" class="form-control" value="${project.rawFileLink || ''}" placeholder="Link folder Google Drive raw files...">
+                      <label>Source / Raw Folder Link</label>
+                      <input type="url" id="m-p-raw-url" class="form-control" value="${project.rawFileLink || ''}" placeholder="Link to Google Drive raw files folder...">
                     </div>
                     <div class="form-group">
-                      <label>Link Draft / Staging</label>
-                      <input type="url" id="m-p-draft-url" class="form-control" value="${project.draftFileLink || ''}" placeholder="Link mockup, website staging, dll...">
+                      <label>Draft / Staging Link</label>
+                      <input type="url" id="m-p-draft-url" class="form-control" value="${project.draftFileLink || ''}" placeholder="Link to mockup, staging website, etc...">
                     </div>
                     <div class="form-group">
-                      <label>Link Pengiriman Final</label>
-                      <input type="url" id="m-p-final-url" class="form-control" value="${project.finalDeliveryLink || ''}" placeholder="Link paket file final yang disetujui...">
+                      <label>Final Delivery Link</label>
+                      <input type="url" id="m-p-final-url" class="form-control" value="${project.finalDeliveryLink || ''}" placeholder="Link to approved final file package...">
                     </div>
                     <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
-                      <label>Link Folder Aset Referensi</label>
-                      <input type="url" id="m-p-ref-url" class="form-control" value="${project.referenceFolderLink || ''}" placeholder="Link logo, panduan brand, folder referensi...">
+                      <label>Reference Asset Folder Link</label>
+                      <input type="url" id="m-p-ref-url" class="form-control" value="${project.referenceFolderLink || ''}" placeholder="Link to logos, brand guidelines, reference folders...">
                     </div>
                   </div>
                 </div>
@@ -161,99 +161,97 @@ export class ProjectModal {
                 <div class="collapsible-content">
                   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
                     <div class="form-group">
-                      <label>Tanggal Rapat</label>
+                      <label>Meeting Date</label>
                       <input type="date" id="m-p-meet-date" class="form-control" value="${project.meetingDate || ''}">
                     </div>
                     <div class="form-group">
-                      <label>Waktu Rapat</label>
+                      <label>Meeting Time</label>
                       <input type="time" id="m-p-meet-time" class="form-control" value="${project.meetingTime || ''}">
                     </div>
                     <div class="form-group">
-                      <label>Platform / Tipe Rapat</label>
+                      <label>Meeting Platform / Type</label>
                       <input type="text" id="m-p-meet-type" class="form-control" value="${project.meetingType || 'Google Meet'}" placeholder="Google Meet, WA, dll...">
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
-                      <label>Link Ruang Rapat</label>
+                      <label>Meeting Room Link</label>
                       <input type="url" id="m-p-meet-link-val" class="form-control" value="${project.meetingLink || ''}" placeholder="https://meet.google.com/abc-defg-hij">
                     </div>
                     <div class="form-group">
-                      <label>Zona Waktu Rapat</label>
+                      <label>Meeting Timezone</label>
                       <input type="text" id="m-p-meet-timezone" class="form-control" value="${project.meetingTimezone || 'Asia/Jakarta'}" placeholder="WIB, Asia/Jakarta...">
                     </div>
                   </div>
                   <div id="m-p-meet-warning" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); border-radius: var(--border-radius-sm); padding: 8px; font-size: 0.75rem; color: var(--color-danger); font-weight: 700; margin-bottom: 12px; align-items: center; gap: 6px;">
-                    ⚠️ Di luar jam kerja kamu.
+                    ⚠️ Outside your working hours.
                   </div>
 
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div class="form-group">
-                      <label>Permintaan Klien (Client Request)</label>
-                      <textarea id="m-p-client-request" class="form-control" style="min-height: 80px;" placeholder="Catatan keinginan klien...">${project.clientRequest || ''}</textarea>
+                      <label>Client Request</label>
+                      <textarea id="m-p-client-request" class="form-control" style="min-height: 80px;" placeholder="Notes on client requests...">${project.clientRequest || ''}</textarea>
                     </div>
                     <div class="form-group">
-                      <label>Poin Utama Diskusi (Key Discussion)</label>
-                      <textarea id="m-p-key-discussion" class="form-control" style="min-height: 80px;" placeholder="Poin utama diskusi...">${project.keyDiscussionPoints || ''}</textarea>
+                      <label>Key Discussion Points</label>
+                      <textarea id="m-p-key-discussion" class="form-control" style="min-height: 80px;" placeholder="Main points of discussion...">${project.keyDiscussionPoints || ''}</textarea>
                     </div>
                     <div class="form-group">
-                      <label>Keputusan Disepakati (Decisions Made)</label>
-                      <textarea id="m-p-decision-made" class="form-control" style="min-height: 80px;" placeholder="Keputusan yang disepakati...">${project.decisionMade || ''}</textarea>
+                      <label>Decisions Made</label>
+                      <textarea id="m-p-decision-made" class="form-control" style="min-height: 80px;" placeholder="Decisions agreed upon...">${project.decisionMade || ''}</textarea>
                     </div>
                     <div class="form-group">
-                      <label>Action Items (Tugas Freelancer)</label>
-                      <textarea id="m-p-action-items" class="form-control" style="min-height: 80px;" placeholder="Tugas freelancer...">${project.actionItems || ''}</textarea>
+                      <label>Action Items (Freelancer Tasks)</label>
+                      <textarea id="m-p-action-items" class="form-control" style="min-height: 80px;" placeholder="Freelancer tasks...">${project.actionItems || ''}</textarea>
                     </div>
                     <div class="form-group">
-                      <label>Kekhawatiran Klien (Client Concern)</label>
-                      <textarea id="m-p-client-concern" class="form-control" style="min-height: 80px;" placeholder="Kekhawatiran klien...">${project.clientConcern || ''}</textarea>
+                      <label>Client Concern</label>
+                      <textarea id="m-p-client-concern" class="form-control" style="min-height: 80px;" placeholder="Client concerns...">${project.clientConcern || ''}</textarea>
                     </div>
                     <div class="form-group">
-                      <label>Ekspektasi Klien (Client Expectation)</label>
-                      <textarea id="m-p-client-expectation" class="form-control" style="min-height: 80px;" placeholder="Ekspektasi klien...">${project.clientExpectation || ''}</textarea>
+                      <label>Client Expectation</label>
+                      <textarea id="m-p-client-expectation" class="form-control" style="min-height: 80px;" placeholder="Client expectations...">${project.clientExpectation || ''}</textarea>
                     </div>
                   </div>
 
                   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
                     <div class="form-group">
-                      <label>Tenggat Follow-Up Berikutnya</label>
+                      <label>Next Follow-Up Deadline</label>
                       <input type="date" id="m-p-next-followup" class="form-control" value="${project.nextFollowUpDate || ''}">
                     </div>
                     <div class="form-group">
-                      <label>Tanggal Client Review</label>
+                      <label>Client Review Date</label>
                       <input type="date" id="m-p-client-review-date" class="form-control" value="${project.clientReviewDate || ''}">
                     </div>
                     <div class="form-group">
-                      <label>Tanggal Delivery Final</label>
+                      <label>Final Delivery Date</label>
                       <input type="date" id="m-p-final-delivery-date" class="form-control" value="${project.finalDeliveryDate || ''}">
                     </div>
                   </div>
 
                   <div style="margin-top: 16px; border-top: 1px solid var(--border-subtle); padding-top: 12px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap;">
                     <span style="font-size: 0.7rem; color: var(--text-muted);">
-                      🎙️ Real AI Notetaker & Transkripsi (TODO_AFTER_LAUNCH)
+                      🎙️ Real AI Notetaker & Transcription (TODO_AFTER_LAUNCH)
                     </span>
                     <button type="button" class="btn btn-secondary" id="btn-generate-ai-prompt" style="font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
-                      ${getIcon('fileText', '', 14)} Salin AI Summary Prompt
+                      ${getIcon('fileText', '', 14)} Copy AI Summary Prompt
                     </button>
                   </div>
                 </div>
               </div>
 
-              </div>
-
               <!-- Deliverables Checklist (Always Visible) -->
               <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px; margin-top: 16px;">
-                <h4 class="detail-section-title">${getIcon('checkSquare', '', 16)} Checklist Pekerjaan (Deliverables)</h4>
+                <h4 class="detail-section-title">${getIcon('checkSquare', '', 16)} Job Checklist (Deliverables)</h4>
                 <div class="checklist-container" id="modal-checklist-list"></div>
                 <form class="checklist-add-form" id="modal-checklist-form">
-                  <input type="text" placeholder="Tambah tugas atau deliverables..." class="checklist-input" required>
-                  <button type="submit" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.8rem;">Tambah Tugas</button>
+                  <input type="text" placeholder="Add task or deliverable..." class="checklist-input" required>
+                  <button type="submit" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.8rem;">Add Task</button>
                 </form>
               </div>
 
               <!-- Revisions & Reviews (Collapsible) -->
               <div class="collapsible-section collapsed" id="section-revisions">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>${getIcon('refresh', '', 16)} Tracking Revisi & Review</span>
+                  <span>${getIcon('refresh', '', 16)} Revision & Review Tracking</span>
                   <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
                 </h4>
                 <div class="collapsible-content">
@@ -261,7 +259,7 @@ export class ProjectModal {
                   <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                       <span style="font-size: 0.85rem; font-weight: 700;">
-                        Revisi: ${project.revisionRound} / ${project.maxRevisionRounds || 'TBD'}
+                        Revisions: ${project.revisionRound} / ${project.maxRevisionRounds || 'TBD'}
                       </span>
                     </div>
                     
@@ -271,10 +269,10 @@ export class ProjectModal {
 
                     ${project.revisionRound >= project.maxRevisionRounds ? `
                       <div style="color: var(--color-danger); font-size: 0.72rem; font-weight: 600; line-height: 1.3;">
-                        ⚠️ Jatah revisi sudah mencapai batas maksimal.
+                        ⚠️ Revision limit has been reached.
                       </div>
                       <div style="color: var(--text-muted); font-size: 0.68rem; margin-top: 2px; line-height: 1.3;">
-                        Pertimbangkan untuk membuat quotation tambahan jika revisi di luar scope.
+                        Consider creating an additional quotation if revision is out of scope.
                       </div>
                     ` : ''}
                   </div>
@@ -282,14 +280,14 @@ export class ProjectModal {
                   <div class="deliverables-box-list" id="modal-deliverables-list"></div>
                   
                   <form id="modal-deliverable-form" style="margin-top: 10px; display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 6px;">
-                    <input type="text" id="d-title" class="checklist-input" placeholder="Nama deliverable..." required>
+                    <input type="text" id="d-title" class="checklist-input" placeholder="Deliverable name..." required>
                     <input type="url" id="d-url" class="checklist-input" placeholder="Link URL..." required>
                     <button type="submit" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.8rem;">Link File</button>
                   </form>
                   
                   <div class="form-group" style="margin-top: 14px; margin-bottom: 0;">
-                    <label>Catatan Revisi / Masukan (Feedback)</label>
-                    <textarea class="form-control" id="m-p-rev-notes" style="min-height: 60px;" placeholder="Rangkum masukan dan feedback klien di sini...">${project.revisionNotes || ''}</textarea>
+                    <label>Revision Notes / Feedback</label>
+                    <textarea class="form-control" id="m-p-rev-notes" style="min-height: 60px;" placeholder="Summarize client feedback and input here...">${project.revisionNotes || ''}</textarea>
                   </div>
                 </div>
               </div>
@@ -297,7 +295,7 @@ export class ProjectModal {
               <!-- Invoices & Billing (Collapsible) -->
               <div class="collapsible-section collapsed" id="section-invoices">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>${getIcon('fileText', '', 16)} Invoice & Rincian Tagihan</span>
+                  <span>${getIcon('fileText', '', 16)} Invoice & Billing Details</span>
                   <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
                 </h4>
                 
@@ -309,7 +307,7 @@ export class ProjectModal {
                       <input type="text" id="m-p-invoice-num" class="form-control" value="${project.invoiceNumber || ''}" placeholder="INV-001">
                     </div>
                     <div class="form-group">
-                      <label>Invoice Amount (Rp)</label>
+                      <label>Invoice Amount</label>
                       <input type="number" id="m-p-invoice-amount" class="form-control" value="${project.invoiceAmount || 0}" placeholder="Amount">
                     </div>
                     <div class="form-group">
@@ -349,8 +347,8 @@ export class ProjectModal {
             <div class="drawer-column-sidebar">
               <!-- Helper locked stage warning message banner -->
               ${isLockedStage ? `
-                <div class="locked-helper-banner" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px 14px; border-radius: 6px; font-size: 0.75rem; color: var(--color-accent); margin-bottom: 16px;">
-                  💡 Untuk mengubah detail proposal, pindahkan project kembali ke <strong>Proposal Sent</strong>.
+                <div class="locked-helper-banner" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); padding: 10px 14px; border-radius: 6px; font-size: 0.75rem; color: var(--color-accent); margin-bottom: 16px;">
+                  💡 To change details of this project, move it back to <strong>Queue</strong>.
                 </div>
               ` : ''}
 
@@ -359,7 +357,7 @@ export class ProjectModal {
                 <div class="form-group" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); padding: 16px; border-radius: 8px; margin-bottom: 16px; text-align: center;">
                   <span style="font-size: 1.5rem; display: block; margin-bottom: 6px;">🎉</span>
                   <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-success); display: block; margin-bottom: 6px;">
-                    Project selesai dan semua pembayaran sudah diterima.
+                    Project completed and all payments received.
                   </span>
                   <button class="btn btn-secondary btn-sm" id="m-btn-reopen-project" style="margin: 0 auto; padding: 4px 12px; font-size: 0.72rem; justify-content: center; width: 100%;">
                     Reopen Project
@@ -371,38 +369,38 @@ export class ProjectModal {
               ${project.stage === 'completed' ? `
                 <div class="form-group" style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.25); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
                   <label class="drawer-meta-title" style="color: var(--color-primary); font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                    ${getIcon('upload', '', 14)} Link Pengiriman Raw / Source File
+                    ${getIcon('upload', '', 14)} Link to Send Raw / Source File
                   </label>
                   <p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
-                    Upload link raw/source file yang akan dikirim atau diunduh oleh klien.
+                    Upload the raw/source file link to be sent or downloaded by the client.
                   </p>
                   <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <input type="url" id="m-p-raw-download-link" class="form-control" style="font-size: 0.78rem;" value="${project.rawFileDownloadLink || ''}" placeholder="Contoh: link Google Drive">
+                    <input type="url" id="m-p-raw-download-link" class="form-control" style="font-size: 0.78rem;" value="${project.rawFileDownloadLink || ''}" placeholder="Example: Google Drive link">
                     <button type="button" class="btn btn-primary btn-sm" id="m-btn-save-raw-download" style="padding: 6px 12px; font-size: 0.72rem; justify-content: center; width: 100%; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
-                      Simpan Link
+                      Save Link
                     </button>
                   </div>
                 </div>
 
                 <!-- Completed checklist -->
                 <div class="form-group" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 14px; border-radius: 8px; margin-bottom: 16px;">
-                  <label class="drawer-meta-title" style="margin-bottom: 8px;">Checklist Pengiriman Selesai</label>
+                  <label class="drawer-meta-title" style="margin-bottom: 8px;">Delivery Completion Checklist</label>
                   <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.78rem;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                       <span style="color: var(--color-success);">${getIcon('check', '', 12)}</span>
-                      <span>Klien menyetujui</span>
+                      <span>Client approved</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                       <span style="color: var(--color-success);">${getIcon('check', '', 12)}</span>
-                      <span>Invoice terkirim</span>
+                      <span>Invoice sent</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                       <span style="color: var(--color-success);">${getIcon('check', '', 12)}</span>
-                      <span>Pembayaran diterima</span>
+                      <span>Payment received</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                       <span style="color: var(--color-success);">${getIcon('check', '', 12)}</span>
-                      <span>File final dikirimkan</span>
+                      <span>Final files sent</span>
                     </div>
                   </div>
                 </div>
@@ -412,15 +410,15 @@ export class ProjectModal {
               ${project.stage === 'revision' ? `
                 <div class="form-group" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.25); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
                   <span style="font-size: 0.7rem; font-weight: 700; color: var(--color-accent); text-transform: uppercase; display: block; margin-bottom: 8px;">
-                    🔄 Pelacakan Revisi
+                    🔄 Revision Tracking
                   </span>
                   
                   <button class="btn btn-primary" id="btn-work-revision" style="background: var(--color-accent); border-color: rgba(245,158,11,0.25); width: 100%; justify-content: center; margin-bottom: 12px; font-size: 0.78rem;">
-                    🛠️ Kerjakan Revisi
+                    🛠️ Work on Revision
                   </button>
 
                   <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-size: 0.75rem; font-weight: 700;">Revisi: ${project.revisionRound} / ${project.maxRevisionRounds || 'TBD'}</span>
+                    <span style="font-size: 0.75rem; font-weight: 700;">Revisions: ${project.revisionRound} / ${project.maxRevisionRounds || 'TBD'}</span>
                     <div style="display: flex; gap: 6px;">
                       <button class="invoice-btn-small" id="m-p-rev-dec" style="padding: 2px 8px; font-weight: 800;">-</button>
                       <button class="invoice-btn-small" id="m-p-rev-inc" style="padding: 2px 8px; font-weight: 800;" ${project.maxRevisionRounds && project.revisionRound >= project.maxRevisionRounds ? 'disabled' : ''}>+</button>
@@ -433,14 +431,14 @@ export class ProjectModal {
               ${project.stage === 'waiting_payment' ? `
                 <div class="form-group" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
                   <span style="font-size: 0.7rem; font-weight: 700; color: var(--color-accent); text-transform: uppercase; display: block; margin-bottom: 8px;">
-                    💳 Reminder Pembayaran
+                    💳 Payment Reminder
                   </span>
                   <p style="font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 12px;">
-                    Tahap ini digunakan sebagai reminder pembayaran, bukan tahap pengerjaan project.
+                    This stage is used as a payment reminder, not for working on the project.
                   </p>
                   
                   <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Status Pembayaran</label>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Payment Status</label>
                     <select class="form-control" id="m-p-payment-status-select" style="font-size: 0.75rem; padding: 4px 6px;">
                       <option value="Waiting Payment" ${project.paymentStatus === 'Waiting Payment' || project.paymentStatus === 'Waiting payment' ? 'selected' : ''}>Waiting Payment</option>
                       <option value="DP Paid" ${project.paymentStatus === 'DP Paid' || project.paymentStatus === 'DP paid' ? 'selected' : ''}>DP Paid</option>
@@ -451,28 +449,28 @@ export class ProjectModal {
                   </div>
                   
                   <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Jatuh Tempo Pembayaran</label>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Payment Due Date</label>
                     <input type="date" id="m-p-payment-due" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.paymentDueDate || ''}">
                   </div>
                   
                   <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Tanggal Follow-up Terakhir</label>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Last Follow-up Date</label>
                     <input type="date" id="m-p-last-followup" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.lastFollowUpDate || ''}">
                   </div>
 
                   <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Tanggal Follow-up Berikutnya</label>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Next Follow-up Date</label>
                     <input type="date" id="m-p-next-followup" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.nextFollowUpDate || ''}">
                   </div>
 
                   <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Link Bukti Pembayaran</label>
-                    <input type="url" id="m-p-payment-receipt" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.paymentReceiptLink || ''}" placeholder="Link Google Drive bukti bayar...">
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Payment Receipt Link</label>
+                    <input type="url" id="m-p-payment-receipt" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.paymentReceiptLink || ''}" placeholder="Google Drive link of proof of payment...">
                   </div>
 
                   <div class="form-group" style="margin-bottom: 0;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Catatan Pengingat</label>
-                    <textarea id="m-p-reminder-note" class="form-control" style="font-size: 0.75rem; padding: 4px 6px; min-height: 40px;" placeholder="Catatan follow-up...">${project.reminderNote || ''}</textarea>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Reminder Notes</label>
+                    <textarea id="m-p-reminder-note" class="form-control" style="font-size: 0.75rem; padding: 4px 6px; min-height: 40px;" placeholder="Follow-up notes...">${project.reminderNote || ''}</textarea>
                   </div>
                 </div>
               ` : ''}
@@ -480,7 +478,7 @@ export class ProjectModal {
               <!-- Client Approval Status (Visible starting from Client Review) -->
               ${['client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed'].includes(project.stage) ? `
                 <div class="form-group" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-                  <label class="drawer-meta-title" style="color: var(--color-success); font-weight: 700;">Status Persetujuan Klien</label>
+                  <label class="drawer-meta-title" style="color: var(--color-success); font-weight: 700;">Client Approval Status</label>
                   <select class="form-control" id="m-p-approval-status-select" style="font-size: 0.75rem; padding: 4px 6px;">
                     <option value="Pending Review" ${project.clientApprovalStatus === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
                     <option value="Approved" ${project.clientApprovalStatus === 'Approved' ? 'selected' : ''}>Approved</option>
@@ -491,10 +489,10 @@ export class ProjectModal {
 
               <!-- Main Stage Selection -->
               <div class="form-group">
-                <label class="drawer-meta-title">Status Tahap Project</label>
+                <label class="drawer-meta-title">Project Stage Status</label>
                 <select class="form-control" id="m-p-stage">
                   <option value="new_lead" ${project.stage === 'new_lead' ? 'selected' : ''}>New Lead</option>
-                  <option value="proposal_sent" ${project.stage === 'proposal_sent' ? 'selected' : ''}>Proposal Sent</option>
+                  <option value="proposal_sent" ${project.stage === 'proposal_sent' ? 'selected' : ''}>Queue</option>
                   <option value="in_progress" ${project.stage === 'in_progress' ? 'selected' : ''}>In Progress</option>
                   <option value="client_review" ${project.stage === 'client_review' ? 'selected' : ''}>Client Review</option>
                   <option value="revision" ${project.stage === 'revision' ? 'selected' : ''}>Revision</option>
@@ -512,18 +510,18 @@ export class ProjectModal {
                     ⏸️ On Hold Project
                   </span>
                   <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
-                    Project ini sedang ditunda sementara. Tambahkan alasan hold agar project tidak hilang dari tracking. Set follow-up date untuk mengingatkan kapan project perlu dicek kembali.
+                    This project is temporarily on hold. Add a hold reason so the project does not get lost from tracking. Set a follow-up date to remind you when the project needs to be checked again.
                   </p>
                   <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Alasan Hold</label>
-                    <input type="text" id="m-p-hold-reason" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.holdReason || ''}" placeholder="Contoh: Menunggu keputusan budget klien...">
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Hold Reason</label>
+                    <input type="text" id="m-p-hold-reason" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.holdReason || ''}" placeholder="Example: Waiting for client budget decision...">
                   </div>
                   <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Tanggal Hold</label>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Hold Date</label>
                     <input type="date" id="m-p-hold-date" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.holdDate || ''}">
                   </div>
                   <div class="form-group" style="margin-bottom: 12px;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Follow Up Berikutnya</label>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Next Follow Up</label>
                     <input type="date" id="m-p-hold-followup" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.holdFollowUpDate || ''}">
                   </div>
                   <div style="display: flex; gap: 6px;">
@@ -537,91 +535,105 @@ export class ProjectModal {
                 </div>
               ` : ''}
 
-              <!-- Client Dropdown Selection -->
-              <div class="form-group">
-                <label class="drawer-meta-title">Nama Klien / Perusahaan</label>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <select class="form-control" id="m-p-client-select" style="font-size: 0.75rem; padding: 4px 6px;">
-                    <option value="">-- Belum pilih client --</option>
-                    ${clientOptions}
-                    <option value="NEW_CLIENT">+ Register New Client</option>
-                  </select>
-                  
-                  <div id="m-p-client-details-row" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <span class="client-status-badge status-active" id="m-p-client-type-badge" style="font-size: 0.65rem; padding: 2px 6px;">
-                      Tipe: ${project.clientType || 'General'}
-                    </span>
+              <!-- Project Setup Card Wrapper -->
+              <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
+                <h4 style="margin: 0; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                  ${getIcon('settings', '', 14)} Project Setup
+                </h4>
+
+                <!-- Client Dropdown Selection -->
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="drawer-meta-title">Client Name / Company</label>
+                  <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <select class="form-control" id="m-p-client-select" style="font-size: 0.75rem; padding: 4px 6px;">
+                      <option value="">-- No client selected --</option>
+                      ${clientOptions}
+                      <option value="NEW_CLIENT">+ Register New Client</option>
+                    </select>
+                    
+                    <div id="m-p-client-details-row" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                      <span class="client-status-badge status-active" id="m-p-client-type-badge" style="font-size: 0.65rem; padding: 2px 6px;">
+                        Type: ${project.clientType || 'General'}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                <!-- Register New Client inline inputs -->
+                <div id="m-p-new-client-inline-group" class="d-none" style="background: rgba(255,255,255,0.01); border: 1px dashed var(--border-subtle); padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">New Client Name</label>
+                    <input type="text" id="m-p-new-client-name" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" placeholder="Example: Sarah Connor">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Client Type</label>
+                    <select id="m-p-new-client-type" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;">
+                      <option value="General">General (Freelancer / Individual)</option>
+                      <option value="Corporate">Corporate (Company / Group)</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-sm" id="m-btn-save-client-inline" style="padding: 4px 8px; font-size: 0.7rem; justify-content: center; width: 100%;">
+                    Save & Connect Client
+                  </button>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="drawer-meta-title" style="margin: 0;">Estimated Value</label>
+                     <span id="m-p-budget-formatted" style="font-size: 0.82rem; font-weight: 700; color: var(--color-secondary); font-family: 'Plus Jakarta Sans', sans-serif;">${formatCurrency(project.budget)}</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px;">
+                     <span style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary);">Rp</span>
+                     <input type="number" class="form-control" id="m-p-budget" value="${project.budget}" style="padding: 6px 10px; font-weight: 700; color: var(--color-secondary); font-family: 'Plus Jakarta Sans', sans-serif;" min="0">
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="drawer-meta-title tooltip-trigger">
+                    Deadline
+                    <span class="tooltip-box">Deadline for completion to track overdue status.</span>
+                  </label>
+                  <input type="date" class="form-control" id="m-p-due" value="${project.dueDate}" style="font-size: 0.8rem; padding: 6px 8px;">
+                </div>
               </div>
 
-              <!-- Register New Client inline inputs -->
-              <div id="m-p-new-client-inline-group" class="d-none" style="background: rgba(255,255,255,0.01); border: 1px dashed var(--border-subtle); padding: 10px; border-radius: 8px; margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
-                <div class="form-group" style="margin: 0;">
-                  <label style="font-size: 0.7rem; color: var(--text-muted);">Nama Klien Baru</label>
-                  <input type="text" id="m-p-new-client-name" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" placeholder="Contoh: Sarah Connor">
-                </div>
-                <div class="form-group" style="margin: 0;">
-                  <label style="font-size: 0.7rem; color: var(--text-muted);">Tipe Klien</label>
-                  <select id="m-p-new-client-type" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;">
-                    <option value="General">General (Freelancer / Perorangan)</option>
-                    <option value="Corporate">Corporate (Perusahaan / Group)</option>
+              <!-- Payment Tracking Card Wrapper -->
+              <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
+                <h4 style="margin: 0; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                  ${getIcon('creditCard', '', 14)} Payment Tracking
+                </h4>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="drawer-meta-title tooltip-trigger">
+                    Payment Status
+                    <span class="tooltip-box">Current payment tracking state for cash flow monitoring.</span>
+                  </label>
+                  <select class="form-control" id="m-p-payment-status">
+                    <option value="None" ${project.paymentStatus === 'None' ? 'selected' : ''}>Not Invoiced</option>
+                    <option value="DP paid" ${project.paymentStatus === 'DP paid' ? 'selected' : ''}>DP Paid</option>
+                    <option value="Invoice overdue" ${project.paymentStatus === 'Invoice overdue' ? 'selected' : ''}>Overdue</option>
+                    <option value="Waiting payment" ${project.paymentStatus === 'Waiting payment' ? 'selected' : ''}>Waiting Payment</option>
+                    <option value="Paid" ${project.paymentStatus === 'Paid' ? 'selected' : ''}>Paid</option>
                   </select>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" id="m-btn-save-client-inline" style="padding: 4px 8px; font-size: 0.7rem; justify-content: center; width: 100%;">
-                  Simpan & Hubungkan Klien
-                </button>
-              </div>
-
-              <div class="form-group">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <label class="drawer-meta-title" style="margin: 0;">Nilai Kontrak Project (IDR)</label>
-                   <span id="m-p-budget-formatted" style="font-size: 0.82rem; font-weight: 700; color: var(--color-secondary); font-family: 'Plus Jakarta Sans', sans-serif;">${formatCurrency(project.budget)}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px;">
-                   <span style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary);">Rp</span>
-                   <input type="number" class="form-control" id="m-p-budget" value="${project.budget}" style="padding: 6px 10px; font-weight: 700; color: var(--color-secondary); font-family: 'Plus Jakarta Sans', sans-serif;" min="0">
-                </div>
               </div>
 
               <div class="form-group">
                 <label class="drawer-meta-title tooltip-trigger">
-                  Tenggat Waktu (Deadline)
-                  <span class="tooltip-box">Batas waktu penyelesaian proyek untuk memantau status keterlambatan (overdue).</span>
+                  Next Action
+                  <span class="tooltip-box">The immediate concrete task to move the project forward.</span>
                 </label>
-                <input type="date" class="form-control" id="m-p-due" value="${project.dueDate}" style="font-size: 0.8rem; padding: 6px 8px;">
-              </div>
-
-              <div class="form-group">
-                <label class="drawer-meta-title tooltip-trigger">
-                  Status Pembayaran
-                  <span class="tooltip-box">Status penagihan saat ini untuk memantau kelancaran arus kas proyek.</span>
-                </label>
-                <select class="form-control" id="m-p-payment-status">
-                  <option value="None" ${project.paymentStatus === 'None' ? 'selected' : ''}>Belum ditagih</option>
-                  <option value="DP paid" ${project.paymentStatus === 'DP paid' ? 'selected' : ''}>DP dibayar</option>
-                  <option value="Invoice overdue" ${project.paymentStatus === 'Invoice overdue' ? 'selected' : ''}>Tagihan terlambat</option>
-                  <option value="Waiting payment" ${project.paymentStatus === 'Waiting payment' ? 'selected' : ''}>Menunggu pembayaran</option>
-                  <option value="Paid" ${project.paymentStatus === 'Paid' ? 'selected' : ''}>Lunas</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="drawer-meta-title tooltip-trigger">
-                  Next Action (Langkah Berikutnya)
-                  <span class="tooltip-box">Tugas konkret terdekat yang harus dilakukan untuk melanjutkan progres proyek.</span>
-                </label>
-                <input type="text" class="form-control" id="m-p-next-action" value="${project.nextAction || ''}" placeholder="Apa tugas berikutnya?">
+                <input type="text" class="form-control" id="m-p-next-action" value="${project.nextAction || ''}" placeholder="What is the next task?">
               </div>
 
               <!-- Info Tambahan Container -->
               <div class="collapsible-section collapsed" id="section-info-tambahan" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" id="header-info-tambahan">
                   <div>
-                    <h4 class="drawer-meta-title" style="margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">Info Tambahan</h4>
-                    <span style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px;">Catatan internal, meeting link, dan termin pembayaran</span>
+                    <h4 class="drawer-meta-title" style="margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">Additional Info</h4>
+                    <span style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px;">Internal notes, meeting link, and payment terms</span>
                   </div>
-                  <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-info-tambahan" style="padding: 4px 8px; font-size: 0.7rem;">Lihat Detail</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-info-tambahan" style="padding: 4px 8px; font-size: 0.7rem;">View Details</button>
                 </div>
                 <div class="collapsible-content" id="content-info-tambahan" style="margin-top: 12px; display: none; flex-direction: column; gap: 12px;">
                   
@@ -641,17 +653,17 @@ export class ProjectModal {
                             <option value="Microsoft Teams" ${project.meetingPlatform === 'Microsoft Teams' ? 'selected' : ''}>Teams</option>
                             <option value="Slack Call" ${project.meetingPlatform === 'Slack Call' ? 'selected' : ''}>Slack</option>
                             <option value="WhatsApp" ${project.meetingPlatform === 'WhatsApp' ? 'selected' : ''}>WhatsApp Call</option>
-                            <option value="Other" ${project.meetingPlatform === 'Other' ? 'selected' : ''}>Lainnya</option>
+                            <option value="Other" ${project.meetingPlatform === 'Other' ? 'selected' : ''}>Other</option>
                           </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 8px;">
-                          <label style="font-size: 0.68rem;">URL Link Meeting</label>
+                          <label style="font-size: 0.68rem;">Meeting Link URL</label>
                           <input type="url" id="m-p-meet-link" class="form-control" style="font-size: 0.72rem; padding: 4px 6px;" value="${project.meetingLink || ''}" placeholder="https://meet.google.com/abc-defg">
                         </div>
                       </div>
                       <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-size: 0.68rem;">Catatan Sesi</label>
-                        <input type="text" id="m-p-meet-notes" class="form-control" style="font-size: 0.72rem; padding: 4px 6px;" value="${project.meetingNotes || ''}" placeholder="Password, catatan...">
+                        <label style="font-size: 0.68rem;">Session Notes</label>
+                        <input type="text" id="m-p-meet-notes" class="form-control" style="font-size: 0.72rem; padding: 4px 6px;" value="${project.meetingNotes || ''}" placeholder="Password, notes...">
                       </div>
                     </div>
                   </div>
@@ -659,16 +671,16 @@ export class ProjectModal {
                   <!-- Referensi Quotation -->
                   <div class="collapsible-section collapsed" id="section-quotation-ref" style="border: 1px solid rgba(255,255,255,0.03); padding: 8px; border-radius: 6px;">
                     <h5 class="collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin: 0; font-size: 0.75rem; color: var(--text-secondary);">
-                      <span>Referensi Quotation</span>
+                      <span>Quotation Reference</span>
                       <span class="toggle-icon">${getIcon('chevronRight', '', 12)}</span>
                     </h5>
                     <div class="collapsible-content" style="margin-top: 8px;">
                       <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary);">
-                          ${project.quotationId ? `Terhubung (QT-${project.quotationId.substring(0,3)})` : 'Tidak ada referensi'}
+                          ${project.quotationId ? `Connected (QT-${project.quotationId.substring(0,3)})` : 'No reference'}
                         </span>
                         <span class="client-status-badge ${project.quotationId ? 'status-active text-success' : 'status-completed'}" style="font-size: 0.62rem; padding: 1px 6px;">
-                          ${project.quotationStatus || 'Tidak ada'}
+                          ${project.quotationStatus || 'None'}
                         </span>
                       </div>
                     </div>
@@ -677,39 +689,39 @@ export class ProjectModal {
                   <!-- Termin & Metode Pembayaran -->
                   <div class="collapsible-section collapsed" id="section-payment-terms" style="border: 1px solid rgba(255,255,255,0.03); padding: 8px; border-radius: 6px;">
                     <h5 class="collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin: 0; font-size: 0.75rem; color: var(--text-secondary);">
-                      <span>Termin & Metode Pembayaran</span>
+                      <span>Payment Terms & Methods</span>
                       <span class="toggle-icon">${getIcon('chevronRight', '', 12)}</span>
                     </h5>
                     <div class="collapsible-content" style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
-                      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <label style="font-size: 0.72rem; color: var(--text-secondary); margin: 0;">Uang Muka / DP (%)</label>
+                       <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                        <label style="font-size: 0.72rem; color: var(--text-secondary); margin: 0;">Down Payment / DP (%)</label>
                         <input type="number" class="form-control" id="m-p-dp-percent" value="${project.downPaymentPercent}" style="width: 70px; padding: 4px 6px; font-size: 0.72rem; text-align: center;" min="0" max="100">
                       </div>
                       <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <span style="font-size: 0.72rem; color: var(--text-secondary);">Jumlah DP</span>
+                        <span style="font-size: 0.72rem; color: var(--text-secondary);">DP Amount</span>
                         <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted);" id="m-p-dp-amount-lbl">${formatCurrency(project.downPaymentAmount)}</span>
                       </div>
                       <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <label style="font-size: 0.72rem; color: var(--text-secondary); margin: 0;">Milestone Termin (Rp)</label>
+                        <label style="font-size: 0.72rem; color: var(--text-secondary); margin: 0;">Milestone Payment Amount (Rp)</label>
                         <input type="number" class="form-control" id="m-p-mile-amount" value="${project.milestonePaymentAmount}" style="width: 100px; padding: 4px 6px; font-size: 0.72rem; text-align: right;" min="0">
                       </div>
                       <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <span style="font-size: 0.72rem; color: var(--text-secondary);">Pembayaran Akhir</span>
+                        <span style="font-size: 0.72rem; color: var(--text-secondary);">Final Payment</span>
                         <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted);" id="m-p-final-amount-lbl">${formatCurrency(project.finalPaymentAmount)}</span>
                       </div>
                       <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <span style="font-size: 0.72rem; color: var(--color-danger); font-weight: 600;">Sisa Tagihan</span>
+                        <span style="font-size: 0.72rem; color: var(--color-danger); font-weight: 600;">Remaining Balance</span>
                         <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-danger);" id="m-p-remaining-lbl">${formatCurrency(project.remainingBalance)}</span>
                       </div>
                       <div class="form-group" style="margin-top: 6px; margin-bottom: 0;">
-                        <label style="font-size: 0.68rem;">Metode Pembayaran</label>
+                        <label style="font-size: 0.68rem;">Payment Method</label>
                         <select class="form-control" id="m-p-pay-method" style="font-size: 0.72rem; padding: 4px 6px;">
                           <option value="Bank Transfer" ${project.paymentMethod === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
                           <option value="E-Wallet" ${project.paymentMethod === 'E-Wallet' ? 'selected' : ''}>E-Wallet</option>
                           <option value="PayPal" ${project.paymentMethod === 'PayPal' ? 'selected' : ''}>PayPal</option>
                           <option value="Wise" ${project.paymentMethod === 'Wise' ? 'selected' : ''}>Wise Transfer</option>
                           <option value="Manual Payment" ${project.paymentMethod === 'Manual Payment' ? 'selected' : ''}>Manual cash/cheque</option>
-                          <option value="Other" ${project.paymentMethod === 'Other' ? 'selected' : ''}>Lainnya</option>
+                          <option value="Other" ${project.paymentMethod === 'Other' ? 'selected' : ''}>Other</option>
                         </select>
                       </div>
                     </div>
@@ -718,12 +730,12 @@ export class ProjectModal {
                   <!-- Catatan Internal -->
                   <div class="collapsible-section collapsed" id="section-internal-notes" style="border: 1px solid rgba(255,255,255,0.03); padding: 8px; border-radius: 6px;">
                     <h5 class="collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin: 0; font-size: 0.75rem; color: var(--text-secondary);">
-                      <span>Catatan Internal (Privat)</span>
+                      <span>Internal Notes (Private)</span>
                       <span class="toggle-icon">${getIcon('chevronRight', '', 12)}</span>
                     </h5>
                     <div class="collapsible-content" style="margin-top: 8px;">
                       <div class="form-group" style="margin: 0;">
-                        <textarea class="form-control" id="m-p-internal-notes" style="min-height: 60px; font-size: 0.75rem;" placeholder="Catatan privat klien, info login, dll...">${project.internalNotes || ''}</textarea>
+                        <textarea class="form-control" id="m-p-internal-notes" style="min-height: 60px; font-size: 0.75rem;" placeholder="Private client notes, login info, etc...">${project.internalNotes || ''}</textarea>
                       </div>
                     </div>
                   </div>
@@ -731,20 +743,20 @@ export class ProjectModal {
                   <!-- Portfolio Showcase Settings -->
                   <div class="collapsible-section collapsed" id="section-portfolio-settings" style="border: 1px solid rgba(255,255,255,0.03); padding: 8px; border-radius: 6px;">
                     <h5 class="collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin: 0; font-size: 0.75rem; color: var(--text-secondary);">
-                      <span>Pengaturan Portofolio</span>
+                      <span>Portfolio Settings</span>
                       <span class="toggle-icon">${getIcon('chevronRight', '', 12)}</span>
                     </h5>
                     <div class="collapsible-content" style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
                       <div class="switch-control-row" style="margin-top: 4px; padding: 4px 6px;">
-                        <span class="switch-control-label" style="font-size: 0.75rem;">Tampilkan Secara Publik</span>
+                        <span class="switch-control-label" style="font-size: 0.75rem;">Show Publicly</span>
                         <label class="switch-widget">
                           <input type="checkbox" id="m-p-portfolio" ${project.portfolioShowcase ? 'checked' : ''}>
                           <span class="switch-slider"></span>
                         </label>
                       </div>
                       <div class="form-group ${project.portfolioShowcase ? '' : 'd-none'}" id="portfolio-desc-wrapper" style="margin-top: 8px; margin-bottom: 0;">
-                        <label style="font-size: 0.68rem;">Studi Kasus</label>
-                        <textarea class="form-control" id="m-p-portfolio-desc" style="font-size: 0.75rem; min-height: 50px;" placeholder="Tulis ringkasan studi kasus...">${project.portfolioDescription || ''}</textarea>
+                        <label style="font-size: 0.68rem;">Case Study</label>
+                        <textarea class="form-control" id="m-p-portfolio-desc" style="font-size: 0.75rem; min-height: 50px;" placeholder="Write a summary of the case study...">${project.portfolioDescription || ''}</textarea>
                       </div>
                     </div>
                   </div>
@@ -754,7 +766,7 @@ export class ProjectModal {
 
               <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: auto;">
                 <button class="btn btn-secondary" id="m-btn-delete" style="width: 100%; border-color: rgba(239, 68, 68, 0.2); color: var(--color-danger); justify-content: center; gap: 4px; padding: 8px;">
-                  ${getIcon('trash', '', 13)} Hapus Project
+                  ${getIcon('trash', '', 13)} Delete Project
                 </button>
               </div>
 
@@ -841,7 +853,7 @@ export class ProjectModal {
       const newName = newNameEl ? newNameEl.value.trim() : '';
       const newType = newTypeEl ? newTypeEl.value : 'General';
       if (!newName) {
-        this.onTriggerToast('Nama client tidak boleh kosong.', 'text-warning');
+        this.onTriggerToast('Client name cannot be empty.', 'text-warning');
         return;
       }
 
@@ -858,7 +870,7 @@ export class ProjectModal {
         clientName: newClient.name,
         clientType: newType
       });
-      this.onTriggerToast('Client baru berhasil dibuat dan ditautkan.', 'text-success');
+      this.onTriggerToast('New client successfully created and linked.', 'text-success');
       this.onStateChange();
       this.render();
     });
@@ -895,14 +907,14 @@ export class ProjectModal {
       if (nextStage === 'invoice_sent') {
         if (project.clientApprovalStatus !== 'Approved') {
           e.target.value = project.stage; // Revert selection
-          this.onTriggerToast('Invoice sebaiknya dikirim setelah pekerjaan disetujui oleh client.', 'text-danger');
+          this.onTriggerToast('Invoice should be sent after client approval.', 'text-danger');
           return;
         }
       }
       if (nextStage === 'completed') {
         if (project.paymentStatus !== 'Fully Paid' && project.paymentStatus !== 'Paid') {
           e.target.value = project.stage; // Revert selection
-          this.onTriggerToast('Project hanya dapat dipindahkan ke Completed jika pembayaran sudah lunas (Fully Paid).', 'text-danger');
+          this.onTriggerToast('Project can only be completed if payment status is Paid.', 'text-danger');
           return;
         }
       }
@@ -1042,14 +1054,14 @@ export class ProjectModal {
         this.onStateChange();
         this.render();
       } else {
-        this.onTriggerToast('Jatah revisi sudah mencapai batas maksimal.', 'text-warning');
+        this.onTriggerToast('Revision limit has been reached.', 'text-warning');
       }
     });
 
     // Revision CTA
     addListener('#btn-work-revision', 'click', () => {
       this.store.updateProject(project.id, { stage: 'in_progress' });
-      this.onTriggerToast('Project dikembalikan ke In Progress untuk pengerjaan revisi.', 'text-success');
+      this.onTriggerToast('Project returned to In Progress for revision work.', 'text-success');
       this.onStateChange();
       this.render();
     });
@@ -1077,7 +1089,7 @@ export class ProjectModal {
       const paymentTerms = modalOverlay.querySelector('#m-p-payment-terms').value.trim();
 
       if (!invoiceNumber) {
-        this.onTriggerToast('Nomor invoice tidak boleh kosong.', 'text-warning');
+        this.onTriggerToast('Invoice number cannot be empty.', 'text-warning');
         return;
       }
 
@@ -1100,16 +1112,16 @@ export class ProjectModal {
         paymentStatus: 'Waiting payment'
       });
 
-      this.onTriggerToast('Invoice sudah dikirim. Project dipindahkan ke Waiting Payment.', 'text-success');
+      this.onTriggerToast('Invoice sent. Project moved to Waiting Payment.', 'text-success');
       this.onStateChange();
       this.render();
     });
 
     // Reopen Project CTA (Completed stage)
     addListener('#m-btn-reopen-project', 'click', () => {
-      if (confirm('Apakah Anda yakin ingin membuka kembali project ini?')) {
+      if (confirm('Are you sure you want to reopen this project?')) {
         this.store.updateProject(project.id, { stage: 'in_progress', paymentStatus: 'DP paid' });
-        this.onTriggerToast('Project dibuka kembali.', 'text-success');
+        this.onTriggerToast('Project reopened.', 'text-success');
         this.onStateChange();
         this.render();
       }
@@ -1128,6 +1140,8 @@ export class ProjectModal {
       this.store.updateProject(project.id, { paymentStatus: e.target.value });
       this.onStateChange();
     });
+
+    // TODO_AFTER_LAUNCH: Add Indonesian language toggle
 
     addListener('#m-p-payment-due', 'change', (e) => {
       this.store.updateProject(project.id, { paymentDueDate: e.target.value });
@@ -1167,13 +1181,13 @@ export class ProjectModal {
 
     addListener('#m-btn-resume-hold', 'click', () => {
       this.store.updateProject(project.id, { stage: 'in_progress' });
-      this.onTriggerToast('Project dilanjutkan (In Progress).', 'text-success');
+      this.onTriggerToast('Project resumed (In Progress).', 'text-success');
       this.onStateChange();
       this.render();
     });
     addListener('#m-btn-waiting-client-hold', 'click', () => {
       this.store.updateProject(project.id, { stage: 'client_review' });
-      this.onTriggerToast('Project dipindahkan ke Client Review.', 'text-success');
+      this.onTriggerToast('Project moved to Client Review.', 'text-success');
       this.onStateChange();
       this.render();
     });
@@ -1187,10 +1201,10 @@ export class ProjectModal {
         const isCollapsed = wrapper.classList.toggle('collapsed');
         if (isCollapsed) {
           content.style.display = 'none';
-          btn.textContent = 'Lihat Detail';
+          btn.textContent = 'View Details';
         } else {
           content.style.display = 'flex';
-          btn.textContent = 'Sembunyikan Detail';
+          btn.textContent = 'Hide Details';
         }
       }
     };
@@ -1345,33 +1359,33 @@ export class ProjectModal {
     // AI summary prompt generator copy listener
     addListener('#btn-generate-ai-prompt', 'click', () => {
       const p = this.store.getState().projects.find(x => x.id === project.id) || project;
-      const template = `Bantu saya merangkum catatan meeting client berikut menjadi format kerja freelancer.
+      const template = `Please help me summarize the following client meeting notes into a structured freelancer action plan.
 
-Tolong hasilkan:
-1. Ringkasan meeting
-2. Kebutuhan utama client
-3. Keputusan yang sudah disepakati
-4. Action items untuk freelancer (Saya)
-5. Action items untuk client
-6. Potensi scope creep atau hal yang perlu diklarifikasi
-7. Next action paling penting
-8. Draft follow-up message ke client
+Please generate:
+1. Meeting Summary
+2. Core client requirements
+3. Key agreed decisions
+4. Action items for the freelancer (Me)
+5. Action items for the client
+6. Potential scope creep or items needing clarification
+7. Most critical next action
+8. Draft follow-up message to the client
 
-Catatan meeting:
+Meeting Notes:
 - Project: ${p.title}
-- Tanggal/Waktu Rapat: ${p.meetingDate || 'TBD'} ${p.meetingTime || ''} (${p.meetingTimezone || 'Asia/Jakarta'})
-- Jenis Rapat: ${p.meetingType || 'Google Meet'}
-- Permintaan Klien: ${p.clientRequest || 'TBD'}
-- Poin Utama Diskusi: ${p.keyDiscussionPoints || 'TBD'}
-- Keputusan Disepakati: ${p.decisionMade || 'TBD'}
-- Kekhawatiran Klien: ${p.clientConcern || 'TBD'}
-- Ekspektasi Klien: ${p.clientExpectation || 'TBD'}
+- Meeting Date/Time: ${p.meetingDate || 'TBD'} ${p.meetingTime || ''} (${p.meetingTimezone || 'Asia/Jakarta'})
+- Meeting Type: ${p.meetingType || 'Google Meet'}
+- Client Request: ${p.clientRequest || 'TBD'}
+- Key Discussion Points: ${p.keyDiscussionPoints || 'TBD'}
+- Agreed Decisions: ${p.decisionMade || 'TBD'}
+- Client Concerns: ${p.clientConcern || 'TBD'}
+- Client Expectations: ${p.clientExpectation || 'TBD'}
 
-Gunakan bahasa Indonesia yang profesional, jelas, dan sopan.
-Jangan membuat klaim atau keputusan yang tidak ada di catatan.`;
+Use a professional, clear, and polite tone.
+Do not make assumptions or claims not explicitly mentioned in the notes.`;
 
       navigator.clipboard.writeText(template).then(() => {
-        this.onTriggerToast('AI Summary Prompt berhasil disalin ke clipboard!', 'text-success');
+        this.onTriggerToast('AI Summary Prompt successfully copied to clipboard!', 'text-success');
       }).catch(err => {
         console.error('Failed to copy text: ', err);
         alert(template);
