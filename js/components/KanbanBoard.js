@@ -22,6 +22,10 @@ export class KanbanBoard {
     // Bind Drag & Drop contexts
     this.draggedCardId = null;
     this.expandedCardIds = new Set(JSON.parse(localStorage.getItem('alurkarya_expanded_cards') || '[]'));
+    
+    // Columns collapsed state (default all collapsed/peek mode on load)
+    this.collapsedColumns = new Set(['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed']);
+    localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
   }
 
   getProjectHealth(project) {
@@ -42,6 +46,38 @@ export class KanbanBoard {
       return { label: 'Not Invoiced', class: 'health-not-invoiced', color: 'var(--text-muted)' };
     }
     return { label: 'On Track', class: 'health-on-track', color: 'var(--color-secondary)' };
+  }
+
+  getPreviewProject(colProjects) {
+    if (colProjects.length === 0) return null;
+
+    // 1. Overdue projects
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const overdueProj = colProjects.find(p => p.dueDate && new Date(p.dueDate) < today && p.stage !== 'completed' && p.stage !== 'on_hold');
+    if (overdueProj) return overdueProj;
+
+    // 2. Need Action projects (health is Need Action)
+    const needActionProj = colProjects.find(p => {
+      const h = this.getProjectHealth(p);
+      return h.label === 'Need Action';
+    });
+    if (needActionProj) return needActionProj;
+
+    // 3. Urgent / High priority
+    const priorityProj = colProjects.find(p => p.priority === 'Urgent' || p.priority === 'High');
+    if (priorityProj) return priorityProj;
+
+    // 4. Nearest deadline
+    const deadlineProj = [...colProjects].filter(p => p.dueDate).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))[0];
+    if (deadlineProj) return deadlineProj;
+
+    // 5. Highest value
+    const valueProj = [...colProjects].sort((a, b) => b.budget - a.budget)[0];
+    if (valueProj) return valueProj;
+
+    // 6. First project in the column
+    return colProjects[0];
   }
 
   createOnboardingSection() {
@@ -197,8 +233,29 @@ export class KanbanBoard {
     addBtn.innerHTML = `${getIcon('plus', '', 18)} Add Project`;
     addBtn.addEventListener('click', () => this.showNewProjectDrawer());
 
+    // Global Expand/Collapse All controls
+    const globalToggles = document.createElement('div');
+    globalToggles.className = 'view-mode-selector';
+    globalToggles.innerHTML = `
+      <button class="view-mode-btn" id="btn-collapse-all" style="font-size: 0.75rem; padding: 6px 10px;" title="Collapse All Columns">Collapse All</button>
+      <button class="view-mode-btn" id="btn-expand-all" style="font-size: 0.75rem; padding: 6px 10px;" title="Expand All Columns">Expand All</button>
+    `;
+
+    globalToggles.querySelector('#btn-collapse-all').addEventListener('click', () => {
+      this.collapsedColumns = new Set(['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed']);
+      localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
+      this.renderBoardOnly();
+    });
+
+    globalToggles.querySelector('#btn-expand-all').addEventListener('click', () => {
+      this.collapsedColumns.clear();
+      localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
+      this.renderBoardOnly();
+    });
+
     rightControls.appendChild(sortSelector);
     rightControls.appendChild(viewModeSelector);
+    rightControls.appendChild(globalToggles);
     rightControls.appendChild(addBtn);
 
     controlRibbon.appendChild(searchWrapper);
@@ -388,36 +445,110 @@ export class KanbanBoard {
       }
 
       const colBudget = colProjects.reduce((sum, p) => sum + p.budget, 0);
+      const isColCollapsed = this.collapsedColumns.has(col.id);
 
       const colEl = document.createElement('div');
-      colEl.className = 'kanban-column';
+      colEl.className = `kanban-column${isColCollapsed ? ' collapsed' : ''}`;
       colEl.dataset.stageId = col.id;
 
       colEl.innerHTML = `
-        <div class="column-header">
-          <div class="column-title-box">
+        <div class="column-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div class="column-title-box" style="display: flex; align-items: center; gap: 8px;">
             <span class="column-title" title="${col.label}">${col.label}</span>
             <span class="column-badge">${colProjects.length}</span>
           </div>
-          <span class="column-budget-sum" style="font-size: 0.65rem;">${formatCurrency(colBudget)}</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="column-budget-sum" style="font-size: 0.65rem; color: var(--text-secondary);">${formatCurrency(colBudget)}</span>
+            <button type="button" class="col-toggle-btn" style="background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all var(--transition-fast);" title="${isColCollapsed ? 'Expand column' : 'Collapse column'}">
+              ${getIcon(isColCollapsed ? 'chevronRight' : 'chevronDown', '', 14)}
+            </button>
+          </div>
         </div>
         <div class="column-cards-list" id="list-${col.id.replace(/\s+/g, '-')}"></div>
       `;
 
       const listEl = colEl.querySelector(`.column-cards-list`);
 
-      // Fill Column Projects
-      colProjects.forEach(p => {
-        const card = this.createProjectCard(p);
-        listEl.appendChild(card);
-      });
+      if (isColCollapsed) {
+        listEl.style.display = 'none';
+        
+        // Render preview project
+        const previewProj = this.getPreviewProject(colProjects);
+        if (previewProj) {
+          const previewEl = document.createElement('div');
+          previewEl.className = 'column-preview-item';
+          previewEl.style.cssText = 'background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(255,255,255,0.04); border-radius: var(--border-radius-md); padding: 10px; cursor: pointer; margin-top: 10px; display: flex; flex-direction: column; gap: 4px; transition: border-color var(--transition-fast);';
+          
+          const health = this.getProjectHealth(previewProj);
+          const priorityVal = previewProj.priority || 'TBD';
+          const clientNameStr = previewProj.clientName || previewProj.customClientName || 'Belum pilih client';
 
-      if (colProjects.length === 0) {
-        listEl.innerHTML = `
-          <div style="flex: 1; display: flex; align-items: center; justify-content: center; border: 1px dashed rgba(255,255,255,0.03); border-radius: var(--border-radius-md); padding: 16px; text-align: center; min-height: 70px;">
-            <span style="font-size: 0.68rem; color: var(--text-muted);">Drop cards here</span>
-          </div>
-        `;
+          previewEl.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span class="health-indicator-dot" style="width: 5px; height: 5px; border-radius: 50%; background-color: ${health.color};"></span>
+                <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">${health.label}</span>
+              </div>
+              <span class="priority-badge" style="font-size: 0.58rem; padding: 1px 4px; border-radius: 3px; transform: scale(0.9); transform-origin: right center;">${priorityVal}</span>
+            </div>
+            <strong style="font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;" title="${previewProj.title}">${previewProj.title}</strong>
+            <div style="font-size: 0.68rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${clientNameStr}">${clientNameStr}</div>
+            ${previewProj.dueDate ? `
+              <div style="font-size: 0.62rem; color: ${health.label === 'Overdue' ? 'var(--color-danger)' : 'var(--color-warning)'}; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                ${getIcon('clock', health.label === 'Overdue' ? 'text-danger' : 'text-warning', 10)} Due: ${formatDate(previewProj.dueDate)}
+              </div>
+            ` : ''}
+          `;
+
+          previewEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.onCardClick(previewProj.id);
+          });
+
+          // subtle hover border effect
+          previewEl.addEventListener('mouseenter', () => {
+            previewEl.style.borderColor = 'rgba(139, 92, 246, 0.2)';
+          });
+          previewEl.addEventListener('mouseleave', () => {
+            previewEl.style.borderColor = 'rgba(255,255,255,0.04)';
+          });
+
+          colEl.appendChild(previewEl);
+        } else {
+          const emptyPreviewEl = document.createElement('div');
+          emptyPreviewEl.style.cssText = 'border: 1px dashed rgba(255,255,255,0.03); border-radius: var(--border-radius-sm); padding: 10px; text-align: center; margin-top: 10px; font-size: 0.68rem; color: var(--text-muted);';
+          emptyPreviewEl.textContent = 'Kosong';
+          colEl.appendChild(emptyPreviewEl);
+        }
+      } else {
+        // Fill Column Projects
+        colProjects.forEach(p => {
+          const card = this.createProjectCard(p);
+          listEl.appendChild(card);
+        });
+
+        if (colProjects.length === 0) {
+          listEl.innerHTML = `
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; border: 1px dashed rgba(255,255,255,0.03); border-radius: var(--border-radius-md); padding: 16px; text-align: center; min-height: 70px;">
+              <span style="font-size: 0.68rem; color: var(--text-muted);">Drop cards here</span>
+            </div>
+          `;
+        }
+      }
+
+      // Column level expand/collapse toggle action
+      const toggleBtn = colEl.querySelector('.col-toggle-btn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (this.collapsedColumns.has(col.id)) {
+            this.collapsedColumns.delete(col.id);
+          } else {
+            this.collapsedColumns.add(col.id);
+          }
+          localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
+          this.renderBoardOnly();
+        });
       }
 
       // Drag over effect handlers

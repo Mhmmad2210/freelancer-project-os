@@ -2133,4 +2133,20 @@ body.no-scroll {
   box-shadow: 0 0 10px var(--color-primary-glow) !important;
 }
 
+/* Collapsed Kanban Column styles */
+.kanban-column.collapsed {
+  flex: 0 0 200px !important;
+  min-height: fit-content !important;
+  height: fit-content !important;
+  padding-bottom: 12px;
+}
+
+@media (max-width: 1024px) {
+  .kanban-column.collapsed {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    margin-bottom: 12px;
+  }
+}
+
 
