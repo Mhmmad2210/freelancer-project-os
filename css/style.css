@@ -39,10 +39,10 @@
   --text-muted: hsl(215, 12%, 45%);
   
   /* Glassmorphism & Shadow Tokens */
-  --glass-bg: rgba(15, 23, 42, 0.45);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-backdrop: blur(14px);
-  --shadow-premium: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+  --glass-bg: rgba(11, 17, 32, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-backdrop: blur(20px);
+  --shadow-premium: 0 16px 40px 0 rgba(0, 0, 0, 0.6);
   --shadow-inset: inset 0 1px 1px rgba(255, 255, 255, 0.05);
   
   /* Dimensions */
@@ -71,12 +71,39 @@ html, body {
 }
 
 body {
-  background-color: var(--bg-primary);
+  background: radial-gradient(circle at 50% 50%, hsl(224, 60%, 8%) 0%, hsl(224, 75%, 2%) 100%) fixed;
   color: var(--text-primary);
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   line-height: 1.5;
   height: 100vh;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+body::before, body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(140px);
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.15;
+}
+
+body::before {
+  width: 400px;
+  height: 400px;
+  top: 10%;
+  left: 20%;
+  background: var(--color-primary);
+}
+
+body::after {
+  width: 500px;
+  height: 500px;
+  bottom: 10%;
+  right: 15%;
+  background: var(--color-secondary);
 }
 
 img, svg, video {
@@ -130,13 +157,18 @@ button {
 /* --- Sidebar --- */
 .sidebar {
   width: var(--sidebar-width);
-  background-color: var(--bg-secondary);
-  border-right: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  margin: 16px 8px 16px 16px;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-premium), 0 0 30px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   z-index: 100;
-  transition: transform var(--transition-normal);
+  transition: transform var(--transition-normal), margin var(--transition-normal), border-radius var(--transition-normal);
 }
 
 .sidebar-header {
@@ -188,9 +220,10 @@ button {
 
 .menu-item.active {
   color: var(--text-primary);
-  background: rgba(139, 92, 246, 0.08);
-  border-left: 3px solid var(--color-primary);
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.02) 100%) !important;
+  border-left: 3px solid var(--color-primary) !important;
   padding-left: 11px;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-footer {
@@ -247,6 +280,14 @@ button {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  margin: 16px 16px 16px 8px;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-premium), 0 0 30px rgba(0,0,0,0.2);
+  transition: margin var(--transition-normal), border-radius var(--transition-normal);
 }
 
 /* --- Top Header --- */
@@ -260,6 +301,7 @@ button {
   background-color: rgba(15, 23, 42, 0.2);
   backdrop-filter: blur(10px);
   z-index: 10;
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
 }
 
 .header-title-container h1 {
@@ -403,15 +445,18 @@ button {
 }
 
 .kanban-column {
-  flex: 0 0 260px;
-  background: rgba(15, 23, 42, 0.2);
-  border: 1px solid var(--border-subtle);
+  flex: 0 0 280px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
   border-radius: var(--border-radius-lg);
   padding: 12px;
   display: flex;
   flex-direction: column;
   max-height: 100%;
   transition: all var(--transition-fast);
+  box-shadow: var(--shadow-inset);
 }
 
 .kanban-column.drag-over {
@@ -467,14 +512,14 @@ button {
 }
 
 .project-card {
-  background: rgba(30, 41, 59, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: hsl(222, 47%, 9%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
   border-radius: var(--border-radius-md);
   padding: 12px;
   cursor: grab;
   position: relative;
   transition: all var(--transition-fast);
-  box-shadow: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -687,11 +732,13 @@ button {
 
 /* --- Collapsible Sections Inside Project Modal --- */
 .collapsible-section {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
   border-radius: var(--border-radius-md);
   margin-bottom: 14px;
-  background: rgba(15, 23, 42, 0.15);
+  background: rgba(15, 23, 42, 0.3) !important;
   overflow: hidden;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.01);
+  transition: border-color var(--transition-fast);
 }
 
 .collapsible-header {
@@ -726,13 +773,16 @@ button {
 .focus-module-box {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
   border-radius: var(--border-radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow-premium);
+  box-shadow: var(--shadow-premium), 0 0 30px rgba(139, 92, 246, 0.02);
   display: flex;
   flex-direction: column;
   gap: 16px;
   height: fit-content;
+  transition: box-shadow var(--transition-normal);
 }
 
 .focus-row-list {
@@ -1134,15 +1184,17 @@ button {
 }
 
 .modal-container {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: var(--glass-backdrop) !important;
+  -webkit-backdrop-filter: var(--glass-backdrop) !important;
   border-radius: var(--border-radius-lg);
   width: 90%;
   max-width: 700px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-premium);
+  box-shadow: var(--shadow-premium), 0 0 50px rgba(139, 92, 246, 0.05);
   transform: translateY(20px);
   transition: transform var(--transition-normal);
 }
@@ -1594,9 +1646,25 @@ textarea.form-control {
     bottom: 0;
     left: 0;
     transform: translateX(-100%);
+    margin: 0 !important;
+    border-radius: 0 !important;
+    height: 100% !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    background: var(--bg-secondary) !important;
   }
   .sidebar.active {
     transform: translateX(0);
+  }
+  .main-canvas {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    background: var(--bg-primary) !important;
+  }
+  .top-header {
+    border-radius: 0 !important;
   }
 }
 
@@ -1979,6 +2047,90 @@ body.no-scroll {
   font-family: 'Plus Jakarta Sans', sans-serif;
   display: inline-block;
   margin-right: 4px;
+}
+
+/* ==========================================================================
+   GLASS ISLAND ADDITIONAL OVERRIDES & MICRO-GLOW EFFECT
+   ========================================================================== */
+.dashboard-summary-section {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: var(--glass-backdrop) !important;
+  -webkit-backdrop-filter: var(--glass-backdrop) !important;
+  border-radius: var(--border-radius-lg) !important;
+  box-shadow: var(--shadow-premium), 0 0 24px rgba(6, 182, 212, 0.02) !important;
+}
+
+.summary-col {
+  background: rgba(15, 23, 42, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  border-radius: var(--border-radius-md) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.02) !important;
+  transition: border-color var(--transition-fast) !important;
+}
+
+.summary-col:hover {
+  border-color: rgba(6, 182, 212, 0.15) !important;
+}
+
+.summary-item {
+  background: hsl(222, 33%, 10%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 6px !important;
+  color: var(--text-primary) !important;
+  transition: transform var(--transition-fast), border-color var(--transition-fast) !important;
+}
+
+.summary-item:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary-glow) !important;
+  background: hsl(222, 33%, 12%) !important;
+}
+
+.calendar-day-col {
+  background: rgba(15, 23, 42, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  border-radius: var(--border-radius-md) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.01) !important;
+  transition: border-color var(--transition-fast);
+}
+
+.calendar-day-col:hover {
+  border-color: rgba(6, 182, 212, 0.15) !important;
+}
+
+#calendar-grid-container > div > div {
+  background: rgba(15, 23, 42, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  border-radius: var(--border-radius-sm) !important;
+  transition: all var(--transition-fast);
+}
+
+#calendar-grid-container > div > div:hover {
+  border-color: rgba(139, 92, 246, 0.15) !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+}
+
+/* Ensure smooth transitions for buttons and tabs */
+.btn, .cal-switch-btn, .menu-item {
+  transition: all var(--transition-normal) !important;
+}
+
+/* Add a very subtle glass glow to active settings panel in planner */
+#availability-form {
+  position: relative;
+}
+
+/* Enhances visual contrast of text fields inside glass modal */
+.form-control {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast) !important;
+}
+
+.form-control:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 10px var(--color-primary-glow) !important;
 }
 
 
