@@ -3,6 +3,8 @@
    ========================================================================== */
 
 import { generateId } from './utils.js';
+import { applyTemplateProjects } from './components/FreelancerTemplates.js';
+
 
 /**
  * Seed data generator with 9 realistic freelance projects in Indonesian Rupiah (IDR).
@@ -480,6 +482,19 @@ export class WorkspaceStore {
           return inv;
         });
 
+        this.clients = this.clients.map(c => {
+          if (c.clientPreference === undefined) { c.clientPreference = ''; migrated = true; }
+          if (c.communicationStyle === undefined) { c.communicationStyle = ''; migrated = true; }
+          if (c.paymentBehavior === undefined) { c.paymentBehavior = ''; migrated = true; }
+          if (c.revisionPattern === undefined) { c.revisionPattern = ''; migrated = true; }
+          if (c.deliveryPreference === undefined) { c.deliveryPreference = ''; migrated = true; }
+          if (c.lastProjectSummary === undefined) { c.lastProjectSummary = ''; migrated = true; }
+          if (c.lastMeetingSummary === undefined) { c.lastMeetingSummary = ''; migrated = true; }
+          if (c.importantNotes === undefined) { c.importantNotes = ''; migrated = true; }
+          if (c.clientRiskNotes === undefined) { c.clientRiskNotes = ''; migrated = true; }
+          return c;
+        });
+
         if (migrated) {
           this.saveState();
         }
@@ -827,6 +842,15 @@ export class WorkspaceStore {
       status: clientData.status || 'Lead',
       lastFollowUpDate: clientData.lastFollowUpDate || new Date().toISOString().split('T')[0],
       notes: clientData.notes || '',
+      clientPreference: clientData.clientPreference || '',
+      communicationStyle: clientData.communicationStyle || '',
+      paymentBehavior: clientData.paymentBehavior || '',
+      revisionPattern: clientData.revisionPattern || '',
+      deliveryPreference: clientData.deliveryPreference || '',
+      lastProjectSummary: clientData.lastProjectSummary || '',
+      lastMeetingSummary: clientData.lastMeetingSummary || '',
+      importantNotes: clientData.importantNotes || '',
+      clientRiskNotes: clientData.clientRiskNotes || '',
       createdAt: new Date().toISOString().split('T')[0]
     };
     this.clients.push(newClient);
@@ -1005,6 +1029,10 @@ export class WorkspaceStore {
     this.availability = { ...this.availability, ...updates };
     this.saveState();
     this.notifyListeners();
+  }
+
+  loadTemplateProjects(roleName) {
+    return applyTemplateProjects(this, roleName);
   }
 }
 export const store = new WorkspaceStore();

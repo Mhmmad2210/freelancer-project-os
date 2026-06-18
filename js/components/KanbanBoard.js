@@ -87,53 +87,100 @@ export class KanbanBoard {
     onboardingEl.innerHTML = `
       <div class="onboarding-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.15rem;">💡</span>
-          <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">Start Organizing Your Projects</h4>
+          <span style="font-size: 1.15rem;">🚀</span>
+          <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; font-weight: 800; color: var(--text-primary);">Start in 3 steps</h4>
         </div>
-        <button class="onboarding-close-btn" style="color: var(--text-muted); background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 4px;">&times;</button>
+        <button class="onboarding-close-btn" style="color: var(--text-muted); background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 4px;" title="Dismiss Onboarding">&times;</button>
       </div>
-      <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 12px;">
-        Let's organize your projects! AlurKarya is designed to help you track work from deal to payment. Here are 4 quick steps to start:
-      </p>
-      <div class="onboarding-steps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
-        <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
-          <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">1</span>
-          <span class="step-text">Create your first project</span>
+      
+      <div class="onboarding-steps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 16px;">
+        <div class="onboarding-step" style="display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
+          <span style="font-size: 0.72rem; color: var(--color-primary); font-weight: 700; text-transform: uppercase;">Step 1: Add your active projects</span>
+          <span style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">Input client, deadline, priority, and next action.</span>
         </div>
-        <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
-          <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">2</span>
-          <span class="step-text">Link with client & terms</span>
+        <div class="onboarding-step" style="display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
+          <span style="font-size: 0.72rem; color: var(--color-secondary); font-weight: 700; text-transform: uppercase;">Step 2: Move projects through the workflow</span>
+          <span style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">Use New Lead, Queue, In Progress, Client Review, Revision, Invoice Sent, Waiting Payment, On Hold, and Completed.</span>
         </div>
-        <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
-          <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">3</span>
-          <span class="step-text">Write concrete next actions</span>
-        </div>
-        <div class="onboarding-step" style="display: flex; align-items: center; gap: 8px;">
-          <span class="step-num" style="font-family: 'Plus Jakarta Sans', sans-serif;">4</span>
-          <span class="step-text">Update project stages daily</span>
+        <div class="onboarding-step" style="display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
+          <span style="font-size: 0.72rem; color: var(--color-accent); font-weight: 700; text-transform: uppercase;">Step 3: Focus on what matters this week</span>
+          <span style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">Use Weekly Focus and Planner Hub to see deadlines, meetings, invoice follow-ups, and on-hold projects.</span>
         </div>
       </div>
-      <div class="onboarding-footer" style="display: flex; justify-content: flex-start;">
-        <button class="btn btn-secondary btn-sm" id="btn-load-samples" style="padding: 6px 12px; font-size: 0.72rem; border-radius: var(--border-radius-sm); font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;">Load sample projects to get started</button>
+
+      <div class="onboarding-footer" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-primary btn-sm" id="onboarding-btn-add" style="padding: 6px 12px; font-size: 0.75rem;">Add Project</button>
+        <button class="btn btn-secondary btn-sm" id="onboarding-btn-diagnose" style="padding: 6px 12px; font-size: 0.75rem;">Diagnose My Workflow</button>
+        <button class="btn btn-secondary btn-sm" id="onboarding-btn-demo" style="padding: 6px 12px; font-size: 0.75rem;">Load Demo Workspace</button>
       </div>
     `;
 
-    // Event listener for load samples (destructive with confirmation)
-    onboardingEl.querySelector('#btn-load-samples').addEventListener('click', () => {
-      if (confirm("This will replace current data with the default sample projects. Proceed?")) {
-        this.store.resetToDefaults();
-        this.onTriggerToast("Workspace reset to default sample data.", "text-success");
+    // Event listeners
+    onboardingEl.querySelector('#onboarding-btn-add').addEventListener('click', () => {
+      this.showNewProjectDrawer();
+    });
+
+    onboardingEl.querySelector('#onboarding-btn-diagnose').addEventListener('click', () => {
+      if (window.app && typeof window.app.openDiagnoseModal === 'function') {
+        window.app.openDiagnoseModal();
+      }
+    });
+
+    onboardingEl.querySelector('#onboarding-btn-demo').addEventListener('click', () => {
+      if (confirm("This will load non-destructive demo projects to your workspace. Existing projects will not be deleted. Proceed?")) {
+        this.store.addDemoProjectsNonDestructively();
+        this.onTriggerToast("Demo projects loaded successfully.", "text-success");
         this.update();
       }
     });
 
-    // Close button event listener
     onboardingEl.querySelector('.onboarding-close-btn').addEventListener('click', () => {
       onboardingEl.style.display = 'none';
       localStorage.setItem('alurkarya_onboarding_dismissed', 'true');
     });
 
     return onboardingEl;
+  }
+
+  createDiagnoseResultCard(result) {
+    const card = document.createElement('div');
+    card.className = 'diagnose-result-panel';
+    card.style.cssText = 'background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: var(--border-radius-lg); padding: 18px; margin-bottom: 16px; position: relative;';
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+          ⚡ Diagnose Results: ${result.freelancerType} Workspace
+        </h4>
+        <button class="diagnose-close-btn" style="color: var(--text-muted); background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 0 4px;" title="Clear Diagnose Result">&times;</button>
+      </div>
+      <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 12px;">
+        Your main bottleneck is <strong>${result.bottleneck}</strong>. Recommendation: ${result.recommendation}
+      </p>
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 0.72rem; color: var(--text-muted);">
+          🎯 Suggested Next Action: <span style="color: var(--color-primary); font-weight: 600;">${result.nextAction}</span>
+        </span>
+        <button class="btn btn-secondary btn-sm" id="btn-diagnose-apply-template" style="padding: 4px 10px; font-size: 0.7rem;">
+          Load ${result.template} Template
+        </button>
+      </div>
+    `;
+
+    card.querySelector('.diagnose-close-btn').addEventListener('click', () => {
+      localStorage.removeItem('alurkarya_workflow_diagnose_result');
+      this.update();
+    });
+
+    card.querySelector('#btn-diagnose-apply-template').addEventListener('click', async () => {
+      if (confirm(`This will add sample projects for the "${result.template}" template. Existing projects will not be deleted. Proceed?`)) {
+        const { applyTemplateProjects } = await import('./FreelancerTemplates.js');
+        applyTemplateProjects(this.store, result.template);
+        this.onTriggerToast(`${result.template} template loaded successfully.`, "text-success");
+        this.update();
+      }
+    });
+
+    return card;
   }
 
   update() {
@@ -156,6 +203,18 @@ export class KanbanBoard {
     if (!onboardingDismissed) {
       const onboardingEl = this.createOnboardingSection();
       dashboardEl.appendChild(onboardingEl);
+    }
+
+    // Renders Diagnose Result Card if exists
+    const diagnoseResultStr = localStorage.getItem('alurkarya_workflow_diagnose_result');
+    if (diagnoseResultStr) {
+      try {
+        const diagnoseResult = JSON.parse(diagnoseResultStr);
+        const diagnoseCard = this.createDiagnoseResultCard(diagnoseResult);
+        dashboardEl.appendChild(diagnoseCard);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     // Renders Stats Metrics Row
@@ -1238,77 +1297,244 @@ export class KanbanBoard {
       }
     });
 
-      summarySection.innerHTML = `
+    // 6. Waiting Payment
+    const waitingPaymentItems = [];
+    activeProjects.forEach(p => {
+      if (p.stage === 'waiting_payment') {
+        waitingPaymentItems.push({
+          type: 'project',
+          title: p.title,
+          projId: p.id,
+          desc: 'Awaiting payment kickoff',
+          date: p.dueDate || '',
+          value: p.budget || 0,
+          nextFollowUpDate: p.nextFollowUpDate || '',
+          isOverdue: false
+        });
+      }
+    });
+    invoices.forEach(inv => {
+      if (inv.status === 'Sent' || inv.status === 'Overdue') {
+        const isOverdue = inv.status === 'Overdue' || (inv.dueDate && inv.dueDate < todayStr);
+        waitingPaymentItems.push({
+          type: 'invoice',
+          title: `Inv: ${inv.invoiceNumber}`,
+          projId: inv.projectId,
+          desc: `${inv.projectName}`,
+          date: inv.dueDate || '',
+          value: inv.amount || 0,
+          nextFollowUpDate: '',
+          isOverdue: isOverdue
+        });
+      }
+    });
+
+    // Priority Sort:
+    // 1. Overdue invoices first
+    // 2. Nearest due invoices (invoices with due dates)
+    // 3. Projects with next follow-up date
+    // 4. Highest value unpaid items (budget/amount descending)
+    waitingPaymentItems.sort((a, b) => {
+      if (a.isOverdue && !b.isOverdue) return -1;
+      if (!a.isOverdue && b.isOverdue) return 1;
+
+      const aIsInvWithDate = a.type === 'invoice' && a.date;
+      const bIsInvWithDate = b.type === 'invoice' && b.date;
+      if (aIsInvWithDate && bIsInvWithDate) {
+        return a.date.localeCompare(b.date);
+      }
+      if (aIsInvWithDate && !bIsInvWithDate) return -1;
+      if (!aIsInvWithDate && bIsInvWithDate) return 1;
+
+      const aHasFollowUp = a.type === 'project' && a.nextFollowUpDate;
+      const bHasFollowUp = b.type === 'project' && b.nextFollowUpDate;
+      if (aHasFollowUp && bHasFollowUp) {
+        return a.nextFollowUpDate.localeCompare(b.nextFollowUpDate);
+      }
+      if (aHasFollowUp && !bHasFollowUp) return -1;
+      if (!aHasFollowUp && bHasFollowUp) return 1;
+
+      return b.value - a.value;
+    });
+
+    // Dynamic descriptions for each column
+    let todayDesc = 'All caught up today';
+    if (todayItems.length > 0) {
+      const dCount = todayItems.filter(i => i.type === 'deadline').length;
+      const mCount = todayItems.filter(i => i.type === 'meeting').length;
+      const iCount = todayItems.filter(i => i.type === 'invoice').length;
+      const parts = [];
+      if (dCount > 0) parts.push(`${dCount} deadline${dCount > 1 ? 's' : ''}`);
+      if (mCount > 0) parts.push(`${mCount} meeting${mCount > 1 ? 's' : ''}`);
+      if (iCount > 0) parts.push(`${iCount} invoice${iCount > 1 ? 's' : ''}`);
+      todayDesc = parts.join(', ');
+    }
+
+    let thisWeekDesc = 'No deadlines';
+    if (thisWeekItems.length > 0) {
+      const dCount = thisWeekItems.filter(i => i.type === 'deadline').length;
+      const mCount = thisWeekItems.filter(i => i.type === 'meeting').length;
+      const iCount = thisWeekItems.filter(i => i.type === 'invoice').length;
+      const parts = [];
+      if (dCount > 0) parts.push(`${dCount} deadline${dCount > 1 ? 's' : ''}`);
+      if (mCount > 0) parts.push(`${mCount} meeting${mCount > 1 ? 's' : ''}`);
+      if (iCount > 0) parts.push(`${iCount} invoice${iCount > 1 ? 's' : ''}`);
+      thisWeekDesc = parts.join(', ');
+    }
+
+    let meetingsDesc = upcomingMeetings.length === 0 ? 'No meetings' : `${upcomingMeetings.length} session${upcomingMeetings.length > 1 ? 's' : ''} scheduled`;
+    let dueSoonDesc = dueSoonItems.length === 0 ? 'No urgent deadlines' : `${dueSoonItems.length} project${dueSoonItems.length > 1 ? 's' : ''} due soon`;
+
+    let followUpDesc = 'No actions required';
+    if (followUpNeededItems.length > 0) {
+      const overdueInvoices = followUpNeededItems.filter(i => i.type === 'invoice').length;
+      const otherFollowUps = followUpNeededItems.filter(i => i.type !== 'invoice').length;
+      if (overdueInvoices > 0 && otherFollowUps > 0) {
+        followUpDesc = `${overdueInvoices} inv overdue, ${otherFollowUps} checks`;
+      } else if (overdueInvoices > 0) {
+        followUpDesc = `${overdueInvoices} invoice${overdueInvoices > 1 ? 's' : ''} overdue`;
+      } else {
+        followUpDesc = `${otherFollowUps} follow-up${otherFollowUps > 1 ? 's' : ''} due`;
+      }
+    }
+
+    let waitingPaymentDesc = 'No pending payments';
+    if (waitingPaymentItems.length > 0) {
+      const invCount = waitingPaymentItems.filter(i => i.type === 'invoice').length;
+      const projCount = waitingPaymentItems.filter(i => i.type === 'project').length;
+      if (invCount > 0 && projCount > 0) {
+        waitingPaymentDesc = `${invCount} inv, ${projCount} proj pending`;
+      } else if (invCount > 0) {
+        waitingPaymentDesc = `${invCount} invoice${invCount > 1 ? 's' : ''} pending`;
+      } else {
+        waitingPaymentDesc = `${projCount} project${projCount > 1 ? 's' : ''} pending`;
+      }
+    }
+
+    // Helper function to generate standardized footer links
+    const makeFooter = (extraCount, viewName, label) => {
+      if (extraCount > 0) {
+        return `
+          <div class="summary-col-footer">
+            <span class="summary-col-footer-link" onclick="window.app.switchView('${viewName}')">
+              +${extraCount} more • View ${label}
+            </span>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="summary-col-footer">
+            <span class="summary-col-footer-link" onclick="window.app.switchView('${viewName}')">
+              Open ${label}
+            </span>
+          </div>
+        `;
+      }
+    };
+
+    const todayFooter = makeFooter(todayItems.length - 3, 'planner', 'Planner');
+    const thisWeekFooter = makeFooter(thisWeekItems.length - 3, 'planner', 'Planner');
+    const meetingsFooter = makeFooter(upcomingMeetings.length - 3, 'planner', 'Planner');
+    const dueSoonFooter = makeFooter(dueSoonItems.length - 3, 'planner', 'Planner');
+    const followUpFooter = makeFooter(followUpNeededItems.length - 3, 'planner', 'Planner');
+    const waitingPaymentFooter = makeFooter(waitingPaymentItems.length - 3, 'invoices', 'Ledger');
+
+    summarySection.innerHTML = `
       <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
         <h3 style="margin: 0; font-size: 0.9rem; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 8px;">
           📊 Agenda & Schedule Summary
         </h3>
         <span style="font-size: 0.7rem; color: var(--text-muted);">Tip: More details can be accessed in the Planner Hub tab.</span>
       </div>
-      <div class="dashboard-summary-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 4px;">
+      <div class="dashboard-summary-grid">
         <!-- Column 1: Today -->
-        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Today (${todayItems.length})</span>
-          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${todayItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : todayItems.map(item => `
-              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: ${item.projId ? 'pointer' : 'default'};" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')"` : ''}>
-                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
-                <span style="font-size: 0.58rem; color: var(--text-muted); text-transform: uppercase;">${item.label}</span>
+        <div class="summary-col">
+          <span class="summary-col-title">Today</span>
+          <span class="summary-col-desc" title="${todayDesc}">${todayDesc}</span>
+          <div class="summary-col-items">
+            ${todayItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : todayItems.slice(0, 3).map(item => `
+              <div class="summary-item" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')" style="cursor: pointer;"` : ''}>
+                <strong>${item.title}</strong>
+                <span>${item.label}</span>
               </div>
             `).join('')}
           </div>
+          ${todayFooter}
         </div>
 
         <!-- Column 2: This Week -->
-        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">This Week (${thisWeekItems.length})</span>
-          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${thisWeekItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">No deadlines</span>' : thisWeekItems.map(item => `
-              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: ${item.projId ? 'pointer' : 'default'};" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')"` : ''}>
-                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
-                <span style="font-size: 0.58rem; color: var(--text-muted); text-transform: uppercase;">${item.label}</span>
+        <div class="summary-col">
+          <span class="summary-col-title">This Week</span>
+          <span class="summary-col-desc" title="${thisWeekDesc}">${thisWeekDesc}</span>
+          <div class="summary-col-items">
+            ${thisWeekItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">No deadlines</span>' : thisWeekItems.slice(0, 3).map(item => `
+              <div class="summary-item" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')" style="cursor: pointer;"` : ''}>
+                <strong>${item.title}</strong>
+                <span>${item.label}</span>
               </div>
             `).join('')}
           </div>
+          ${thisWeekFooter}
         </div>
 
-        <!-- Column 3: Upcoming Meeting -->
-        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Meetings (${upcomingMeetings.length})</span>
-          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${upcomingMeetings.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">No meetings</span>' : upcomingMeetings.map(item => `
-              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: pointer;" onclick="window.app.projectModal.open('${item.projId}')">
-                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
-                <span style="font-size: 0.58rem; color: var(--color-secondary); text-transform: uppercase;">${item.desc}</span>
+        <!-- Column 3: Meetings -->
+        <div class="summary-col">
+          <span class="summary-col-title">Meetings</span>
+          <span class="summary-col-desc" title="${meetingsDesc}">${meetingsDesc}</span>
+          <div class="summary-col-items">
+            ${upcomingMeetings.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">No meetings</span>' : upcomingMeetings.slice(0, 3).map(item => `
+              <div class="summary-item" onclick="window.app.projectModal.open('${item.projId}')" style="cursor: pointer;">
+                <strong>${item.title}</strong>
+                <span style="color: var(--color-secondary);">${item.desc}</span>
               </div>
             `).join('')}
           </div>
+          ${meetingsFooter}
         </div>
 
         <!-- Column 4: Due Soon -->
-        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Due Soon (${dueSoonItems.length})</span>
-          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${dueSoonItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : dueSoonItems.map(item => `
-              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: pointer;" onclick="window.app.projectModal.open('${item.projId}')">
-                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
-                <span style="font-size: 0.58rem; color: var(--color-warning); text-transform: uppercase;">${item.desc}</span>
+        <div class="summary-col">
+          <span class="summary-col-title">Due Soon</span>
+          <span class="summary-col-desc" title="${dueSoonDesc}">${dueSoonDesc}</span>
+          <div class="summary-col-items">
+            ${dueSoonItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : dueSoonItems.slice(0, 3).map(item => `
+              <div class="summary-item" onclick="window.app.projectModal.open('${item.projId}')" style="cursor: pointer;">
+                <strong>${item.title}</strong>
+                <span style="color: var(--color-warning);">${item.desc}</span>
               </div>
             `).join('')}
           </div>
+          ${dueSoonFooter}
         </div>
 
-        <!-- Column 5: Follow-up Needed -->
-        <div class="summary-col" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 110px;">
-          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Follow-up Needed (${followUpNeededItems.length})</span>
-          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;" class="summary-col-items">
-            ${followUpNeededItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : followUpNeededItems.map(item => `
-              <div class="summary-item" style="font-size: 0.68rem; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-subtle); cursor: ${item.projId ? 'pointer' : 'default'};" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')"` : ''}>
-                <strong style="color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
-                <span style="font-size: 0.58rem; color: var(--color-danger); text-transform: uppercase;">${item.desc}</span>
+        <!-- Column 5: Follow-up -->
+        <div class="summary-col">
+          <span class="summary-col-title">Follow-up</span>
+          <span class="summary-col-desc" title="${followUpDesc}">${followUpDesc}</span>
+          <div class="summary-col-items">
+            ${followUpNeededItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : followUpNeededItems.slice(0, 3).map(item => `
+              <div class="summary-item" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')" style="cursor: pointer;"` : ''}>
+                <strong>${item.title}</strong>
+                <span style="color: var(--color-danger);">${item.desc}</span>
               </div>
             `).join('')}
           </div>
+          ${followUpFooter}
+        </div>
+
+        <!-- Column 6: Waiting Payment -->
+        <div class="summary-col">
+          <span class="summary-col-title">Waiting Payment</span>
+          <span class="summary-col-desc" title="${waitingPaymentDesc}">${waitingPaymentDesc}</span>
+          <div class="summary-col-items">
+            ${waitingPaymentItems.length === 0 ? '<span style="font-size: 0.68rem; color: var(--text-muted);">Clear</span>' : waitingPaymentItems.slice(0, 3).map(item => `
+              <div class="summary-item" ${item.projId ? `onclick="window.app.projectModal.open('${item.projId}')" style="cursor: pointer;"` : ''}>
+                <strong>${item.title}</strong>
+                <span style="color: var(--color-success);">${item.desc}</span>
+              </div>
+            `).join('')}
+          </div>
+          ${waitingPaymentFooter}
         </div>
       </div>
     `;

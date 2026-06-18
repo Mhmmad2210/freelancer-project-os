@@ -4,6 +4,7 @@
 
 import { getIcon } from '../icons.js';
 import { formatCurrency, formatDate, isOutsideWorkingHours } from '../utils.js';
+import { promptTemplates, copyPromptToClipboard } from './AIPromptHelpers.js';
 
 export class ProjectModal {
   /**
@@ -47,6 +48,8 @@ export class ProjectModal {
     const state = this.store.getState();
     const project = state.projects.find(p => p.id === this.activeProjectId);
     if (!project) return;
+
+    const clientObj = state.clients.find(c => c.id === project.clientId);
 
     const defaultCategories = ['Design', 'Development', 'Production', 'Marketing', 'Consulting', 'Copywriting'];
     const projectCategory = project.tags[0] || 'Design';
@@ -337,6 +340,100 @@ export class ProjectModal {
                   <div class="deliverables-box-list" id="modal-invoices-list" style="gap: 8px;"></div>
                   <button class="btn btn-secondary" id="m-btn-invoice-add" style="margin-top: 8px; width: 100%; justify-content: center; font-size: 0.8rem;">
                     ${getIcon('plus', '', 14)} Add Custom Invoice Log
+                  </button>
+                </div>
+              </div>
+
+              <!-- Client Memory (Collapsible) -->
+              <div class="collapsible-section collapsed" id="section-client-memory">
+                <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                  <span>${getIcon('user', '', 16)} Client Memory & Project History</span>
+                  <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
+                </h4>
+                <div class="collapsible-content">
+                  <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">
+                    Capture important client context so you do not lose project history across chats, meetings, and files.
+                  </p>
+                  ${clientObj ? `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                      <div class="form-group">
+                        <label>Client Preference</label>
+                        <textarea id="m-c-preference" class="form-control" style="min-height: 50px;" placeholder="e.g. Prefers Monday updates">${clientObj.clientPreference || ''}</textarea>
+                      </div>
+                      <div class="form-group">
+                        <label>Communication Style</label>
+                        <textarea id="m-c-comm-style" class="form-control" style="min-height: 50px;" placeholder="e.g. WhatsApp only, direct call">${clientObj.communicationStyle || ''}</textarea>
+                      </div>
+                      <div class="form-group">
+                        <label>Payment Behavior</label>
+                        <textarea id="m-c-payment-behavior" class="form-control" style="min-height: 50px;" placeholder="e.g. Needs 1 reminder follow-up">${clientObj.paymentBehavior || ''}</textarea>
+                      </div>
+                      <div class="form-group">
+                        <label>Revision Pattern</label>
+                        <textarea id="m-c-revision-pattern" class="form-control" style="min-height: 50px;" placeholder="e.g. Usually asks for extra rounds">${clientObj.revisionPattern || ''}</textarea>
+                      </div>
+                      <div class="form-group">
+                        <label>Delivery Preference</label>
+                        <textarea id="m-c-delivery-preference" class="form-control" style="min-height: 50px;" placeholder="e.g. Figma + Google Drive SVGs">${clientObj.deliveryPreference || ''}</textarea>
+                      </div>
+                      <div class="form-group">
+                        <label>Client Risk Notes</label>
+                        <textarea id="m-c-risk-notes" class="form-control" style="min-height: 50px;" placeholder="e.g. Scope creep prone">${clientObj.clientRiskNotes || ''}</textarea>
+                      </div>
+                      <div class="form-group" style="grid-column: span 2;">
+                        <label>Important Notes</label>
+                        <textarea id="m-c-important-notes" class="form-control" style="min-height: 50px;" placeholder="Other critical preferences...">${clientObj.importantNotes || ''}</textarea>
+                      </div>
+                      <div class="form-group">
+                        <label>Last Project Summary</label>
+                        <textarea id="m-c-last-proj-summary" class="form-control" style="min-height: 50px;" placeholder="Summary of previous work...">${clientObj.lastProjectSummary || ''}</textarea>
+                      </div>
+                      <div class="form-group">
+                        <label>Last Meeting Summary</label>
+                        <textarea id="m-c-last-meet-summary" class="form-control" style="min-height: 50px;" placeholder="Notes from previous meeting...">${clientObj.lastMeetingSummary || ''}</textarea>
+                      </div>
+                    </div>
+                  ` : `
+                    <div style="background: rgba(255,255,255,0.01); border: 1px dashed var(--border-subtle); padding: 16px; text-align: center; border-radius: 8px; font-size: 0.82rem; color: var(--text-muted);">
+                      No client associated with this project. Select a client in the sidebar to enable Client Memory.
+                    </div>
+                  `}
+                </div>
+              </div>
+
+              <!-- AI Prompt Helpers (Collapsible) -->
+              <div class="collapsible-section collapsed" id="section-ai-prompts">
+                <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                  <span>🤖 AI Prompt Helper Pack</span>
+                  <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
+                </h4>
+                <div class="collapsible-content" style="display: flex; flex-direction: column; gap: 12px;">
+                  <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 4px;">
+                    Choose a template to generate structured prompts pre-filled with this project's details. You can copy and paste them into ChatGPT, Claude, or other AI tools.
+                  </p>
+
+                  <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px; padding: 10px; font-size: 0.7rem; color: var(--color-warning); font-weight: 600; line-height: 1.4;">
+                    🔒 Privacy Reminder: Review sensitive client information before pasting this prompt into external AI tools.
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 8px;">
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">Select AI Prompt Template</label>
+                    <select class="form-control" id="ai-prompt-selector" style="font-size: 0.78rem; padding: 6px 10px;">
+                      <option value="meetingSummary">Meeting Summary Prompt</option>
+                      <option value="proposalDraft">Proposal Draft Prompt</option>
+                      <option value="scopeChecker">Scope Checker Prompt</option>
+                      <option value="revisionBoundary">Revision Boundary Script Prompt</option>
+                      <option value="invoiceFollowUp">Invoice Follow-up Prompt</option>
+                      <option value="clientUpdate">Client Update Message Prompt</option>
+                      <option value="finalDelivery">Final Delivery Message Prompt</option>
+                      <option value="portfolioCaseStudy">Portfolio Case Study Prompt</option>
+                    </select>
+                  </div>
+
+                  <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 12px; font-family: monospace; font-size: 0.72rem; color: var(--text-secondary); max-height: 200px; overflow-y: auto; white-space: pre-wrap;" id="ai-prompt-preview"></div>
+
+                  <button type="button" class="btn btn-primary" id="btn-copy-ai-prompt" style="font-size: 0.8rem; padding: 8px; justify-content: center; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
+                    ${getIcon('copy', '', 14)} Copy Prompt to Clipboard
                   </button>
                 </div>
               </div>
@@ -1359,38 +1456,39 @@ export class ProjectModal {
     // AI summary prompt generator copy listener
     addListener('#btn-generate-ai-prompt', 'click', () => {
       const p = this.store.getState().projects.find(x => x.id === project.id) || project;
-      const template = `Please help me summarize the following client meeting notes into a structured freelancer action plan.
-
-Please generate:
-1. Meeting Summary
-2. Core client requirements
-3. Key agreed decisions
-4. Action items for the freelancer (Me)
-5. Action items for the client
-6. Potential scope creep or items needing clarification
-7. Most critical next action
-8. Draft follow-up message to the client
-
-Meeting Notes:
-- Project: ${p.title}
-- Meeting Date/Time: ${p.meetingDate || 'TBD'} ${p.meetingTime || ''} (${p.meetingTimezone || 'Asia/Jakarta'})
-- Meeting Type: ${p.meetingType || 'Google Meet'}
-- Client Request: ${p.clientRequest || 'TBD'}
-- Key Discussion Points: ${p.keyDiscussionPoints || 'TBD'}
-- Agreed Decisions: ${p.decisionMade || 'TBD'}
-- Client Concerns: ${p.clientConcern || 'TBD'}
-- Client Expectations: ${p.clientExpectation || 'TBD'}
-
-Use a professional, clear, and polite tone.
-Do not make assumptions or claims not explicitly mentioned in the notes.`;
-
-      navigator.clipboard.writeText(template).then(() => {
-        this.onTriggerToast('AI Summary Prompt successfully copied to clipboard!', 'text-success');
-      }).catch(err => {
-        console.error('Failed to copy text: ', err);
-        alert(template);
-      });
+      const templateText = promptTemplates.meetingSummary.generate(p);
+      copyPromptToClipboard(templateText, this.onTriggerToast);
     });
+
+    // AI Prompt Helper selector change & copy logic
+    const promptSelector = modalOverlay.querySelector('#ai-prompt-selector');
+    const promptPreview = modalOverlay.querySelector('#ai-prompt-preview');
+    const copyPromptBtn = modalOverlay.querySelector('#btn-copy-ai-prompt');
+
+    const updatePromptPreview = () => {
+      if (!promptSelector || !promptPreview) return;
+      const key = promptSelector.value;
+      const template = promptTemplates[key];
+      if (template) {
+        promptPreview.textContent = template.generate(project);
+      }
+    };
+
+    if (promptSelector) {
+      promptSelector.addEventListener('change', updatePromptPreview);
+      // Initialize preview
+      updatePromptPreview();
+    }
+
+    if (copyPromptBtn && promptSelector) {
+      copyPromptBtn.addEventListener('click', () => {
+        const key = promptSelector.value;
+        const template = promptTemplates[key];
+        if (template) {
+          copyPromptToClipboard(template.generate(project), this.onTriggerToast);
+        }
+      });
+    }
 
     this.checkMeetingAvailabilityWarning(project.id);
   }
@@ -1568,6 +1666,26 @@ Do not make assumptions or claims not explicitly mentioned in the notes.`;
     }
 
     this.store.updateProject(this.activeProjectId, updates);
+
+    // Save Client Memory fields if clientId is present and elements exist on screen
+    if (clientId) {
+      const clientPreference = getVal('#m-c-preference', null);
+      if (clientPreference !== null) {
+        const clientUpdates = {
+          clientPreference,
+          communicationStyle: getVal('#m-c-comm-style', ''),
+          paymentBehavior: getVal('#m-c-payment-behavior', ''),
+          revisionPattern: getVal('#m-c-revision-pattern', ''),
+          deliveryPreference: getVal('#m-c-delivery-preference', ''),
+          clientRiskNotes: getVal('#m-c-risk-notes', ''),
+          importantNotes: getVal('#m-c-important-notes', ''),
+          lastProjectSummary: getVal('#m-c-last-proj-summary', ''),
+          lastMeetingSummary: getVal('#m-c-last-meet-summary', '')
+        };
+        this.store.updateClient(clientId, clientUpdates);
+      }
+    }
+
     this.onStateChange();
   }
 

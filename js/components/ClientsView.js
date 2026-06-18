@@ -251,6 +251,52 @@ export class ClientsView {
               <textarea id="c-notes" class="form-control" placeholder="Add contact summaries, specific request details...">${notesVal}</textarea>
             </div>
 
+            <!-- Client Memory Section (Collapsible) -->
+            <div class="collapsible-section collapsed" id="section-client-drawer-memory" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+              <h4 class="collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">
+                <span>🧠 Client Memory Fields</span>
+                <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
+              </h4>
+              <div class="collapsible-content" style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="form-group">
+                  <label for="c-preference">Client Preference</label>
+                  <textarea id="c-preference" class="form-control" placeholder="e.g. Prefers Monday updates">${existingClient ? existingClient.clientPreference || '' : ''}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="c-comm-style">Communication Style</label>
+                  <textarea id="c-comm-style" class="form-control" placeholder="e.g. WhatsApp only, Slack">${existingClient ? existingClient.communicationStyle || '' : ''}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="c-payment-behavior">Payment Behavior</label>
+                  <textarea id="c-payment-behavior" class="form-control" placeholder="e.g. Always pays within Net 14">${existingClient ? existingClient.paymentBehavior || '' : ''}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="c-revision-pattern">Revision Pattern</label>
+                  <textarea id="c-revision-pattern" class="form-control" placeholder="e.g. Likes minimal edits">${existingClient ? existingClient.revisionPattern || '' : ''}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="c-delivery-preference">Delivery Preference</label>
+                  <textarea id="c-delivery-preference" class="form-control" placeholder="e.g. Google Drive folder">${existingClient ? existingClient.deliveryPreference || '' : ''}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="c-risk-notes">Client Risk Notes</label>
+                  <textarea id="c-risk-notes" class="form-control" placeholder="e.g. Prone to scope additions">${existingClient ? existingClient.clientRiskNotes || '' : ''}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="c-important-notes">Important Notes</label>
+                  <textarea id="c-important-notes" class="form-control" placeholder="Other key preferences...">${existingClient ? existingClient.importantNotes || '' : ''}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="c-last-proj-summary">Last Project Summary</label>
+                  <textarea id="c-last-proj-summary" class="form-control" placeholder="Previous project context...">${existingClient ? existingClient.lastProjectSummary || '' : ''}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="c-last-meet-summary">Last Meeting Summary</label>
+                  <textarea id="c-last-meet-summary" class="form-control" placeholder="Previous meeting context...">${existingClient ? existingClient.lastMeetingSummary || '' : ''}</textarea>
+                </div>
+              </div>
+            </div>
+
             <div class="modal-footer" style="padding: 16px 0 0 0; border: none;">
               <button type="button" class="btn btn-secondary" id="cancel-c-drawer">Cancel</button>
               <button type="submit" class="btn btn-primary">Save Client Directory</button>
@@ -270,6 +316,21 @@ export class ClientsView {
     drawerOverlay.querySelector('#close-c-drawer').addEventListener('click', closeActions);
     drawerOverlay.querySelector('#cancel-c-drawer').addEventListener('click', closeActions);
 
+    // Collapsible drawer memory toggle
+    const drawerCollapsibleHeader = drawerOverlay.querySelector('#section-client-drawer-memory .collapsible-header');
+    if (drawerCollapsibleHeader) {
+      drawerCollapsibleHeader.addEventListener('click', () => {
+        const section = drawerCollapsibleHeader.closest('.collapsible-section');
+        if (section) {
+          const isCollapsed = section.classList.toggle('collapsed');
+          const toggleIcon = drawerCollapsibleHeader.querySelector('.toggle-icon');
+          if (toggleIcon) {
+            toggleIcon.innerHTML = getIcon(isCollapsed ? 'chevronRight' : 'chevronDown', '', 14);
+          }
+        }
+      });
+    }
+
     const form = drawerOverlay.querySelector('#client-drawer-form');
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -282,7 +343,21 @@ export class ClientsView {
       const status = form.querySelector('#c-status').value;
       const notes = form.querySelector('#c-notes').value.trim();
 
-      const fields = { name, businessName, email, phone, lastFollowUpDate, status, notes };
+      const clientPreference = form.querySelector('#c-preference').value.trim();
+      const communicationStyle = form.querySelector('#c-comm-style').value.trim();
+      const paymentBehavior = form.querySelector('#c-payment-behavior').value.trim();
+      const revisionPattern = form.querySelector('#c-revision-pattern').value.trim();
+      const deliveryPreference = form.querySelector('#c-delivery-preference').value.trim();
+      const clientRiskNotes = form.querySelector('#c-risk-notes').value.trim();
+      const importantNotes = form.querySelector('#c-important-notes').value.trim();
+      const lastProjectSummary = form.querySelector('#c-last-proj-summary').value.trim();
+      const lastMeetingSummary = form.querySelector('#c-last-meet-summary').value.trim();
+
+      const fields = { 
+        name, businessName, email, phone, lastFollowUpDate, status, notes,
+        clientPreference, communicationStyle, paymentBehavior, revisionPattern,
+        deliveryPreference, clientRiskNotes, importantNotes, lastProjectSummary, lastMeetingSummary
+      };
 
       if (existingClient) {
         this.store.updateClient(existingClient.id, fields);

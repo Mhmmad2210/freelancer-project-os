@@ -15,6 +15,7 @@ import { QuotationsView } from './components/QuotationsView.js';
 import { ClientProjectView } from './components/ClientView.js';
 import { AccessGate } from './components/AccessGate.js';
 import { PlannerHub } from './components/PlannerHub.js';
+import { WorkflowDiagnose } from './components/WorkflowDiagnose.js';
 
 class FreelancerApp {
   constructor() {
@@ -43,6 +44,21 @@ class FreelancerApp {
     document.body.classList.remove('no-scroll');
   }
 
+  openDiagnoseModal() {
+    const modal = new WorkflowDiagnose((selectedTemplate) => {
+      if (selectedTemplate) {
+        if (confirm(`This will add sample projects for the "${selectedTemplate}" template. Existing projects will not be deleted. Proceed?`)) {
+          store.loadTemplateProjects(selectedTemplate);
+          this.triggerToast(`${selectedTemplate} template loaded successfully.`, "text-success");
+          this.switchView(this.activeTab);
+        }
+      } else {
+        this.switchView(this.activeTab);
+      }
+    });
+    modal.open();
+  }
+
   init() {
     this.renderShell();
     this.mountViews();
@@ -58,6 +74,7 @@ class FreelancerApp {
     const root = document.getElementById('app-root');
     if (!root) return;
 
+    root.innerHTML = '';
     root.className = 'app-container';
     
     // Mobile sidebar drawer backdrop element
@@ -91,6 +108,9 @@ class FreelancerApp {
         </div>
       </div>
       <div class="header-actions">
+        <button class="btn btn-primary" id="btn-workflow-diagnose" title="Start Workflow Diagnosis" style="background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
+          🧠 Diagnose
+        </button>
         <button class="btn btn-secondary" id="btn-backup-export" title="Export workspace backup file">
           ${getIcon('download', '', 14)} Export Backup
         </button>
@@ -361,6 +381,14 @@ class FreelancerApp {
         if (this.activeTab === 'kanban' && this.currentView) {
           this.currentView.update();
         }
+      });
+    }
+
+    // 4.8 Workflow Diagnose Button listener
+    const diagnoseBtn = document.getElementById('btn-workflow-diagnose');
+    if (diagnoseBtn) {
+      diagnoseBtn.addEventListener('click', () => {
+        this.openDiagnoseModal();
       });
     }
   }

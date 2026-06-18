@@ -2131,10 +2131,81 @@ body.no-scroll {
   border-radius: var(--border-radius-md) !important;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.02) !important;
   transition: border-color var(--transition-fast) !important;
+  height: 260px !important;
+  padding: 12px 12px 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+  position: relative !important;
 }
 
 .summary-col:hover {
   border-color: rgba(6, 182, 212, 0.15) !important;
+}
+
+.summary-col-title {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  display: block !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+  padding-bottom: 4px !important;
+}
+
+.summary-col-desc {
+  font-size: 0.6rem !important;
+  color: var(--text-muted) !important;
+  display: block !important;
+  margin-top: -4px !important;
+  min-height: 14px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.summary-col-items {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  overflow-y: auto !important;
+  flex: 1 !important;
+  padding-right: 2px !important;
+}
+
+.summary-col-items::-webkit-scrollbar {
+  width: 4px;
+}
+.summary-col-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+.summary-col-items::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+.summary-col-items::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.summary-col-footer {
+  margin-top: auto !important;
+  padding-top: 6px !important;
+  text-align: center !important;
+  border-top: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+.summary-col-footer-link {
+  font-size: 0.65rem !important;
+  color: var(--text-muted) !important;
+  cursor: pointer !important;
+  transition: color var(--transition-fast) !important;
+  display: inline-block !important;
+}
+
+.summary-col-footer-link:hover {
+  color: var(--color-secondary) !important;
 }
 
 .summary-item {
@@ -2143,12 +2214,38 @@ body.no-scroll {
   border-radius: 6px !important;
   color: var(--text-primary) !important;
   transition: transform var(--transition-fast), border-color var(--transition-fast) !important;
+  padding: 6px 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  overflow: hidden !important;
 }
 
 .summary-item:hover {
   transform: translateY(-1px);
   border-color: var(--color-primary-glow) !important;
   background: hsl(222, 33%, 12%) !important;
+}
+
+.summary-item strong {
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+}
+
+.summary-item span {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 0.58rem !important;
+  text-transform: uppercase !important;
+  font-weight: 500 !important;
 }
 
 .calendar-day-col {
@@ -2212,5 +2309,82 @@ body.no-scroll {
     margin-bottom: 12px;
   }
 }
+
+/* --- Workflow Diagnose Modal & Onboarding styles --- */
+.diagnose-option-btn {
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--border-radius-md) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  color: var(--text-secondary) !important;
+  font-size: 0.88rem !important;
+  cursor: pointer;
+  transition: all var(--transition-fast) !important;
+}
+
+.diagnose-option-btn:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+  color: var(--text-primary) !important;
+}
+
+.diagnose-option-btn.active {
+  background: rgba(139, 92, 246, 0.1) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 0 12px var(--color-primary-glow) !important;
+}
+
+.diagnose-options-container {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* --- AI Prompt Helpers --- */
+#ai-prompt-preview {
+  background: rgba(15, 23, 42, 0.4) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--border-radius-md) !important;
+  padding: 14px !important;
+  font-family: 'Fira Code', monospace, sans-serif !important;
+  font-size: 0.72rem !important;
+  color: var(--text-secondary) !important;
+  line-height: 1.5 !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  white-space: pre-wrap !important;
+  user-select: all !important;
+  transition: all var(--transition-fast) !important;
+}
+
+#ai-prompt-preview:hover {
+  border-color: rgba(139, 92, 246, 0.3) !important;
+  background: rgba(15, 23, 42, 0.5) !important;
+}
+
+/* --- 6-Column Dashboard Summary Grid --- */
+.dashboard-summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr) !important;
+  gap: 12px !important;
+  margin-top: 4px !important;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-summary-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 
 
