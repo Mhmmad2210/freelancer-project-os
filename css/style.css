@@ -160,6 +160,12 @@ button {
   overflow: hidden;
 }
 
+/* --- Hide boot screen fallback --- */
+.app-container #app-booting-screen,
+.access-page #app-booting-screen {
+  display: none !important;
+}
+
 /* --- Sidebar --- */
 .sidebar {
   width: var(--sidebar-width);
