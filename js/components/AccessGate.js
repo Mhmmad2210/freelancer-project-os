@@ -1,5 +1,7 @@
 import { getIcon } from '../icons.js';
 
+// TODO_AFTER_LAUNCH: Replace static access gate with real authentication using Supabase, Firebase, Clerk, or a custom backend when AlurKarya becomes a paid SaaS.
+
 export class AccessGate {
   /**
    * @param {HTMLElement} container - Target mount element (usually app-root)
@@ -8,10 +10,15 @@ export class AccessGate {
   constructor(container, onAccessGranted) {
     this.container = container;
     this.onAccessGranted = onAccessGranted;
-    // This placeholder is replaced by build.js during npm run build
+    // These placeholders are replaced by build.js during npm run build
     this.targetHash = '__VITE_ACCESS_PASSWORD_HASH__';
-    // Fallback hash for local development (SHA-256 of 'alurkarya')
+    this.targetActivationHash = '__VITE_ACTIVATION_CODE_HASH__';
+    
+    // Fallback hashes for local development (SHA-256)
+    // SHA-256 of 'alurkarya'
     this.devFallbackHash = 'af5af5b958efc7eafacd2eecb10938116e66c9b0f4558ba70b03fd52125483cf';
+    // SHA-256 of 'alurkarya-activate'
+    this.activationFallbackHash = '5ef9261ab4f6b6c8c389cbd74efd10646fc267ee9b59b31e15577723e2f04c36';
   }
 
   async sha256(message) {
@@ -21,202 +28,215 @@ export class AccessGate {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
+  isHashConfigured(hashValue, placeholder) {
+    return hashValue && hashValue !== placeholder && hashValue.trim() !== '';
+  }
+
+  isLocalhost() {
+    const hn = window.location.hostname;
+    return hn === 'localhost' || hn === '127.0.0.1' || hn === '[::1]' || hn.startsWith('192.168.');
+  }
+
   render() {
     this.container.innerHTML = '';
     
     // Create gate wrapper
     const gateWrapper = document.createElement('div');
-    gateWrapper.className = 'access-gate-wrapper';
+    gateWrapper.className = 'access-page';
     
     // Add custom embedded styles for the gate to guarantee premium visual styling
     const styleEl = document.createElement('style');
     styleEl.textContent = `
-      .access-gate-wrapper {
+      .access-page {
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: radial-gradient(circle at center, hsl(222, 47%, 10%) 0%, hsl(224, 71%, 4%) 100%);
-        color: var(--text-primary);
+        padding: 24px;
+        background: radial-gradient(circle at 50% 50%, hsl(224, 45%, 6%) 0%, hsl(224, 60%, 2%) 100%);
+        color: #f8fafc;
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-        padding: 20px;
         box-sizing: border-box;
-      }
-      .gate-card {
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border);
-        backdrop-filter: var(--glass-backdrop);
-        box-shadow: var(--shadow-premium), 0 0 40px rgba(139, 92, 246, 0.05);
-        border-radius: 16px;
-        padding: 40px 32px;
         width: 100%;
-        max-width: 440px;
-        text-align: center;
+      }
+      .access-card {
+        width: min(92vw, 560px);
+        background: rgba(11, 17, 32, 0.52);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45), 0 0 40px rgba(139, 92, 246, 0.03);
+        padding: 36px;
         display: flex;
         flex-direction: column;
         gap: 24px;
         position: relative;
         overflow: hidden;
+        box-sizing: border-box;
       }
-      .gate-card::before {
+      .access-card::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 4px;
-        background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+        background: linear-gradient(90deg, #6D5DFB, #9B5CFF);
       }
-      .gate-logo {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
+      .access-logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #6D5DFB, #9B5CFF);
+        color: white;
+        font-weight: 800;
+        display: grid;
+        place-items: center;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 22px;
         margin: 0 auto;
+        box-shadow: 0 8px 20px rgba(109, 93, 251, 0.25);
       }
-      .gate-logo svg {
-        color: var(--color-primary);
-        filter: drop-shadow(0 0 8px var(--color-primary-glow));
-      }
-      .gate-brand {
+      .access-title {
         font-family: 'Space Grotesk', sans-serif;
         font-size: 1.8rem;
         font-weight: 800;
-        letter-spacing: -0.03em;
-        background: linear-gradient(135deg, #ffffff 40%, var(--text-secondary) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+        margin: 0;
+        text-align: center;
       }
-      .gate-meta {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .gate-subtitle {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--color-secondary);
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        line-height: 1.4;
-      }
-      .gate-text {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
+      .access-subtitle {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        text-align: center;
+        margin: 0;
         line-height: 1.5;
       }
-      .gate-form {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        text-align: left;
-      }
-      .gate-form-group {
+      .access-field {
         display: flex;
         flex-direction: column;
         gap: 8px;
+        text-align: left;
       }
-      .gate-label {
+      .access-label {
         font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: var(--text-secondary);
+        color: #94a3b8;
       }
-      .gate-input-wrapper {
-        position: relative;
-      }
-      .gate-input {
+      .access-input {
         width: 100%;
-        background: rgba(2, 6, 17, 0.6);
-        border: 1px solid var(--border-subtle);
-        border-radius: 8px;
-        padding: 14px 16px 14px 44px;
-        color: var(--text-primary);
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
+        background: rgba(2, 6, 23, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 14px;
+        color: white;
+        padding: 16px 18px;
+        font-size: 16px;
         box-sizing: border-box;
-      }
-      .gate-input:focus {
-        outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 12px var(--color-primary-glow);
-        background: rgba(2, 6, 17, 0.8);
-      }
-      .gate-input-icon {
-        position: absolute;
-        left: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-muted);
-        display: flex;
-        align-items: center;
-      }
-      .gate-btn {
-        width: 100%;
-        background: linear-gradient(135deg, var(--color-primary) 0%, hsl(263, 85%, 55%) 100%);
-        border: none;
-        border-radius: 8px;
-        padding: 14px;
-        color: #ffffff;
-        font-size: 0.95rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
         transition: all 0.2s ease;
-        box-shadow: 0 4px 20px var(--color-primary-glow);
       }
-      .gate-btn:hover {
+      .access-input:focus {
+        outline: none;
+        border-color: rgba(155, 92, 255, 0.65);
+        box-shadow: 0 0 0 4px rgba(155, 92, 255, 0.12);
+        background: rgba(2, 6, 23, 0.75);
+      }
+      .access-button {
+        width: 100%;
+        border: 0;
+        border-radius: 16px;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #6D5DFB, #9B5CFF);
+        color: white;
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 0.95rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      }
+      .access-button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 6px 24px rgba(139, 92, 246, 0.4);
+        box-shadow: 0 12px 28px rgba(155, 92, 255, 0.28);
         filter: brightness(1.1);
       }
-      .gate-btn:active {
+      .access-button:active {
         transform: translateY(1px);
       }
-      .gate-error {
-        font-size: 0.8rem;
-        color: var(--color-danger);
-        background: var(--color-danger-bg);
-        border: 1px solid rgba(239, 68, 68, 0.15);
-        border-radius: 8px;
-        padding: 12px 14px;
+      .access-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+      .access-secondary {
+        background: none;
+        border: none;
+        color: #a78bfa;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: underline;
+        transition: color 0.2s ease;
+      }
+      .access-secondary:hover {
+        color: #c084fc;
+      }
+      .access-error {
+        font-size: 0.85rem;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 12px;
+        padding: 12px 16px;
         display: none;
-        align-items: flex-start;
+        align-items: center;
         gap: 8px;
         line-height: 1.4;
+        text-align: left;
       }
-      .gate-error.active {
+      .access-error.active {
         display: flex;
       }
-      .gate-footer-note {
-        font-size: 0.7rem;
-        color: var(--text-muted);
+      .access-success {
+        font-size: 0.85rem;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 12px;
+        padding: 12px 16px;
+        display: none;
+        align-items: center;
+        gap: 8px;
         line-height: 1.4;
-        margin-top: 10px;
+        text-align: left;
+      }
+      .access-success.active {
+        display: flex;
+      }
+      .access-footer-note {
+        font-size: 0.75rem;
+        color: #64748b;
+        line-height: 1.4;
+        margin-top: 4px;
+        text-align: center;
+      }
+      @supports not (backdrop-filter: blur(18px)) {
+        .access-card {
+          background: rgba(11, 17, 32, 0.92);
+        }
       }
       @media (max-width: 480px) {
-        .gate-card {
-          padding: 28px 20px;
-          gap: 16px;
+        .access-card {
+          padding: 24px;
+          gap: 20px;
         }
-        .gate-brand {
+        .access-title {
           font-size: 1.5rem;
         }
-        .gate-subtitle {
-          font-size: 0.8rem;
-        }
-        .gate-text {
-          font-size: 0.75rem;
-        }
-        .gate-input {
-          padding: 12px 16px 12px 40px;
-        }
-        .gate-btn {
-          padding: 12px;
+        .access-subtitle {
+          font-size: 0.85rem;
         }
       }
     `;
@@ -224,82 +244,206 @@ export class AccessGate {
 
     // Card structure
     const cardEl = document.createElement('div');
-    cardEl.className = 'gate-card';
+    cardEl.className = 'access-card';
     cardEl.innerHTML = `
-      <div class="gate-logo">
-        ${getIcon('briefcase', '', 28)}
-        <span class="gate-brand">AlurKarya</span>
+      <div class="access-logo">A</div>
+      <div class="access-meta" style="display: flex; flex-direction: column; gap: 8px;">
+        <h2 class="access-title">Welcome to AlurKarya</h2>
+        <p class="access-subtitle">Manage freelance projects from client to paid.</p>
       </div>
-      <div class="gate-meta">
-        <span class="gate-subtitle">Client-to-Paid Operating System for Digital Freelancers</span>
-        <span class="gate-text">Enter the access password you received after purchase.</span>
+      
+      <!-- Inline message feedback box (Error/Success) -->
+      <div class="access-error" id="access-error-box">
+        <span style="display: flex; align-items: center;">${getIcon('alert', '', 16)}</span>
+        <span class="error-text"></span>
       </div>
-      <div class="gate-error" id="gate-error-message">
-        <span style="margin-top: 2px;">${getIcon('alert', '', 14)}</span>
-        <span>Incorrect access password. Please check your purchase email again.</span>
+      <div class="access-success" id="access-success-box">
+        <span style="display: flex; align-items: center;">${getIcon('check', '', 16)}</span>
+        <span class="success-text">Access granted. Preparing your workspace…</span>
       </div>
-      <form class="gate-form" id="gate-access-form">
-        <div class="gate-form-group">
-          <label class="gate-label" for="gate-password-input">Access Password</label>
-          <div class="gate-input-wrapper">
-            <span class="gate-input-icon">${getIcon('lock', '', 16)}</span>
-            <input type="password" id="gate-password-input" class="gate-input" placeholder="••••••••" required autocomplete="current-password">
-          </div>
+
+      <!-- Password Access Form -->
+      <form class="gate-form" id="password-form" style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="access-field">
+          <label class="access-label" for="password-input">Access Password</label>
+          <input type="password" id="password-input" class="access-input" placeholder="Enter your password" required autocomplete="current-password">
         </div>
-        <button type="submit" class="gate-btn" id="gate-submit-btn">
-          Enter AlurKarya
+        <button type="submit" class="access-button" id="password-submit-btn">
+          Enter Workspace
+        </button>
+        <button type="button" class="access-secondary" id="btn-show-activation">
+          Don’t have access yet? Enter activation code
         </button>
       </form>
-      <div class="gate-footer-note">
-        Buyer Access Gate. Password configuration is securely stored.
+
+      <!-- Activation Code Form -->
+      <form class="gate-form" id="activation-form" style="display: none; flex-direction: column; gap: 20px;">
+        <div class="access-field">
+          <label class="access-label" for="activation-input">Activation Code</label>
+          <input type="text" id="activation-input" class="access-input" placeholder="Enter your activation code" required>
+        </div>
+        <button type="submit" class="access-button" id="activation-submit-btn">
+          Activate Access
+        </button>
+        <button type="button" class="access-secondary" id="btn-show-password">
+          Back to login
+        </button>
+      </form>
+
+      <div class="access-footer-note">
+        Private access for AlurKarya early users.
       </div>
     `;
 
     gateWrapper.appendChild(cardEl);
     this.container.appendChild(gateWrapper);
 
-    // Event binding
-    const form = cardEl.querySelector('#gate-access-form');
-    const input = cardEl.querySelector('#gate-password-input');
-    const errorBox = cardEl.querySelector('#gate-error-message');
-    const submitBtn = cardEl.querySelector('#gate-submit-btn');
+    // DOM References
+    const passwordForm = cardEl.querySelector('#password-form');
+    const activationForm = cardEl.querySelector('#activation-form');
+    const passwordInput = cardEl.querySelector('#password-input');
+    const activationInput = cardEl.querySelector('#activation-input');
+    const errorBox = cardEl.querySelector('#access-error-box');
+    const errorText = errorBox.querySelector('.error-text');
+    const successBox = cardEl.querySelector('#access-success-box');
+    
+    const passwordSubmit = cardEl.querySelector('#password-submit-btn');
+    const activationSubmit = cardEl.querySelector('#activation-submit-btn');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    const showActivationBtn = cardEl.querySelector('#btn-show-activation');
+    const showPasswordBtn = cardEl.querySelector('#btn-show-password');
+
+    // Helper functions for displaying inline feedback messages
+    const showError = (message) => {
+      successBox.classList.remove('active');
+      errorText.textContent = message;
+      errorBox.classList.add('active');
+    };
+
+    const clearMessages = () => {
       errorBox.classList.remove('active');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Verifying...';
+      successBox.classList.remove('active');
+    };
 
-      const passwordVal = input.value ? input.value.trim() : '';
-      const inputHash = await this.sha256(passwordVal);
+    // Toggle Forms
+    showActivationBtn.addEventListener('click', () => {
+      clearMessages();
+      passwordForm.style.display = 'none';
+      activationForm.style.display = 'flex';
+      activationInput.focus();
+    });
 
-      // Determine active target hash and normalize it
-      let activeTargetHash = this.targetHash ? this.targetHash.trim() : '';
-      if (activeTargetHash === '__VITE_ACCESS_PASSWORD_HASH__' || activeTargetHash === '') {
-        // Fallback for raw local development without build
+    showPasswordBtn.addEventListener('click', () => {
+      clearMessages();
+      activationForm.style.display = 'none';
+      passwordForm.style.display = 'flex';
+      passwordInput.focus();
+    });
+
+    // Handle Password Submission
+    passwordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMessages();
+      
+      const val = passwordInput.value ? passwordInput.value.trim() : '';
+      if (!val) {
+        showError('Please enter your password.');
+        return;
+      }
+
+      passwordSubmit.disabled = true;
+      const originalText = passwordSubmit.textContent;
+      passwordSubmit.textContent = 'Verifying...';
+
+      const inputHash = await this.sha256(val);
+      const isLocal = this.isLocalhost();
+      const hasConfiguredHash = this.isHashConfigured(this.targetHash, '__VITE_ACCESS_PASSWORD_HASH__');
+
+      let activeTargetHash = '';
+      if (hasConfiguredHash) {
+        activeTargetHash = this.targetHash.trim();
+      } else if (isLocal) {
         activeTargetHash = this.devFallbackHash;
+      } else {
+        console.warn("Access hash is missing in production. Configure VITE_ACCESS_PASSWORD_HASH.");
       }
 
-      // Check if target hash is a valid 64-character hexadecimal SHA-256 string.
-      // If it isn't (e.g. the user entered a plain-text password in Render's env variable by mistake),
-      // we hash it on the fly so it matches the browser-side input hash!
-      const isHex64 = /^[0-9a-f]{64}$/i.test(activeTargetHash);
-      if (!isHex64 && activeTargetHash !== '') {
-        activeTargetHash = await this.sha256(activeTargetHash);
+      // If activeTargetHash has been normalized or we are checking a plain password on-the-fly:
+      if (activeTargetHash !== '') {
+        const isHex64 = /^[0-9a-f]{64}$/i.test(activeTargetHash);
+        if (!isHex64) {
+          activeTargetHash = await this.sha256(activeTargetHash);
+        }
       }
 
-      // Final comparison (case-insensitive comparison for safety)
-      if (inputHash.toLowerCase() === activeTargetHash.toLowerCase()) {
+      if (activeTargetHash !== '' && inputHash.toLowerCase() === activeTargetHash.toLowerCase()) {
         // Correct password
+        successBox.classList.add('active');
         localStorage.setItem('alurkarya_access_granted', 'true');
-        this.onAccessGranted();
+        setTimeout(() => {
+          this.onAccessGranted();
+        }, 600);
       } else {
         // Wrong password
-        errorBox.classList.add('active');
-        input.value = '';
-        input.focus();
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Enter AlurKarya';
+        showError('Access not recognized. Please check your password.');
+        passwordInput.value = '';
+        passwordInput.focus();
+        passwordSubmit.disabled = false;
+        passwordSubmit.textContent = originalText;
+      }
+    });
+
+    // Handle Activation Code Submission
+    activationForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMessages();
+
+      const val = activationInput.value ? activationInput.value.trim() : '';
+      if (!val) {
+        showError('Please enter your activation code.');
+        return;
+      }
+
+      activationSubmit.disabled = true;
+      const originalText = activationSubmit.textContent;
+      activationSubmit.textContent = 'Activating...';
+
+      const inputHash = await this.sha256(val);
+      const isLocal = this.isLocalhost();
+      const hasConfiguredActivation = this.isHashConfigured(this.targetActivationHash, '__VITE_ACTIVATION_CODE_HASH__');
+
+      let activeTargetActivationHash = '';
+      if (hasConfiguredActivation) {
+        activeTargetActivationHash = this.targetActivationHash.trim();
+      } else if (isLocal) {
+        activeTargetActivationHash = this.activationFallbackHash;
+      } else {
+        console.warn("Access hash is missing in production. Configure VITE_ACCESS_PASSWORD_HASH.");
+      }
+
+      // Normalize target activation hash:
+      if (activeTargetActivationHash !== '') {
+        const isHex64 = /^[0-9a-f]{64}$/i.test(activeTargetActivationHash);
+        if (!isHex64) {
+          activeTargetActivationHash = await this.sha256(activeTargetActivationHash);
+        }
+      }
+
+      if (activeTargetActivationHash !== '' && inputHash.toLowerCase() === activeTargetActivationHash.toLowerCase()) {
+        // Correct activation code
+        successBox.classList.add('active');
+        localStorage.setItem('alurkarya_access_granted', 'true');
+        localStorage.setItem('alurkarya_access_method', 'activation_code');
+        setTimeout(() => {
+          this.onAccessGranted();
+        }, 600);
+      } else {
+        // Wrong activation code
+        showError('Invalid activation code.');
+        activationInput.value = '';
+        activationInput.focus();
+        activationSubmit.disabled = false;
+        activationSubmit.textContent = originalText;
       }
     });
   }

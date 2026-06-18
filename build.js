@@ -27,9 +27,11 @@ function loadEnv() {
 
 const env = loadEnv();
 const passwordHash = env.VITE_ACCESS_PASSWORD_HASH || '';
+const activationHash = env.VITE_ACTIVATION_CODE_HASH || '';
 
 console.log('[AlurKarya Build] Initiating production build...');
 console.log('[AlurKarya Build] Target VITE_ACCESS_PASSWORD_HASH status:', passwordHash ? 'Configured' : 'NOT FOUND (Using empty fallback)');
+console.log('[AlurKarya Build] Target VITE_ACTIVATION_CODE_HASH status:', activationHash ? 'Configured' : 'NOT FOUND (Using empty fallback)');
 
 const distPath = path.join(__dirname, 'dist');
 
@@ -65,13 +67,14 @@ copyDirSync(path.join(__dirname, 'js'), path.join(distPath, 'js'));
 
 console.log('[AlurKarya Build] Copied static app assets (excluding landing.html)');
 
-// Inject password hash into the built AccessGate.js
+// Inject password and activation hashes into the built AccessGate.js
 const accessGatePath = path.join(distPath, 'js', 'components', 'AccessGate.js');
 if (fs.existsSync(accessGatePath)) {
   let content = fs.readFileSync(accessGatePath, 'utf-8');
   content = content.replace('__VITE_ACCESS_PASSWORD_HASH__', passwordHash);
+  content = content.replace('__VITE_ACTIVATION_CODE_HASH__', activationHash);
   fs.writeFileSync(accessGatePath, content, 'utf-8');
-  console.log('[AlurKarya Build] Injected VITE_ACCESS_PASSWORD_HASH into AccessGate.js');
+  console.log('[AlurKarya Build] Injected VITE_ACCESS_PASSWORD_HASH and VITE_ACTIVATION_CODE_HASH into AccessGate.js');
 } else {
   console.error('[AlurKarya Build] ERROR: AccessGate.js not found in dist path. Verification required.');
 }
