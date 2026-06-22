@@ -39,7 +39,7 @@ export class ProjectModal {
     const availability = this.store.getState().availability;
     const warningEl = document.getElementById('m-p-meet-warning');
     if (warningEl) {
-      const isOutside = isOutsideWorkingHours(project.meetingDate, project.meetingTime, availability);
+      const isOutside = isOutsideWorkingHours(project.meetingDate, project.meetingTime, availability, project.meetingTimezone);
       warningEl.style.display = isOutside ? 'flex' : 'none';
     }
   }
@@ -173,7 +173,7 @@ export class ProjectModal {
                     </div>
                     <div class="form-group">
                       <label>Meeting Platform / Type</label>
-                      <input type="text" id="m-p-meet-type" class="form-control" value="${project.meetingType || 'Google Meet'}" placeholder="Google Meet, WA, dll...">
+                      <input type="text" id="m-p-meet-type" class="form-control" value="${project.meetingType || 'Google Meet'}" placeholder="Google Meet, WhatsApp, Zoom...">
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
                       <label>Meeting Room Link</label>
@@ -181,7 +181,7 @@ export class ProjectModal {
                     </div>
                     <div class="form-group">
                       <label>Meeting Timezone</label>
-                      <input type="text" id="m-p-meet-timezone" class="form-control" value="${project.meetingTimezone || 'Asia/Jakarta'}" placeholder="WIB, Asia/Jakarta...">
+                      <input type="text" id="m-p-meet-timezone" class="form-control" value="${project.meetingTimezone || 'Asia/Jakarta'}" placeholder="EST, UTC, Asia/Jakarta...">
                     </div>
                   </div>
                   <div id="m-p-meet-warning" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); border-radius: var(--border-radius-sm); padding: 8px; font-size: 0.75rem; color: var(--color-danger); font-weight: 700; margin-bottom: 12px; align-items: center; gap: 6px;">

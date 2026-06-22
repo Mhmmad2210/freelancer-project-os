@@ -212,8 +212,8 @@ export class WeeklyFocusView {
         let focusDetailsMarkup = '';
         const availability = this.store.getState().availability;
         if (p.meetingDate && p.meetingDate >= selectedWeekStart && p.meetingDate <= weekEndStr) {
-          const isOutside = isOutsideWorkingHours(p.meetingDate, p.meetingTime, availability);
-          const outsideWarning = isOutside ? ' <span style="color: var(--color-danger); font-size: 0.6rem; font-weight: 700; border: 1px solid var(--color-danger); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">Outside working hours</span>' : '';
+          const isOutside = isOutsideWorkingHours(p.meetingDate, p.meetingTime, availability, p.meetingTimezone);
+          const outsideWarning = isOutside ? ' <span style="color: var(--color-danger); font-size: 0.6rem; font-weight: 700; border: 1px solid var(--color-danger); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">Outside your working hours.</span>' : '';
           focusDetailsMarkup += `
             <div style="margin-top: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; color: var(--color-secondary);">
               <span class="manual-label" style="color: var(--color-secondary);">MEETING:</span>
@@ -324,7 +324,7 @@ export class WeeklyFocusView {
       'Deadlines This Week',
       'clock',
       deadlinesThisWeek,
-      'No urgent project deadlines this week.',
+      'No deadlines this week',
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';

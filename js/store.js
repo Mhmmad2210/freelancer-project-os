@@ -2,7 +2,7 @@
    FREELANCER PROJECT OS - CENTRAL STORAGE & STORE COMPONENT
    ========================================================================== */
 
-import { generateId } from './utils.js';
+import { generateId, getBrowserTimezone } from './utils.js';
 import { applyTemplateProjects } from './components/FreelancerTemplates.js';
 
 
@@ -380,6 +380,15 @@ export class WorkspaceStore {
         this.availability = parsed.availability || this.getDefaultAvailability();
 
         let migrated = false;
+
+        if (parsed.availability) {
+          if (!parsed.availability.timezone) {
+            this.availability.timezone = getBrowserTimezone();
+            migrated = true;
+          }
+        } else {
+          migrated = true;
+        }
 
         if (!parsed.quotations) {
           const seed = getInitialSeedData();
@@ -1015,12 +1024,16 @@ export class WorkspaceStore {
     this.saveState();
   }
 
+  getBrowserTimezone() {
+    return getBrowserTimezone();
+  }
+
   getDefaultAvailability() {
     return {
       workingDays: [1, 2, 3, 4, 5], // Monday to Friday
       workingHoursStart: '09:00',
       workingHoursEnd: '17:00',
-      timezone: 'Asia/Jakarta',
+      timezone: getBrowserTimezone(),
       unavailableDates: []
     };
   }

@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatDate, isOutsideWorkingHours } from '../utils.js';
+import { formatCurrency, formatDate, isOutsideWorkingHours, formatTimeForTimezone, formatDateRange, convertDateTimeTimezone } from '../utils.js';
 
 export class PlannerHub {
   /**
@@ -38,7 +38,7 @@ export class PlannerHub {
     introBox.className = 'portfolio-intro-box';
     introBox.innerHTML = `
       <h2>Planner Hub</h2>
-      <p>Kelola jadwal meeting klien, tenggat waktu, follow-up invoice, dan ketersediaan jam kerja harianmu di satu dashboard terpadu.</p>
+      <p>Manage client meetings, deadlines, invoice follow-ups, and your working availability in one connected dashboard.</p>
     `;
     viewEl.appendChild(introBox);
 
@@ -99,8 +99,8 @@ export class PlannerHub {
             <button class="cal-switch-btn ${mode === 'week' ? 'active' : ''}" id="cal-switch-week" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'week' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'week' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Weekly</button>
             <button class="cal-switch-btn ${mode === 'month' ? 'active' : ''}" id="cal-switch-month" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: ${mode === 'month' ? 'var(--text-primary)' : 'var(--text-muted)'}; background: ${mode === 'month' ? 'rgba(255,255,255,0.05)' : 'transparent'}; cursor: pointer; transition: all var(--transition-fast);">Monthly</button>
           </div>
-          <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 4px 8px; cursor: not-allowed; opacity: 0.5; height: auto; display: flex; align-items: center; gap: 4px;" title="Google Calendar Integration (TODO_AFTER_LAUNCH)" disabled>
-            <span>🔄 Sync GCal (TODO_AFTER_LAUNCH)</span>
+          <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 4px 8px; cursor: not-allowed; opacity: 0.5; height: auto; display: flex; align-items: center; gap: 4px;" title="Sync Google Calendar (Coming Soon)" disabled>
+            <span>🔄 Sync Google Calendar (Coming Soon)</span>
           </button>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -118,17 +118,15 @@ export class PlannerHub {
     const state = this.store.getState();
     const projects = state.projects;
     const invoices = state.invoices;
+    const availability = state.availability || {};
 
     if (mode === 'week') {
       const getFormattedRange = (monStr) => {
         const mon = new Date(monStr);
         const sun = new Date(mon);
         sun.setDate(mon.getDate() + 6);
-        const format = (d) => {
-          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-          return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-        };
-        return `${format(mon)} - ${format(sun)}`;
+        const sunStr = sun.toISOString().split('T')[0];
+        return formatDateRange(monStr, sunStr, availability.timezone);
       };
 
       rangeDisplay.textContent = getFormattedRange(selectedWeekStart);
@@ -296,13 +294,19 @@ export class PlannerHub {
 
   getCalendarItemsForDate(dateStr, projects, invoices) {
     const items = [];
+    const availability = this.store.getState().availability || {};
+    const targetTz = availability.timezone || 'Asia/Jakarta';
     
     projects.forEach(p => {
       if (p.dueDate === dateStr && p.stage !== 'completed' && p.stage !== 'on_hold') {
         items.push({ type: 'deadline', label: 'Deadline', title: p.title, project: p });
       }
-      if (p.meetingDate === dateStr) {
-        items.push({ type: 'meeting', label: 'Meeting', title: `${p.title} (${p.meetingTime || 'TBD'})`, project: p });
+      if (p.meetingDate) {
+        const converted = convertDateTimeTimezone(p.meetingDate, p.meetingTime, p.meetingTimezone, targetTz);
+        if (converted.dateStr === dateStr) {
+          const displayTime = p.meetingTime ? formatTimeForTimezone(converted.timeStr, targetTz) : 'TBD';
+          items.push({ type: 'meeting', label: 'Meeting', title: `${p.title} (${displayTime})`, project: p });
+        }
       }
       if (p.nextFollowUpDate === dateStr && p.stage !== 'completed') {
         items.push({ type: 'follow-up', label: 'Follow-up', title: p.title, project: p });
@@ -449,13 +453,16 @@ export class PlannerHub {
       </h3>
       <div style="display: flex; flex-direction: column; gap: 8px;" class="widget-list">
         ${upcomingMeetings.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">No scheduled meetings</span>' : upcomingMeetings.map(p => {
-          const isOutside = isOutsideWorkingHours(p.meetingDate, p.meetingTime, availability);
-          const outsideWarning = isOutside ? `<div style="color: var(--color-danger); font-size: 0.65rem; font-weight: 700; margin-top: 2px;">⚠️ Outside your working hours</div>` : '';
+          const isOutside = isOutsideWorkingHours(p.meetingDate, p.meetingTime, availability, p.meetingTimezone);
+          const outsideWarning = isOutside ? `<div style="color: var(--color-danger); font-size: 0.65rem; font-weight: 700; margin-top: 2px;">⚠️ Outside your working hours.</div>` : '';
+          const converted = convertDateTimeTimezone(p.meetingDate, p.meetingTime, p.meetingTimezone, availability.timezone);
+          const displayDate = formatDate(converted.dateStr);
+          const displayTime = p.meetingTime ? formatTimeForTimezone(converted.timeStr, availability.timezone) : 'TBD';
           return `
             <div class="focus-item-row" style="padding: 10px; cursor: pointer;" onclick="window.app.projectModal.open('${p.id}')">
               <div style="flex: 1; min-width: 0;">
                 <strong style="font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.title}</strong>
-                <span style="font-size: 0.7rem; color: var(--text-muted);">${formatDate(p.meetingDate)} at ${p.meetingTime || 'TBD'} (${p.meetingType})</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">${displayDate} at ${displayTime} (${availability.timezone})</span>
                 ${outsideWarning}
               </div>
               ${p.meetingLink ? `
@@ -478,7 +485,7 @@ export class PlannerHub {
         ${getIcon('clock', 'text-warning', 16)} Follow-up Needed (${followUps.length})
       </h3>
       <div style="display: flex; flex-direction: column; gap: 8px;" class="widget-list">
-        ${followUps.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">All follow-ups up to date</span>' : followUps.map(item => `
+        ${followUps.length === 0 ? '<span style="font-size: 0.72rem; color: var(--text-muted);">No follow-up needed</span>' : followUps.map(item => `
           <div class="focus-item-row" style="padding: 10px; cursor: ${item.pId ? 'pointer' : 'default'};" ${item.pId ? `onclick="window.app.projectModal.open('${item.pId}')"` : ''}>
             <div style="flex: 1; min-width: 0;">
               <strong style="font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</strong>
@@ -573,7 +580,7 @@ export class PlannerHub {
         ${getIcon('clock', '', 16)} Working Hours & Availability
       </h3>
       <span class="stat-subtext" style="display: block; margin-top: -8px; font-size: 0.72rem; color: var(--text-muted);">
-        Configure your freelancing working days and hours here. Meetings scheduled outside these hours will trigger an automatic warning.
+        Configure your working days, hours, timezone, and unavailable dates. Meetings outside these hours will trigger a gentle warning.
       </span>
       <form id="availability-form" style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
         <div>
@@ -599,24 +606,32 @@ export class PlannerHub {
           </div>
         </div>
         <div class="form-group">
-          <label style="font-size: 0.72rem;">Timezone</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 0.72rem; margin-bottom: 0;">Timezone</label>
+            <button type="button" id="btn-use-local-tz" class="btn btn-secondary" style="padding: 2px 6px; font-size: 0.62rem; border-radius: 4px; height: auto; line-height: 1;">Use Local Timezone</button>
+          </div>
           <input type="text" name="tz" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${availability.timezone || 'Asia/Jakarta'}" placeholder="Asia/Jakarta">
           <span style="font-size: 0.62rem; color: var(--text-muted); display: block; margin-top: 2px;">
-            * Advanced timezone conversion (TODO_AFTER_LAUNCH)
+            Detected from your device. You can change it manually anytime.
           </span>
         </div>
         <div style="border-top: 1px solid rgba(255,255,255,0.03); padding-top: 10px;">
           <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 4px;">Unavailable Dates / Holidays</label>
           <div id="unavailable-dates-list" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;">
-            ${(availability.unavailableDates || []).map(d => `
+            ${(availability.unavailableDates || []).length === 0 ? `
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-style: italic;">No unavailable dates added</span>
+            ` : (availability.unavailableDates || []).map(d => `
               <span class="card-tag" style="font-size: 0.62rem; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--color-danger);">
                 ${d} <button type="button" class="btn-remove-date" data-date="${d}" style="color: var(--color-danger); padding: 0; font-size: 0.65rem; font-weight: 800;">&times;</button>
               </span>
             `).join('')}
           </div>
-          <div style="display: flex; gap: 6px;">
-            <input type="date" id="add-unavailable-date" class="form-control" style="font-size: 0.75rem; padding: 4px 6px; flex: 1;">
-            <button type="button" class="btn btn-secondary" id="btn-add-unavailable-date" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px;">Add</button>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 0.72rem; color: var(--text-muted);">Add Unavailable Date</label>
+            <div style="display: flex; gap: 6px;">
+              <input type="date" id="add-unavailable-date" class="form-control" style="font-size: 0.75rem; padding: 4px 6px; flex: 1;">
+              <button type="button" class="btn btn-secondary" id="btn-add-unavailable-date" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px;">Add</button>
+            </div>
           </div>
         </div>
       </form>
@@ -646,6 +661,20 @@ export class PlannerHub {
       el.addEventListener('change', saveAvailabilityForm);
     });
     form.querySelector('input[name="tz"]').addEventListener('blur', saveAvailabilityForm);
+
+    // Bind Use Local Timezone button
+    const btnUseLocalTz = box.querySelector('#btn-use-local-tz');
+    if (btnUseLocalTz) {
+      btnUseLocalTz.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const localTz = this.store.getBrowserTimezone();
+        form.querySelector('input[name="tz"]').value = localTz;
+        this.store.updateAvailability({ timezone: localTz });
+        this.onTriggerToast(`Timezone updated to local: ${localTz}`, 'text-success');
+        this.update();
+      });
+    }
 
     // Add unavailable date
     box.querySelector('#btn-add-unavailable-date').addEventListener('click', () => {
