@@ -2392,5 +2392,25 @@ body.no-scroll {
   }
 }
 
+/* Client Portal Timeline Styles */
+.timeline-dot {
+  transition: all 0.3s ease;
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+}
+.timeline-dot-pending {
+  background: var(--bg-surface);
+  border: 2px solid rgba(255,255,255,0.05);
+}
+.timeline-dot-active {
+  background: var(--color-secondary);
+  border: 2px solid #fff;
+  box-shadow: 0 0 12px var(--color-secondary);
+}
+.timeline-dot-completed {
+  background: var(--color-success);
+  border: 2px solid var(--color-success);
+  color: #fff;
+}
+
 
 

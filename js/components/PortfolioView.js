@@ -3,6 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
+import { promptTemplates, copyPromptToClipboard } from './AIPromptHelpers.js';
 
 export class PortfolioView {
   /**
@@ -205,9 +206,14 @@ export class PortfolioView {
           </div>
 
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" id="cancel-case-modal">Cancel</button>
-          <button class="btn btn-primary" id="save-case-modal">Save Case Study</button>
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+          <button class="btn btn-secondary" id="btn-portfolio-ai-prompt" style="font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
+            🤖 AI Case Study Prompt
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary" id="cancel-case-modal">Cancel</button>
+            <button class="btn btn-primary" id="save-case-modal">Save Case Study</button>
+          </div>
         </div>
       </div>
     `;
@@ -221,6 +227,23 @@ export class PortfolioView {
 
     modalOverlay.querySelector('#close-case-modal').addEventListener('click', closeActions);
     modalOverlay.querySelector('#cancel-case-modal').addEventListener('click', closeActions);
+
+    const aiBtn = modalOverlay.querySelector('#btn-portfolio-ai-prompt');
+    if (aiBtn) {
+      aiBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const state = this.store.getState();
+        const client = state.clients.find(c => c.id === project.clientId);
+        const clientMemory = client ? client.clientMemory : null;
+        const flProfile = state.freelancerProfile;
+        const template = promptTemplates.portfolioCaseStudy;
+        if (template) {
+          const text = template.generate(project, clientMemory, 'Professional', flProfile);
+          copyPromptToClipboard(text, this.onTriggerToast, 'portfolioCaseStudy', project.id);
+        }
+      });
+    }
 
     modalOverlay.querySelector('#save-case-modal').addEventListener('click', () => {
       const img = modalOverlay.querySelector('#case-img-url').value.trim();

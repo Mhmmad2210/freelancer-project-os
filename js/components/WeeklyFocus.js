@@ -3,7 +3,8 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatDate, getDueDateStatus, getLocalizedDueDateStatus, isOutsideWorkingHours } from '../utils.js';
+import { formatCurrency, formatMoney, formatDate, getDueDateStatus, getLocalizedDueDateStatus, isOutsideWorkingHours } from '../utils.js';
+import { copyPromptToClipboard, promptTemplates } from './AIPromptHelpers.js';
 
 export class WeeklyFocusView {
   /**
@@ -31,8 +32,15 @@ export class WeeklyFocusView {
     const introBox = document.createElement('div');
     introBox.className = 'portfolio-intro-box';
     introBox.innerHTML = `
-      <h2>Weekly Focus</h2>
-      <p>View project priorities, upcoming deadlines, pending revisions, and client follow-up reminders this week.</p>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 280px;">
+          <h2>Weekly Focus</h2>
+          <p>View project priorities, upcoming deadlines, pending revisions, and client follow-up reminders this week.</p>
+        </div>
+        <button class="btn btn-secondary" id="btn-weekly-focus-ai-prompt" style="font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px;">
+          🤖 Copy Weekly Focus Summary
+        </button>
+      </div>
     `;
     viewEl.appendChild(introBox);
 
@@ -127,8 +135,88 @@ export class WeeklyFocusView {
       (!p.invoices || p.invoices.length === 0)
     );
 
-    // Payments to Follow Up: Invoices that are Sent or Overdue
-    const overduePayments = invoices.filter(inv => ['Sent', 'Overdue'].includes(inv.status));
+    // Payments to Follow Up: Prioritized project-level invoice & payment tasks
+    const paymentTasks = [];
+    const currentDate = new Date();
+    currentDate.setHours(0,0,0,0);
+    
+    projects.forEach(p => {
+      if (p.stage === 'completed') return;
+
+      const isPaid = ['Fully Paid', 'Payment Received', 'Paid'].includes(p.paymentStatus);
+
+      // Check if invoiceDueDate is overdue
+      let isInvoiceOverdue = false;
+      if (p.invoiceDueDate && !isPaid) {
+        const dueDate = new Date(p.invoiceDueDate);
+        dueDate.setHours(0,0,0,0);
+        if (dueDate < currentDate) {
+          isInvoiceOverdue = true;
+        }
+      }
+
+      // Check if invoice due date is this week
+      const isDueThisWeek = p.invoiceDueDate && p.invoiceDueDate >= selectedWeekStart && p.invoiceDueDate <= weekEndStr;
+      
+      // Check if follow up date is this week or today
+      const isFollowUpThisWeek = p.nextFollowUpDate && p.nextFollowUpDate >= selectedWeekStart && p.nextFollowUpDate <= weekEndStr;
+
+      const taskCurrency = p.invoiceCurrency || p.projectCurrency || 'IDR';
+
+      if (p.invoiceStatus === 'Overdue' || isInvoiceOverdue || p.paymentStatus === 'Overdue') {
+        paymentTasks.push({
+          id: p.id,
+          projectName: p.title,
+          clientName: p.clientName || 'General Client',
+          label: "Payment overdue",
+          amount: p.invoiceAmount || p.budget || 0,
+          currency: taskCurrency,
+          dateText: p.invoiceDueDate ? formatDate(p.invoiceDueDate) : 'Overdue',
+          priority: 1
+        });
+      } else if (isDueThisWeek && !isPaid) {
+        paymentTasks.push({
+          id: p.id,
+          projectName: p.title,
+          clientName: p.clientName || 'General Client',
+          label: "Invoice due soon",
+          amount: p.invoiceAmount || p.budget || 0,
+          currency: taskCurrency,
+          dateText: formatDate(p.invoiceDueDate),
+          priority: 2
+        });
+      } else if (isFollowUpThisWeek && !isPaid) {
+        paymentTasks.push({
+          id: p.id,
+          projectName: p.title,
+          clientName: p.clientName || 'General Client',
+          label: "Payment follow-up",
+          amount: p.invoiceAmount || p.budget || 0,
+          currency: taskCurrency,
+          dateText: formatDate(p.nextFollowUpDate),
+          priority: 3
+        });
+      } else if (['Waiting Payment', 'Fully Paid', 'Payment Received'].includes(p.paymentStatus) && !p.receiptLink && !p.paymentReceiptLink) {
+        paymentTasks.push({
+          id: p.id,
+          projectName: p.title,
+          clientName: p.clientName || 'General Client',
+          label: "Receipt needed",
+          amount: p.invoiceAmount || p.budget || 0,
+          currency: taskCurrency,
+          dateText: "Awaiting Receipt",
+          priority: 4
+        });
+      }
+    });
+
+    // Sort paymentTasks by priority, then by amount descending
+    paymentTasks.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return a.priority - b.priority;
+      }
+      return b.amount - a.amount;
+    });
 
     // Stuck Projects: Projects overdue or in revision rounds exceeding max revision round limit
     const stuckProjects = projects.filter(p => {
@@ -408,7 +496,7 @@ export class WeeklyFocusView {
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${p.title}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Client: ${p.clientName} | Value: ${formatCurrency(p.budget, p.currency)}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">Client: ${p.clientName} | Value: ${formatMoney(p.budget, p.projectCurrency || p.currency || 'IDR')}</span>
           </div>
           <span class="client-status-badge status-completed" style="font-size: 0.65rem;">Bill Draft</span>
         `;
@@ -422,23 +510,35 @@ export class WeeklyFocusView {
     const followUpPaymentsMod = createFocusModule(
       'Payment Follow-up',
       'fileText',
-      overduePayments,
+      paymentTasks,
       'No overdue payments. Smooth cash flow!',
-      (inv) => {
+      (task) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
         row.style.padding = '8px 12px';
         row.style.display = 'flex';
         row.style.justifyContent = 'space-between';
         row.style.alignItems = 'center';
-        const color = inv.status === 'Overdue' ? 'status-lead text-danger' : 'status-active';
+        
+        let color = 'status-active';
+        if (task.label === 'Payment overdue') color = 'status-lead text-danger';
+        else if (task.label === 'Invoice due soon') color = 'status-active text-warning';
+        else if (task.label === 'Receipt needed') color = 'status-active text-info';
+        
         row.innerHTML = `
           <div>
-            <span class="focus-item-title" style="font-size: 0.85rem;">${inv.invoiceNumber} - ${inv.projectName}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Value: ${formatCurrency(inv.amount, inv.currency)} | Due: ${formatDate(inv.dueDate)}</span>
+            <span class="focus-item-title" style="font-size: 0.85rem;">${task.projectName}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">Client: ${task.clientName} | Amount: ${formatMoney(task.amount, task.currency)} | Date: ${task.dateText}</span>
           </div>
-          <span class="client-status-badge ${color}" style="font-size: 0.65rem;">${inv.status}</span>
+          <span class="client-status-badge ${color}" style="font-size: 0.65rem;">${task.label}</span>
         `;
+        
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', () => {
+          if (window.app && window.app.projectModal) {
+            window.app.projectModal.open(task.id);
+          }
+        });
         return row;
       },
       'text-danger'
@@ -469,5 +569,56 @@ export class WeeklyFocusView {
     colRight.appendChild(stuckMod);
 
     gridEl.appendChild(colRight);
+
+    // Wire up weekly focus summary prompt button
+    const aiBtn = this.container.querySelector('#btn-weekly-focus-ai-prompt');
+    if (aiBtn) {
+      aiBtn.addEventListener('click', () => {
+        const state = this.store.getState();
+        const projects = state.projects || [];
+        const flProfile = state.freelancerProfile;
+        
+        // Build customContent for weeklyFocusSummary
+        const overdueDeadlineList = projects.filter(p => {
+          if (p.stage === 'completed' || p.stage === 'on_hold') return false;
+          const status = getLocalizedDueDateStatus(p.dueDate);
+          return status.status === 'overdue';
+        });
+        const dueSoonList = projects.filter(p => {
+          if (p.stage === 'completed' || p.stage === 'on_hold') return false;
+          const status = getLocalizedDueDateStatus(p.dueDate);
+          return status.status === 'soon' || status.status === 'today';
+        });
+        const reviewList = projects.filter(p => p.stage === 'client_review');
+        const paymentList = paymentTasks.filter(t => t.label === 'Payment overdue' || t.label === 'Invoice due soon');
+
+        const overdueText = overdueDeadlineList.map(p => `- ${p.title} (Due: ${p.dueDate || 'N/A'})`).join('\n') || 'None';
+        const dueSoonText = dueSoonList.map(p => `- ${p.title} (Due: ${p.dueDate || 'N/A'})`).join('\n') || 'None';
+        const reviewText = reviewList.map(p => `- ${p.title} (Client feedback summary: ${p.clientFeedbackSummary || 'N/A'})`).join('\n') || 'None';
+        const paymentText = paymentList.map(t => `- ${t.projectName} (${t.label}: ${t.dateText})`).join('\n') || 'None';
+
+        const customContent = `Internal summary — not for client.
+Weekly Focus Overview:
+- Overdue Deadlines:
+${overdueText}
+
+- Due Soon This Week:
+${dueSoonText}
+
+- Awaiting Client Review:
+${reviewText}
+
+- Payment Follow-ups / Overdue:
+${paymentText}
+
+Recommended Actions:
+1. Prioritize overdue project deadlines immediately.
+2. Nudge clients with projects in 'client_review' stage using the update template.
+3. Follow up with overdue invoice clients.
+4. Prepare project deliveries and checklist audits.`;
+
+        copyPromptToClipboard(customContent, this.onTriggerToast, 'weeklyFocusSummary', 'workspace');
+      });
+    }
   }
 }

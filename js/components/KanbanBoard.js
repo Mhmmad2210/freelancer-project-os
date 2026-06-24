@@ -3,7 +3,9 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, getDueDateStatus, getLocalizedDueDateStatus, formatDate } from '../utils.js';
+import { formatCurrency, formatMoney, getDueDateStatus, getLocalizedDueDateStatus, formatDate, showCompletionWarningModal } from '../utils.js';
+import { t } from '../i18n.js';
+import { TemplatesModal } from './TemplatesModal.js';
 
 export class KanbanBoard {
   /**
@@ -26,6 +28,11 @@ export class KanbanBoard {
     // Columns collapsed state (default all collapsed/peek mode on load)
     this.collapsedColumns = new Set(['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed']);
     localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
+  }
+
+  showTemplatesModal() {
+    const modal = new TemplatesModal(this.store, () => this.update(), this.onTriggerToast);
+    modal.open();
   }
 
   getProjectHealth(project) {
@@ -233,7 +240,7 @@ export class KanbanBoard {
     searchWrapper.className = 'search-input-wrapper';
     searchWrapper.innerHTML = `
       ${getIcon('search', 'search-icon', 18)}
-      <input type="text" id="board-search" placeholder="Search projects, tags, or clients..." value="${this.searchQuery}">
+      <input type="text" id="board-search" placeholder="${t('kanban.searchPlaceholder', 'Search projects, clients, or tags...')}" value="${this.searchQuery}">
     `;
     const searchInput = searchWrapper.querySelector('input');
     searchInput.addEventListener('input', (e) => {
@@ -252,12 +259,12 @@ export class KanbanBoard {
     sortSelector.className = 'sort-selector';
     sortSelector.style.cssText = 'display: flex; align-items: center; gap: 6px;';
     sortSelector.innerHTML = `
-      <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 600;">Sort by:</span>
+      <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 600;">${t('sortBy', 'Sort by')}:</span>
       <select class="form-control" id="board-sort-select" style="font-size: 0.75rem; padding: 4px 10px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); color: var(--text-secondary); cursor: pointer; height: auto;">
-        <option value="default" ${activeSortMode === 'default' ? 'selected' : ''}>Default</option>
-        <option value="dueDate" ${activeSortMode === 'dueDate' ? 'selected' : ''}>Due Date</option>
-        <option value="value" ${activeSortMode === 'value' ? 'selected' : ''}>Value</option>
-        <option value="submitDate" ${activeSortMode === 'submitDate' ? 'selected' : ''}>Submit Date</option>
+        <option value="default" ${activeSortMode === 'default' ? 'selected' : ''}>${t('all', 'Default')}</option>
+        <option value="dueDate" ${activeSortMode === 'dueDate' ? 'selected' : ''}>${t('projectModal.deadline', 'Due Date')}</option>
+        <option value="value" ${activeSortMode === 'value' ? 'selected' : ''}>${t('projectModal.budget', 'Value')}</option>
+        <option value="submitDate" ${activeSortMode === 'submitDate' ? 'selected' : ''}>${t('delivery.deliveryDate', 'Submit Date')}</option>
       </select>
     `;
 
@@ -269,8 +276,8 @@ export class KanbanBoard {
     const viewModeSelector = document.createElement('div');
     viewModeSelector.className = 'view-mode-selector';
     viewModeSelector.innerHTML = `
-      <button class="view-mode-btn ${activeViewMode === 'simple' ? 'active' : ''}" id="view-mode-simple">Simple</button>
-      <button class="view-mode-btn ${activeViewMode === 'detail' ? 'active' : ''}" id="view-mode-detail">Detailed</button>
+      <button class="view-mode-btn ${activeViewMode === 'simple' ? 'active' : ''}" id="view-mode-simple">${t('kanban.viewSimple', 'Simple')}</button>
+      <button class="view-mode-btn ${activeViewMode === 'detail' ? 'active' : ''}" id="view-mode-detail">${t('kanban.viewDetailed', 'Detailed')}</button>
     `;
 
     viewModeSelector.querySelector('#view-mode-simple').addEventListener('click', () => {
@@ -287,17 +294,23 @@ export class KanbanBoard {
       this.renderBoardOnly();
     });
 
+    const templatesBtn = document.createElement('button');
+    templatesBtn.className = 'btn btn-secondary';
+    templatesBtn.style.cssText = 'font-size: 0.78rem; padding: 8px 14px; border-radius: var(--border-radius-sm); font-weight: 600; display: inline-flex; align-items: center; gap: 6px;';
+    templatesBtn.innerHTML = `${getIcon('layers', '', 14)} ${t('kanban.templates', 'Templates')}`;
+    templatesBtn.addEventListener('click', () => this.showTemplatesModal());
+
     const addBtn = document.createElement('button');
     addBtn.className = 'btn btn-primary';
-    addBtn.innerHTML = `${getIcon('plus', '', 18)} Add Project`;
+    addBtn.innerHTML = `${getIcon('plus', '', 18)} ${t('kanban.addProject', 'Add Project')}`;
     addBtn.addEventListener('click', () => this.showNewProjectDrawer());
 
     // Global Expand/Collapse All controls
     const globalToggles = document.createElement('div');
     globalToggles.className = 'view-mode-selector';
     globalToggles.innerHTML = `
-      <button class="view-mode-btn" id="btn-collapse-all" style="font-size: 0.75rem; padding: 6px 10px;" title="Collapse All Columns">Collapse All</button>
-      <button class="view-mode-btn" id="btn-expand-all" style="font-size: 0.75rem; padding: 6px 10px;" title="Expand All Columns">Expand All</button>
+      <button class="view-mode-btn" id="btn-collapse-all" style="font-size: 0.75rem; padding: 6px 10px;" title="${t('kanban.collapseAll', 'Collapse All Columns')}">${t('kanban.collapseAll', 'Collapse All')}</button>
+      <button class="view-mode-btn" id="btn-expand-all" style="font-size: 0.75rem; padding: 6px 10px;" title="${t('kanban.expandAll', 'Expand All Columns')}">${t('kanban.expandAll', 'Expand All')}</button>
     `;
 
     globalToggles.querySelector('#btn-collapse-all').addEventListener('click', () => {
@@ -315,6 +328,7 @@ export class KanbanBoard {
     rightControls.appendChild(sortSelector);
     rightControls.appendChild(viewModeSelector);
     rightControls.appendChild(globalToggles);
+    rightControls.appendChild(templatesBtn);
     rightControls.appendChild(addBtn);
 
     controlRibbon.appendChild(searchWrapper);
@@ -329,7 +343,7 @@ export class KanbanBoard {
       <span style="display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px; color: var(--color-secondary);">
         ${getIcon('externalLink', '', 12)}
       </span>
-      <span>Scroll sideways to see all workflow stages.</span>
+      <span>${t('kanban.scrollSideways', 'Scroll sideways to see all workflow stages.')}</span>
     `;
     dashboardEl.appendChild(scrollHint);
 
@@ -370,15 +384,52 @@ export class KanbanBoard {
     // Active Projects Count (everything except Completed/New Lead)
     const activeCount = projects.filter(p => !['new_lead', 'completed'].includes(p.stage)).length;
 
-    // Total Project Value (Sum across all projects except Completed)
-    const pipelineSum = projects
+    // Total Project Value (Sum across all projects except Completed, grouped by projectCurrency)
+    const pipelineGroups = {};
+    projects
       .filter(p => p.stage !== 'completed')
-      .reduce((sum, p) => sum + p.budget, 0);
+      .forEach(p => {
+        const cur = p.projectCurrency || localStorage.getItem('alurkarya_default_currency') || 'IDR';
+        if (!pipelineGroups[cur]) pipelineGroups[cur] = 0;
+        pipelineGroups[cur] += Number(p.budget) || 0;
+      });
 
-    // Unpaid Invoices (Sent & Overdue Invoices sum)
-    const receivablesSum = invoices
+    // Unpaid Invoices (Sent & Overdue Invoices sum, grouped by inv.currency)
+    const receivablesGroups = {};
+    invoices
       .filter(inv => ['Sent', 'Overdue'].includes(inv.status))
-      .reduce((sum, inv) => sum + inv.amount, 0);
+      .forEach(inv => {
+        const cur = inv.currency || 'IDR';
+        if (!receivablesGroups[cur]) receivablesGroups[cur] = 0;
+        receivablesGroups[cur] += Number(inv.amount) || 0;
+      });
+
+    // Helper to format grouped values
+    const formatGrouped = (groups) => {
+      const currencies = Object.keys(groups);
+      if (currencies.length === 0) {
+        const def = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+        return {
+          text: formatMoney(0, def),
+          isMulti: false
+        };
+      }
+      if (currencies.length === 1) {
+        return {
+          text: formatMoney(groups[currencies[0]], currencies[0]),
+          isMulti: false
+        };
+      }
+      
+      const formattedList = currencies.map(cur => formatMoney(groups[cur], cur));
+      return {
+        text: formattedList.join(' + '),
+        isMulti: true
+      };
+    };
+
+    const formattedPipeline = formatGrouped(pipelineGroups);
+    const formattedReceivables = formatGrouped(receivablesGroups);
 
     // Average Revision Rounds
     const measuredProjects = projects.filter(p => !['new_lead'].includes(p.stage));
@@ -402,16 +453,16 @@ export class KanbanBoard {
           <span class="stat-title">Total Project Value</span>
           <div class="stat-icon">${getIcon('briefcase', '', 16)}</div>
         </div>
-        <span class="stat-value">${formatCurrency(pipelineSum)}</span>
-        <span class="stat-subtext">All active projects value</span>
+        <span class="stat-value" style="font-size: ${formattedPipeline.isMulti ? '1.1rem' : '1.35rem'}; word-break: break-all;">${formattedPipeline.text}</span>
+        <span class="stat-subtext">${formattedPipeline.isMulti ? t('totalsGroupedHelper', 'Totals are grouped by currency.') : 'All active projects value'}</span>
       </div>
       <div class="stat-card success">
         <div class="stat-header">
           <span class="stat-title">Unpaid Invoices</span>
           <div class="stat-icon">${getIcon('fileText', '', 16)}</div>
         </div>
-        <span class="stat-value">${formatCurrency(receivablesSum)}</span>
-        <span class="stat-subtext">Pending client payments</span>
+        <span class="stat-value" style="font-size: ${formattedReceivables.isMulti ? '1.1rem' : '1.35rem'}; word-break: break-all;">${formattedReceivables.text}</span>
+        <span class="stat-subtext">${formattedReceivables.isMulti ? t('totalsGroupedHelper', 'Totals are grouped by currency.') : 'Pending client payments'}</span>
       </div>
       <div class="stat-card warning">
         <div class="stat-header">
@@ -433,14 +484,14 @@ export class KanbanBoard {
 
     // Freelancer 8-stage pipeline
     const columns = [
-      { id: 'new_lead', label: 'New Lead' },
-      { id: 'proposal_sent', label: 'Queue' },
-      { id: 'in_progress', label: 'In Progress' },
-      { id: 'client_review', label: 'Client Review' },
-      { id: 'revision', label: 'Revision' },
-      { id: 'invoice_sent', label: 'Invoice Sent' },
-      { id: 'waiting_payment', label: 'Waiting Payment' },
-      { id: 'completed', label: 'Completed' }
+      { id: 'new_lead', label: t('kanban.stages.new_lead', 'New Lead') },
+      { id: 'proposal_sent', label: t('kanban.stages.proposal_sent', 'Queue') },
+      { id: 'in_progress', label: t('kanban.stages.in_progress', 'In Progress') },
+      { id: 'client_review', label: t('kanban.stages.client_review', 'Client Review') },
+      { id: 'revision', label: t('kanban.stages.revision', 'Revision') },
+      { id: 'invoice_sent', label: t('kanban.stages.invoice_sent', 'Invoice Sent') },
+      { id: 'waiting_payment', label: t('kanban.stages.waiting_payment', 'Waiting Payment') },
+      { id: 'completed', label: t('kanban.stages.completed', 'Completed') }
     ];
 
     const state = this.store.getState();
@@ -450,23 +501,19 @@ export class KanbanBoard {
       canvas.style.display = 'block';
       canvas.innerHTML = `
         <div class="empty-state-box" style="margin-top: 24px; padding: 40px 20px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); backdrop-filter: var(--glass-backdrop);">
-          <div style="font-size: 2.5rem; margin-bottom: 16px; color: var(--color-primary-glow);">☕</div>
-          <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">No projects yet</h3>
-          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 20px; max-width: 460px; margin-left: auto; margin-right: auto; line-height: 1.5;">
-            No active projects found. You can add a new project now or load demo data to see how AlurKarya helps you manage your workflow from deal to payment.
+          <div style="font-size: 2.8rem; margin-bottom: 16px; color: var(--color-primary-glow); filter: drop-shadow(0 2px 8px rgba(139,92,246,0.3));">💼</div>
+          <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Start with a freelancer template</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.55;">
+            Choose your freelance type and AlurKarya will create a sample client-to-paid workflow for you.
           </p>
           <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-            <button class="btn btn-primary" id="btn-empty-add-project">${getIcon('plus', '', 16)} Add Project</button>
-            <button class="btn btn-secondary" id="btn-empty-load-demo">${getIcon('layers', '', 16)} Load Demo Data</button>
+            <button class="btn btn-primary" id="btn-empty-choose-template" style="padding: 10px 22px; font-weight: 600; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">${getIcon('layers', '', 16)} Choose Template</button>
+            <button class="btn btn-secondary" id="btn-empty-add-project" style="padding: 10px 22px; font-weight: 600;">${getIcon('plus', '', 16)} Create Project Manually</button>
           </div>
         </div>
       `;
       canvas.querySelector('#btn-empty-add-project').addEventListener('click', () => this.showNewProjectDrawer());
-      canvas.querySelector('#btn-empty-load-demo').addEventListener('click', () => {
-        this.store.addDemoProjectsNonDestructively();
-        this.onTriggerToast('Demo projects loaded successfully.', 'text-success');
-        this.update();
-      });
+      canvas.querySelector('#btn-empty-choose-template').addEventListener('click', () => this.showTemplatesModal());
       return;
     }
 
@@ -503,7 +550,22 @@ export class KanbanBoard {
         });
       }
 
-      const colBudget = colProjects.reduce((sum, p) => sum + p.budget, 0);
+      const colBudgetGroups = {};
+      colProjects.forEach(p => {
+        const cur = p.projectCurrency || localStorage.getItem('alurkarya_default_currency') || 'IDR';
+        if (!colBudgetGroups[cur]) colBudgetGroups[cur] = 0;
+        colBudgetGroups[cur] += Number(p.budget) || 0;
+      });
+
+      const colCurrencies = Object.keys(colBudgetGroups);
+      let colBudgetFormatted = '';
+      if (colCurrencies.length === 0) {
+        const def = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+        colBudgetFormatted = formatMoney(0, def);
+      } else {
+        colBudgetFormatted = colCurrencies.map(cur => formatMoney(colBudgetGroups[cur], cur)).join(' + ');
+      }
+
       const isColCollapsed = this.collapsedColumns.has(col.id);
 
       const colEl = document.createElement('div');
@@ -517,7 +579,7 @@ export class KanbanBoard {
         if (col.id === 'invoice_sent') suffix = ' pending';
         else if (col.id === 'waiting_payment') suffix = ' awaiting payment';
         else if (col.id === 'completed') suffix = ' paid';
-        budgetMarkup = `<span class="column-budget-sum" style="font-size: 0.65rem; color: var(--text-secondary);">${formatCurrency(colBudget)}${suffix}</span>`;
+        budgetMarkup = `<span class="column-budget-sum" style="font-size: 0.65rem; color: var(--text-secondary);" title="${colCurrencies.length > 1 ? t('totalsGroupedHelper', 'Totals are grouped by currency.') : ''}">${colBudgetFormatted}${suffix}</span>`;
       }
 
       colEl.innerHTML = `
@@ -605,14 +667,38 @@ export class KanbanBoard {
               this.onTriggerToast('Invoice should be sent after the work is approved by the client.', 'text-danger');
               return;
             }
-            if (col.id === 'completed' && oldProject.paymentStatus !== 'Fully Paid' && oldProject.paymentStatus !== 'Paid') {
-              this.onTriggerToast('Projects can only be moved to Completed if payment status is fully paid.', 'text-danger');
-              return;
+            if (col.id === 'completed') {
+              const lacksApproval = (oldProject.approvalStatus !== 'Approved' && oldProject.clientApprovalStatus !== 'Approved');
+              const lacksFinalFiles = !oldProject.finalFileLink;
+              const lacksPaidStatus = (oldProject.paymentStatus !== 'Fully Paid' && oldProject.paymentStatus !== 'Payment Received');
+              
+              if (lacksApproval || lacksFinalFiles || lacksPaidStatus) {
+                let warningParams = {};
+                if (lacksPaidStatus) {
+                  warningParams = {
+                    title: "Complete this project?",
+                    message: "Payment confirmation may still be missing. You can complete this project anyway or review the invoice details first.",
+                    confirmText: "Move to Completed Anyway",
+                    cancelText: "Review Invoice"
+                  };
+                }
+                
+                showCompletionWarningModal({
+                  ...warningParams,
+                  onConfirm: () => {
+                    const updates = { stage: 'completed' };
+                    this.store.updateProject(cardId, updates);
+                    this.onTriggerToast(`Moved to: ${col.label}`);
+                    this.update();
+                  },
+                  onReview: () => {
+                    this.onCardClick(cardId);
+                  }
+                });
+                return;
+              }
             }
             const updates = { stage: col.id };
-            if (col.id === 'completed') {
-              updates.paymentStatus = 'Paid';
-            }
             this.store.updateProject(cardId, updates);
             this.onTriggerToast(`Moved to: ${col.label}`);
             this.update();
@@ -700,14 +786,14 @@ export class KanbanBoard {
 
     // Map stages to Indonesian/English clean label
     const stageMap = {
-      'new_lead': 'New Lead',
-      'proposal_sent': 'Queue',
-      'in_progress': 'In Progress',
-      'client_review': 'Client Review',
-      'revision': 'Revision',
-      'invoice_sent': 'Invoice Sent',
-      'waiting_payment': 'Waiting Payment',
-      'completed': 'Completed'
+      'new_lead': t('kanban.stages.new_lead', 'New Lead'),
+      'proposal_sent': t('kanban.stages.proposal_sent', 'Queue'),
+      'in_progress': t('kanban.stages.in_progress', 'In Progress'),
+      'client_review': t('kanban.stages.client_review', 'Client Review'),
+      'revision': t('kanban.stages.revision', 'Revision'),
+      'invoice_sent': t('kanban.stages.invoice_sent', 'Invoice Sent'),
+      'waiting_payment': t('kanban.stages.waiting_payment', 'Waiting Payment'),
+      'completed': t('kanban.stages.completed', 'Completed')
     };
     const colName = stageMap[project.stage || project.status] || project.stage || project.status || 'Unknown';
 
@@ -719,13 +805,65 @@ export class KanbanBoard {
 
     const projectTitleStr = project.title || project.name || 'Untitled Project';
 
+    // Overdue check
+    let isOverdue = false;
+    if (project.invoiceDueDate && !['Fully Paid', 'Payment Received', 'Paid'].includes(project.paymentStatus)) {
+      const dueDate = new Date(project.invoiceDueDate);
+      dueDate.setHours(0,0,0,0);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      if (dueDate < today) {
+        isOverdue = true;
+      }
+    }
+    
+    let overdueBadge = '';
+    if (isOverdue && ['invoice_sent', 'waiting_payment'].includes(project.stage)) {
+      overdueBadge = `
+        <span class="client-status-badge" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; background: rgba(245, 158, 11, 0.15); color: #fde047; border: 1px solid rgba(245, 158, 11, 0.3);">
+          ⚠️ Overdue
+        </span>
+      `;
+    }
+
     let cardBody = '';
 
     // Header segment
+    let deliveryBadge = '';
+    const deliveryStages = ['client_review', 'revision', 'completed', 'waiting_payment'];
+    if (deliveryStages.includes(project.stage || project.status)) {
+      const delStatus = project.deliveryStatus || 'Not Submitted';
+      let delColorStyle = 'background: rgba(139, 92, 246, 0.15); color: #c4b5fd;';
+      if (delStatus === 'Not Submitted') {
+        delColorStyle = 'background: rgba(255, 255, 255, 0.05); color: var(--text-muted);';
+      } else if (delStatus === 'Draft Submitted') {
+        delColorStyle = 'background: rgba(59, 130, 246, 0.15); color: #93c5fd;';
+      } else if (delStatus === 'Waiting Feedback') {
+        delColorStyle = 'background: rgba(245, 158, 11, 0.15); color: #fde047;';
+      } else if (delStatus === 'Revision Requested' || delStatus === 'Revision Needed') {
+        delColorStyle = 'background: rgba(239, 68, 68, 0.15); color: #fca5a5;';
+      } else if (delStatus === 'Approved') {
+        delColorStyle = 'background: rgba(16, 185, 129, 0.15); color: #6ee7b7;';
+      } else if (delStatus === 'Final Delivered') {
+        delColorStyle = 'background: rgba(16, 185, 129, 0.15); color: #6ee7b7;';
+      } else if (delStatus === 'Handover Complete') {
+        delColorStyle = 'background: rgba(139, 92, 246, 0.2); color: #d8b4fe; border: 1px solid rgba(139, 92, 246, 0.3);';
+      }
+      deliveryBadge = `
+        <span class="client-status-badge" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; ${delColorStyle}">
+          ${getIcon('folder', '', 10)} Delivery: ${delStatus}
+        </span>
+      `;
+    }
+
     if (viewMode === 'detail') {
       cardBody += `
         <div class="card-header-tags" style="display: flex; gap: 6px; margin-bottom: 8px; justify-content: space-between; align-items: center;">
-          <span class="card-tag ${tagClass}">${primaryTag}</span>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <span class="card-tag ${tagClass}">${primaryTag}</span>
+            ${deliveryBadge}
+            ${overdueBadge}
+          </div>
           <div style="display: flex; gap: 4px; align-items: center;">
             <span class="health-indicator-dot" style="width: 6px; height: 6px; border-radius: 50%; background-color: ${health.color};" title="Health: ${health.label}"></span>
             <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">${health.label}</span>
@@ -738,12 +876,49 @@ export class KanbanBoard {
           <div style="display: flex; gap: 4px; align-items: center;">
             <span class="health-indicator-dot" style="width: 6px; height: 6px; border-radius: 50%; background-color: ${health.color};"></span>
             <span style="font-size: 0.62rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">${health.label}</span>
+            ${overdueBadge}
           </div>
+          ${deliveryBadge}
         </div>
       `;
     }
 
     // Title & Client with Minimize Toggle
+    const state = this.store.getState();
+    const clientObj = state.clients ? state.clients.find(c => c.id === project.clientId) : null;
+    let clientMemoryBadges = '';
+    if (viewMode === 'detail' && clientObj && clientObj.clientMemory) {
+      const memory = clientObj.clientMemory;
+      const badges = [];
+      
+      if (memory.preferredChannel) {
+        badges.push(memory.preferredChannel);
+      }
+      if (memory.paymentReminderStyle) {
+        badges.push(memory.paymentReminderStyle);
+      } else if (memory.paymentBehavior && memory.paymentBehavior.toLowerCase().includes('reminder')) {
+        badges.push('Needs reminder');
+      }
+      if (memory.revisionPattern) {
+        const shortRev = memory.revisionPattern.length > 20 
+          ? memory.revisionPattern.substring(0, 17) + '...' 
+          : memory.revisionPattern;
+        badges.push(shortRev);
+      }
+      
+      if (badges.length > 0) {
+        clientMemoryBadges = `
+          <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; margin-bottom: 6px;">
+            ${badges.slice(0, 2).map(b => `
+              <span class="client-status-badge" style="font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; background: rgba(139, 92, 246, 0.05); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.15);">
+                🧠 ${b}
+              </span>
+            `).join('')}
+          </div>
+        `;
+      }
+    }
+
     cardBody += `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
         <h4 class="card-title" style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; font-family: 'Plus Jakarta Sans', sans-serif; flex: 1; margin-top: 0; line-height: 1.2;">${projectTitleStr}</h4>
@@ -756,6 +931,7 @@ export class KanbanBoard {
         <span class="manual-label">CLIENT:</span>
         <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">${fullClientIdentity}</span>
       </div>
+      ${clientMemoryBadges}
     `;
 
     // Collapsible Details wrapper
@@ -765,12 +941,12 @@ export class KanbanBoard {
     cardBody += `
       <div class="card-meta-row" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 0.72rem; border-top: 1px solid rgba(255,255,255,0.02); padding-top: 6px;">
         <div style="display: flex; align-items: center; gap: 6px;">
-          <span class="manual-label">PRIORITY:</span>
-          <span class="priority-badge ${priorityClass}">${priorityVal}</span>
+          <span class="manual-label">${t('projectModal.priority', 'PRIORITY')}:</span>
+          <span class="priority-badge ${priorityClass}">${t('priority.' + priorityVal.toLowerCase(), priorityVal)}</span>
         </div>
         ${isPreview ? '' : `
         <div style="display: flex; align-items: center; gap: 6px;">
-          <span class="manual-label">STAGE:</span>
+          <span class="manual-label">${t('projectModal.stage', 'STAGE')}:</span>
           <span style="font-weight: 600; color: var(--text-secondary); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.02em;">${colName}</span>
         </div>
         `}
@@ -785,6 +961,64 @@ export class KanbanBoard {
         <span class="manual-label" style="color: ${isNextActionPlaceholder ? 'var(--text-muted)' : 'var(--color-secondary)'};">NEXT:</span> ${displayNextAction}
       </div>
     `;
+
+    // Stage-specific Invoice & Payment layouts
+    if (project.stage === 'waiting_payment') {
+      const payStatus = project.paymentStatus || 'Not Started';
+      const invoiceDueStr = project.invoiceDueDate ? formatDate(project.invoiceDueDate) : 'No due date';
+      const nextFollowUpStr = project.nextFollowUpDate ? formatDate(project.nextFollowUpDate) : 'None';
+      const amountPaidVal = project.amountPaid || 0;
+      const amountDueVal = project.amountDue || 0;
+      const invAmtVal = project.invoiceAmount || 0;
+      const hasReceipt = !!(project.receiptLink || project.paymentReceiptLink);
+      
+      if (viewMode === 'simple') {
+        cardBody += `
+          <div class="waiting-payment-compact" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 0.7rem; color: var(--text-secondary); background: rgba(255,255,255,0.01); padding: 6px 8px; border-radius: 6px; border: 1px dashed rgba(255,255,255,0.04);">
+            <div><strong style="color: var(--text-muted);">Status:</strong> ${payStatus}</div>
+            <div><strong style="color: var(--text-muted);">Due Date:</strong> ${invoiceDueStr}</div>
+            <div><strong style="color: var(--text-muted);">Next Follow-up:</strong> ${nextFollowUpStr}</div>
+          </div>
+        `;
+      } else { // detail view
+        cardBody += `
+          <div class="waiting-payment-detail" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 0.7rem; color: var(--text-secondary); background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+            <div><strong style="color: var(--text-muted);">Status:</strong> ${payStatus}</div>
+            <div><strong style="color: var(--text-muted);">Due Date:</strong> ${invoiceDueStr}</div>
+            <div><strong style="color: var(--text-muted);">Next Follow-up:</strong> ${nextFollowUpStr}</div>
+            <div style="border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 6px; display: grid; grid-template-columns: 1fr; gap: 2px;">
+              <div><strong style="color: var(--text-muted);">Invoice #:</strong> ${project.invoiceNumber || 'N/A'}</div>
+              <div><strong style="color: var(--text-muted);">Inv Amount:</strong> ${formatCurrency(invAmtVal)}</div>
+              <div><strong style="color: var(--text-muted);">Amt Due:</strong> ${formatCurrency(amountDueVal)}</div>
+              <div><strong style="color: var(--text-muted);">Receipt Proof:</strong> ${hasReceipt ? `<span style="color: var(--color-success); font-weight: 600;">Viewable</span>` : `<span style="color: var(--color-warning);">Missing</span>`}</div>
+            </div>
+          </div>
+        `;
+      }
+    } else if (project.stage === 'invoice_sent') {
+      const invFileMarkup = project.invoiceFileLink 
+        ? `<a href="${project.invoiceFileLink}" target="_blank" rel="noopener noreferrer" style="color: var(--color-secondary); text-decoration: none; font-weight: 600;" onclick="event.stopPropagation();">Open Invoice</a>` 
+        : '<span style="color: var(--text-muted);">None</span>';
+      
+      cardBody += `
+        <div class="invoice-sent-detail" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 0.7rem; color: var(--text-secondary); background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+          <div><strong style="color: var(--text-muted);">Inv #:</strong> ${project.invoiceNumber || 'N/A'}</div>
+          <div><strong style="color: var(--text-muted);">Inv Date:</strong> ${project.invoiceDate ? formatDate(project.invoiceDate) : 'N/A'}</div>
+          <div><strong style="color: var(--text-muted);">Due Date:</strong> ${project.invoiceDueDate ? formatDate(project.invoiceDueDate) : 'N/A'}</div>
+          <div><strong style="color: var(--text-muted);">Terms:</strong> ${project.paymentTerms || 'N/A'}</div>
+          <div><strong style="color: var(--text-muted);">Invoice File:</strong> ${invFileMarkup}</div>
+          
+          <div style="display: flex; gap: 6px; margin-top: 6px;" class="card-ctas">
+            <button type="button" class="btn btn-primary btn-card-cta-mark" style="font-size: 0.65rem; padding: 2px 6px; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25); flex: 1;">
+              Mark Waiting
+            </button>
+            <button type="button" class="btn btn-secondary btn-card-cta-follow" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.03); color: #fff; border-color: rgba(255,255,255,0.06); flex: 1;">
+              Follow Up
+            </button>
+          </div>
+        </div>
+      `;
+    }
 
     // Extra details (for Detail view mode)
     if (viewMode === 'detail') {
@@ -856,7 +1090,7 @@ export class KanbanBoard {
     if (isPaymentStage) {
       if (project.stage === 'completed') {
         footerRightMarkup = `
-          <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: normal; margin-right: 2px;">Paid: ${formatCurrency(project.budget)}</span>
+          <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: normal; margin-right: 2px;">Paid: ${formatMoney(project.budget, project.projectCurrency || 'IDR')}</span>
           <span class="client-status-badge ${paymentPillClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">
             ${paymentLabel}
           </span>
@@ -864,8 +1098,9 @@ export class KanbanBoard {
       } else {
         const amountToDisplay = project.invoiceAmount || project.budget;
         const amountLabel = project.stage === 'invoice_sent' ? 'Invoice' : 'Due';
+        const curToUse = project.invoiceAmount ? (project.invoiceCurrency || project.projectCurrency || 'IDR') : (project.projectCurrency || 'IDR');
         footerRightMarkup = `
-          <span style="font-weight: 700; color: var(--text-primary); font-size: 0.72rem; font-family: 'Plus Jakarta Sans', sans-serif; margin-right: 2px;">${amountLabel}: ${formatCurrency(amountToDisplay)}</span>
+          <span style="font-weight: 700; color: var(--text-primary); font-size: 0.72rem; font-family: 'Plus Jakarta Sans', sans-serif; margin-right: 2px;">${amountLabel}: ${formatMoney(amountToDisplay, curToUse)}</span>
           <span class="client-status-badge ${paymentPillClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">
             ${paymentLabel}
           </span>
@@ -874,7 +1109,7 @@ export class KanbanBoard {
     } else {
       if (viewMode === 'detail') {
         footerRightMarkup = `
-          <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: normal; margin-right: 2px;">Est: ${formatCurrency(project.budget)}</span>
+          <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: normal; margin-right: 2px;">Est: ${formatMoney(project.budget, project.projectCurrency || 'IDR')}</span>
         `;
       } else {
         footerRightMarkup = '';
@@ -914,6 +1149,58 @@ export class KanbanBoard {
     card.addEventListener('click', () => {
       this.onCardClick(project.id);
     });
+
+    // Mark as Waiting CTA
+    const btnMark = card.querySelector('.btn-card-cta-mark');
+    if (btnMark) {
+      btnMark.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.store.updateProject(project.id, { stage: 'waiting_payment', paymentStatus: 'Waiting Payment' });
+        if (window.app && window.app.triggerToast) {
+          window.app.triggerToast("Project marked as Waiting Payment.", "text-success");
+        }
+        this.update();
+      });
+    }
+
+    // Follow Up CTA
+    const btnFollow = card.querySelector('.btn-card-cta-follow');
+    if (btnFollow) {
+      btnFollow.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const invNum = project.invoiceNumber || 'N/A';
+        const invAmt = project.invoiceAmount ? 'Rp ' + project.invoiceAmount.toLocaleString('id-ID') : '0';
+        const dueDate = project.invoiceDueDate || 'N/A';
+        const payMethod = project.paymentMethod || 'Bank Transfer';
+
+        const msg = `Hi ${project.clientName || 'Client'},\n\nI hope you're having a great day. Just a quick reminder that invoice ${invNum} of ${invAmt} is currently awaiting payment. It is scheduled to be due on ${dueDate}.\n\nYou can complete the payment via ${payMethod}. Once done, please share the transfer receipt for verification.\n\nThanks so much,\n[Your Name]`;
+        
+        navigator.clipboard.writeText(msg)
+          .then(() => {
+            if (window.app && window.app.triggerToast) {
+              window.app.triggerToast("Invoice follow-up copied.", "text-success");
+            }
+          })
+          .catch(err => {
+            console.error("Clipboard copy failed, using fallback:", err);
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = msg;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            try {
+              document.execCommand('copy');
+              if (window.app && window.app.triggerToast) {
+                window.app.triggerToast("Invoice follow-up copied.", "text-success");
+              }
+            } catch (e2) {
+              if (window.app && window.app.triggerToast) {
+                window.app.triggerToast("Failed to copy message.", "text-danger");
+              }
+            }
+            document.body.removeChild(tempTextarea);
+          });
+      });
+    }
 
     // Handle card minimize button toggle
     const minimizeBtn = card.querySelector('.card-minimize-btn');
@@ -1633,7 +1920,7 @@ export class KanbanBoard {
           <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Client: ${clientName}</span>
         </div>
         <div style="display: flex; gap: 4px; align-items: center;">
-          <span class="priority-badge ${priorityClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">${priority}</span>
+          <span class="priority-badge ${priorityClass}" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;">${t('priority.' + priority.toLowerCase(), priority)}</span>
         </div>
       </div>
 

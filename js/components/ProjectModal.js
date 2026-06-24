@@ -3,8 +3,10 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatDate, isOutsideWorkingHours } from '../utils.js';
+import { formatCurrency, formatMoney, formatDate, isOutsideWorkingHours, getDeliveryLabels, normalizeLink, showCompletionWarningModal, getDeliveryMessageText, showGenericConfirmationModal } from '../utils.js';
 import { promptTemplates, copyPromptToClipboard } from './AIPromptHelpers.js';
+import { ClientMemoryPanel } from './ClientMemoryPanel.js';
+import { t, getLanguage } from '../i18n.js';
 
 export class ProjectModal {
   /**
@@ -56,9 +58,9 @@ export class ProjectModal {
     const isCustomCategory = !defaultCategories.includes(projectCategory);
     
     let categoryOptions = defaultCategories
-      .map(tag => `<option value="${tag}" ${projectCategory === tag ? 'selected' : ''}>${tag}</option>`)
+      .map(tag => `<option value="${tag}" ${projectCategory === tag ? 'selected' : ''}>${t('category.' + tag.toLowerCase(), tag)}</option>`)
       .join('');
-    categoryOptions += `<option value="CUSTOM_CATEGORY" ${isCustomCategory ? 'selected' : ''}>Add custom category...</option>`;
+    categoryOptions += `<option value="CUSTOM_CATEGORY" ${isCustomCategory ? 'selected' : ''}>${t('category.addCustom', 'Add custom category...')}</option>`;
 
     const clients = state.clients || [];
     const clientOptions = clients.map(c => `<option value="${c.id}" ${project.clientId === c.id ? 'selected' : ''}>${c.name} (${c.businessName || 'Personal'})</option>`).join('');
@@ -77,7 +79,7 @@ export class ProjectModal {
       <div class="modal-container" style="max-width: 860px; max-height: 90vh;">
         <div class="modal-header">
           <div style="flex: 1; margin-right: 20px;">
-            <span class="manual-label">Project Details</span>
+            <span class="manual-label">${t('projectModal.setup', 'Project Details')}</span>
             <input type="text" id="m-p-title" class="form-control" value="${project.title}" style="background: none; border: none; font-size: 1.25rem; font-weight: 800; padding: 2px 0; color: var(--text-primary); font-family: 'Plus Jakarta Sans', sans-serif;" required>
           </div>
           <button class="modal-close-btn" id="close-modal">&times;</button>
@@ -91,21 +93,21 @@ export class ProjectModal {
               <!-- Category and Priority Row -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <div class="form-group">
-                  <label>Project Category</label>
+                  <label>${t('projectModal.category', 'Project Category')}</label>
                   <select class="form-control" id="m-p-category">${categoryOptions}</select>
                 </div>
                 <div class="form-group ${isCustomCategory ? '' : 'd-none'}" id="m-p-custom-category-group">
-                  <label>Custom Category</label>
+                  <label>${t('projectModal.customCategory', 'Custom Category')}</label>
                   <input type="text" id="m-p-custom-category" class="form-control" value="${isCustomCategory ? projectCategory : ''}" placeholder="e.g. Video Editing">
                 </div>
                 <div class="form-group">
-                  <label>Priority</label>
+                  <label>${t('projectModal.priority', 'Priority')}</label>
                   <select class="form-control" id="m-p-priority">
-                    <option value="Low" ${project.priority === 'Low' ? 'selected' : ''}>Low Priority</option>
-                    <option value="Medium" ${project.priority === 'Medium' ? 'selected' : ''}>Medium Priority</option>
-                    <option value="High" ${project.priority === 'High' ? 'selected' : ''}>High Priority</option>
-                    <option value="Urgent" ${project.priority === 'Urgent' ? 'selected' : ''}>Urgent Priority</option>
-                    <option value="TBD" ${project.priority === 'TBD' ? 'selected' : ''}>TBD</option>
+                    <option value="Low" ${project.priority === 'Low' ? 'selected' : ''}>${t('priority.low', 'Low Priority')}</option>
+                    <option value="Medium" ${project.priority === 'Medium' ? 'selected' : ''}>${t('priority.medium', 'Medium Priority')}</option>
+                    <option value="High" ${project.priority === 'High' ? 'selected' : ''}>${t('priority.high', 'High Priority')}</option>
+                    <option value="Urgent" ${project.priority === 'Urgent' ? 'selected' : ''}>${t('priority.urgent', 'Urgent Priority')}</option>
+                    <option value="TBD" ${project.priority === 'TBD' ? 'selected' : ''}>${t('priority.tbd', 'TBD')}</option>
                   </select>
                 </div>
               </div>
@@ -113,12 +115,12 @@ export class ProjectModal {
               <!-- Scope Description & Notes (Collapsible) -->
               <div class="collapsible-section" id="section-description">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>${getIcon('fileText', '', 16)} Description & Scope of Work</span>
+                  <span>${getIcon('fileText', '', 16)} ${t('projectModal.description', 'Description & Scope of Work')}</span>
                   <span class="toggle-icon">${getIcon('chevronDown', '', 14)}</span>
                 </h4>
                 <div class="collapsible-content">
                   <div class="form-group" style="margin: 0;">
-                    <textarea class="form-control" id="m-p-desc" style="min-height: 80px;" placeholder="Write details of scope, brief, or job description...">${project.description || ''}</textarea>
+                    <textarea class="form-control" id="m-p-desc" style="min-height: 80px;" placeholder="${t('projectModal.description', 'Write details of scope, brief, or job description...')}">${project.description || ''}</textarea>
                   </div>
                 </div>
               </div>
@@ -126,29 +128,29 @@ export class ProjectModal {
               <!-- File & Delivery Links (Collapsible) -->
               <div class="collapsible-section" id="section-files">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>${getIcon('folder', '', 16)} Files & Delivery Links</span>
+                  <span>${getIcon('folder', '', 16)} ${t('projectModal.files', 'Files & Delivery Links')}</span>
                   <span class="toggle-icon">${getIcon('chevronDown', '', 14)}</span>
                 </h4>
                 <div class="collapsible-content">
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
-                      <label>Brief / Specification Link</label>
+                      <label>${t('projectModal.briefLink', 'Brief / Specification Link')}</label>
                       <input type="url" id="m-p-brief-url" class="form-control" value="${project.briefLink || ''}" placeholder="Link to Figma, brief document, etc...">
                     </div>
                     <div class="form-group">
-                      <label>Source / Raw Folder Link</label>
+                      <label>${t('delivery.rawSourceLink', 'Source / Raw Folder Link')}</label>
                       <input type="url" id="m-p-raw-url" class="form-control" value="${project.rawFileLink || ''}" placeholder="Link to Google Drive raw files folder...">
                     </div>
                     <div class="form-group">
-                      <label>Draft / Staging Link</label>
+                      <label>${t('delivery.draftLink', 'Draft / Staging Link')}</label>
                       <input type="url" id="m-p-draft-url" class="form-control" value="${project.draftFileLink || ''}" placeholder="Link to mockup, staging website, etc...">
                     </div>
                     <div class="form-group">
-                      <label>Final Delivery Link</label>
+                      <label>${t('delivery.finalFileLink', 'Final Delivery Link')}</label>
                       <input type="url" id="m-p-final-url" class="form-control" value="${project.finalDeliveryLink || ''}" placeholder="Link to approved final file package...">
                     </div>
                     <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
-                      <label>Reference Asset Folder Link</label>
+                      <label>${t('projectModal.refLink', 'Reference Asset Folder Link')}</label>
                       <input type="url" id="m-p-ref-url" class="form-control" value="${project.referenceFolderLink || ''}" placeholder="Link to logos, brand guidelines, reference folders...">
                     </div>
                   </div>
@@ -158,25 +160,25 @@ export class ProjectModal {
               <!-- Meeting & Client Notes (Collapsible) -->
               <div class="collapsible-section collapsed" id="section-meeting-notes">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>${getIcon('calendar', '', 16)} Meeting & Client Notes</span>
+                  <span>${getIcon('calendar', '', 16)} ${t('projectModal.meetingNotesTitle', 'Meeting & Client Notes')}</span>
                   <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
                 </h4>
                 <div class="collapsible-content">
                   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
                     <div class="form-group">
-                      <label>Meeting Date</label>
+                      <label>${t('projectModal.meetDate', 'Meeting Date')}</label>
                       <input type="date" id="m-p-meet-date" class="form-control" value="${project.meetingDate || ''}">
                     </div>
                     <div class="form-group">
-                      <label>Meeting Time</label>
+                      <label>${t('projectModal.meetTime', 'Meeting Time')}</label>
                       <input type="time" id="m-p-meet-time" class="form-control" value="${project.meetingTime || ''}">
                     </div>
                     <div class="form-group">
-                      <label>Meeting Platform / Type</label>
+                      <label>${t('projectModal.meetPlatform', 'Meeting Platform / Type')}</label>
                       <input type="text" id="m-p-meet-type" class="form-control" value="${project.meetingType || 'Google Meet'}" placeholder="Google Meet, WhatsApp, Zoom...">
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
-                      <label>Meeting Room Link</label>
+                      <label>${t('projectModal.meetLink', 'Meeting Room Link')}</label>
                       <input type="url" id="m-p-meet-link-val" class="form-control" value="${project.meetingLink || ''}" placeholder="https://meet.google.com/abc-defg-hij">
                     </div>
                     <div class="form-group">
@@ -237,6 +239,9 @@ export class ProjectModal {
                     <button type="button" class="btn btn-secondary" id="btn-generate-ai-prompt" style="font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
                       ${getIcon('fileText', '', 14)} Copy AI Summary Prompt
                     </button>
+                    <button type="button" class="btn btn-secondary" id="btn-extract-client-memory" style="font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; background: rgba(139, 92, 246, 0.08); border-color: rgba(139, 92, 246, 0.25);">
+                      🧠 Extract Client Memory
+                    </button>
                   </div>
                 </div>
               </div>
@@ -295,146 +300,409 @@ export class ProjectModal {
                 </div>
               </div>
 
-              <!-- Invoices & Billing (Collapsible) -->
+              <!-- Invoice & Payment (Collapsible) -->
               <div class="collapsible-section collapsed" id="section-invoices">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>${getIcon('fileText', '', 16)} Invoice & Billing Details</span>
+                  <span>${getIcon('fileText', '', 16)} ${t('projectModal.invoicePayment', 'Invoice & Payment')}</span>
                   <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
                 </h4>
                 
                 <div class="collapsible-content">
-                  <!-- Custom Invoice Form fields -->
+                  <span class="stat-subtext" style="display: block; margin-top: 4px; margin-bottom: 12px; font-size: 0.8rem; color: #94a3b8; line-height: 1.4;">
+                    ${t('projectModal.invoicePaymentDesc', 'Track invoice details, payment due date, follow-up reminders, and payment confirmation.')}
+                  </span>
+                  
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
+                    <!-- Invoice Status & Payment Status -->
                     <div class="form-group">
-                      <label>Invoice Number</label>
+                      <label>${t('invoice.status', 'Invoice Status')}</label>
+                      <select id="m-p-invoice-status" class="form-control">
+                        <option value="Not Created" ${project.invoiceStatus === 'Not Created' ? 'selected' : ''}>${t('status.invoice.not_created', 'Not Created')}</option>
+                        <option value="Draft" ${project.invoiceStatus === 'Draft' ? 'selected' : ''}>${t('status.invoice.draft', 'Draft')}</option>
+                        <option value="Sent" ${project.invoiceStatus === 'Sent' ? 'selected' : ''}>${t('status.invoice.sent', 'Sent')}</option>
+                        <option value="Paid" ${project.invoiceStatus === 'Paid' ? 'selected' : ''}>${t('status.invoice.paid', 'Paid')}</option>
+                        <option value="Overdue" ${project.invoiceStatus === 'Overdue' ? 'selected' : ''}>${t('status.invoice.overdue', 'Overdue')}</option>
+                      </select>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>${t('invoice.paymentStatus', 'Payment Status')}</label>
+                      <select id="m-p-payment-status-select" class="form-control">
+                        <option value="Not Started" ${project.paymentStatus === 'Not Started' ? 'selected' : ''}>${t('status.payment.not_started', 'Not Started')}</option>
+                        <option value="Waiting Payment" ${project.paymentStatus === 'Waiting Payment' ? 'selected' : ''}>${t('status.payment.waiting_payment', 'Waiting Payment')}</option>
+                        <option value="Fully Paid" ${project.paymentStatus === 'Fully Paid' ? 'selected' : ''}>${t('status.payment.fully_paid', 'Fully Paid')}</option>
+                        <option value="Payment Received" ${project.paymentStatus === 'Payment Received' ? 'selected' : ''}>${t('status.payment.payment_received', 'Payment Received')}</option>
+                      </select>
+                      <div id="m-p-payment-suggestion" style="margin-top: 4px;"></div>
+                    </div>
+
+                    <!-- Invoice Number & Invoice Amount -->
+                    <div class="form-group">
+                      <label>${t('invoice.number', 'Invoice Number')}</label>
                       <input type="text" id="m-p-invoice-num" class="form-control" value="${project.invoiceNumber || ''}" placeholder="INV-001">
                     </div>
                     <div class="form-group">
-                      <label>Invoice Amount</label>
-                      <input type="number" id="m-p-invoice-amount" class="form-control" value="${project.invoiceAmount || 0}" placeholder="Amount">
+                      <label>${t('invoice.amount', 'Invoice Amount')}</label>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <select id="m-p-invoice-currency" class="form-control" style="font-size: 0.75rem; padding: 6px; font-weight: 700; width: 80px;">
+                          <option value="IDR" ${project.invoiceCurrency === 'IDR' ? 'selected' : ''}>IDR</option>
+                          <option value="USD" ${project.invoiceCurrency === 'USD' ? 'selected' : ''}>USD</option>
+                          <option value="SGD" ${project.invoiceCurrency === 'SGD' ? 'selected' : ''}>SGD</option>
+                          <option value="AUD" ${project.invoiceCurrency === 'AUD' ? 'selected' : ''}>AUD</option>
+                          <option value="EUR" ${project.invoiceCurrency === 'EUR' ? 'selected' : ''}>EUR</option>
+                        </select>
+                        <input type="number" id="m-p-invoice-amount" class="form-control" value="${project.invoiceAmount || 0}" placeholder="Amount" style="flex: 1;">
+                      </div>
                     </div>
+
+                    <!-- Invoice Date & Invoice Due Date -->
                     <div class="form-group">
-                      <label>Invoice Date</label>
+                      <label>${t('invoice.date', 'Invoice Date')}</label>
                       <input type="date" id="m-p-invoice-date" class="form-control" value="${project.invoiceDate || ''}">
                     </div>
                     <div class="form-group">
-                      <label>Invoice Due Date</label>
+                      <label>${t('invoice.dueDate', 'Invoice Due Date')}</label>
                       <input type="date" id="m-p-invoice-due" class="form-control" value="${project.invoiceDueDate || ''}">
+                      <div id="m-p-overdue-suggestion" style="margin-top: 4px;"></div>
                     </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                      <label>Invoice File URL / Link</label>
-                      <input type="url" id="m-p-invoice-url" class="form-control" value="${project.invoiceFileLink || ''}" placeholder="Google Drive, PDF link...">
-                    </div>
-                    <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
-                      <label>Payment Terms / Notes</label>
+
+                    <!-- Payment Terms & Payment Method -->
+                    <div class="form-group">
+                      <label>${t('planner.workingHours', 'Payment Terms')}</label>
                       <input type="text" id="m-p-payment-terms" class="form-control" value="${project.paymentTerms || ''}" placeholder="Net 15, Net 30...">
                     </div>
+                    <div class="form-group">
+                      <label>${t('invoice.paymentMethod', 'Payment Method')}</label>
+                      <input type="text" id="m-p-pay-method" class="form-control" value="${project.paymentMethod || ''}" placeholder="Bank Transfer, PayPal...">
+                    </div>
+
+                    <!-- Amount Paid & Amount Due -->
+                    <!-- Amount Paid & Amount Due -->
+                    <div class="form-group">
+                      <label>${t('invoice.amountPaid', 'Amount Paid')}</label>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <select id="m-p-payment-currency" class="form-control" style="font-size: 0.75rem; padding: 6px; font-weight: 700; width: 80px;">
+                          <option value="IDR" ${project.paymentCurrency === 'IDR' ? 'selected' : ''}>IDR</option>
+                          <option value="USD" ${project.paymentCurrency === 'USD' ? 'selected' : ''}>USD</option>
+                          <option value="SGD" ${project.paymentCurrency === 'SGD' ? 'selected' : ''}>SGD</option>
+                          <option value="AUD" ${project.paymentCurrency === 'AUD' ? 'selected' : ''}>AUD</option>
+                          <option value="EUR" ${project.paymentCurrency === 'EUR' ? 'selected' : ''}>EUR</option>
+                        </select>
+                        <input type="number" id="m-p-amount-paid" class="form-control" value="${project.amountPaid || 0}" placeholder="Amount Paid" style="flex: 1;">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>${t('invoice.amountDue', 'Amount Due (Calculated)')}</label>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span id="m-p-amount-due-currency" style="font-size: 0.75rem; font-weight: 700; width: 80px; text-align: center; color: var(--text-muted);">
+                          ${project.paymentCurrency || project.invoiceCurrency || 'IDR'}
+                        </span>
+                        <input type="number" id="m-p-amount-due" class="form-control" value="${project.amountDue || 0}" readonly disabled style="opacity: 0.7; flex: 1;">
+                      </div>
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2; margin-top: -8px; margin-bottom: 4px;">
+                      <div id="m-p-currency-mismatch-helper" style="font-size: 0.68rem; color: var(--color-warning); display: none;"></div>
+                      <div id="m-p-payment-currency-mismatch-helper" style="font-size: 0.68rem; color: var(--color-warning); display: none;"></div>
+                    </div>
+
+                    <!-- Last Follow-up Date & Next Follow-up Date -->
+                    <div class="form-group">
+                      <label>${t('invoice.lastFollowUp', 'Last Follow-up Date')}</label>
+                      <input type="date" id="m-p-last-followup" class="form-control" value="${project.lastFollowUpDate || ''}">
+                    </div>
+                    <div class="form-group">
+                      <label>${t('invoice.nextFollowUp', 'Next Follow-up Date')}</label>
+                      <input type="date" id="m-p-next-followup" class="form-control" value="${project.nextFollowUpDate || ''}">
+                    </div>
+
+                    <!-- Receipt / Payment Proof Link & Invoice File Link -->
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Receipt / Payment Proof Link</label>
+                      <input type="url" id="m-p-payment-receipt" class="form-control" value="${project.receiptLink || project.paymentReceiptLink || ''}" placeholder="https://...">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Invoice File Link</label>
+                      <input type="url" id="m-p-invoice-url" class="form-control" value="${project.invoiceFileLink || ''}" placeholder="https://...">
+                    </div>
+
+                    <!-- Payment Notes -->
+                    <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+                      <label>Payment Notes</label>
+                      <textarea id="m-p-payment-notes" class="form-control" placeholder="Internal payment notes, transaction references..." style="min-height: 60px;">${project.paymentNotes || ''}</textarea>
+                    </div>
+
+                    <!-- Invoice AI Helpers Grid -->
+                    <div style="grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                      <button type="button" class="btn btn-secondary btn-sm" id="btn-invoice-ai-followup" style="font-size: 0.72rem; padding: 6px; justify-content: center; display: inline-flex; align-items: center; gap: 4px;">
+                        ${getIcon('copy', '', 12)} Follow-up Msg
+                      </button>
+                      <button type="button" class="btn btn-secondary btn-sm" id="btn-invoice-ai-overdue" style="font-size: 0.72rem; padding: 6px; justify-content: center; display: inline-flex; align-items: center; gap: 4px;">
+                        ${getIcon('alertTriangle', '', 12)} Overdue Reminder
+                      </button>
+                      <button type="button" class="btn btn-secondary btn-sm" id="btn-invoice-ai-confirm" style="font-size: 0.72rem; padding: 6px; justify-content: center; display: inline-flex; align-items: center; gap: 4px;">
+                        ${getIcon('check', '', 12)} Payment Confirm
+                      </button>
+                      <button type="button" class="btn btn-secondary btn-sm" id="btn-invoice-ai-receipt" style="font-size: 0.72rem; padding: 6px; justify-content: center; display: inline-flex; align-items: center; gap: 4px;">
+                        ${getIcon('fileText', '', 12)} Receipt Request
+                      </button>
+                    </div>
                   </div>
-                  
-                  <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <button class="btn btn-primary" id="m-btn-send-invoice" style="flex: 1; justify-content: center; font-size: 0.8rem; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
-                      🚀 Send & Mark as Sent
-                    </button>
-                  </div>
-                  
-                  <div class="deliverables-box-list" id="modal-invoices-list" style="gap: 8px;"></div>
-                  <button class="btn btn-secondary" id="m-btn-invoice-add" style="margin-top: 8px; width: 100%; justify-content: center; font-size: 0.8rem;">
-                    ${getIcon('plus', '', 14)} Add Custom Invoice Log
-                  </button>
                 </div>
               </div>
 
               <!-- Client Memory (Collapsible) -->
               <div class="collapsible-section collapsed" id="section-client-memory">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>${getIcon('user', '', 16)} Client Memory & Project History</span>
+                  <span>${getIcon('user', '', 16)} ${t('projectModal.clientMemorySnapshot', 'Client Memory & Project History')}</span>
                   <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
                 </h4>
                 <div class="collapsible-content">
                   <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">
-                    Capture important client context so you do not lose project history across chats, meetings, and files.
+                    ${t('projectModal.clientMemoryDesc', 'Capture important client context so you do not lose project history across chats, meetings, and files.')}
                   </p>
                   ${clientObj ? `
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                       <div class="form-group">
-                        <label>Client Preference</label>
-                        <textarea id="m-c-preference" class="form-control" style="min-height: 50px;" placeholder="e.g. Prefers Monday updates">${clientObj.clientPreference || ''}</textarea>
+                        <label>${t('projectModal.clientPreference', 'Client Preference')}</label>
+                        <textarea id="m-c-preference" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.clientPreferencePlaceholder', 'e.g. Prefers Monday updates')}">${clientObj.clientPreference || ''}</textarea>
                       </div>
                       <div class="form-group">
-                        <label>Communication Style</label>
-                        <textarea id="m-c-comm-style" class="form-control" style="min-height: 50px;" placeholder="e.g. WhatsApp only, direct call">${clientObj.communicationStyle || ''}</textarea>
+                        <label>${t('projectModal.communicationStyle', 'Communication Style')}</label>
+                        <textarea id="m-c-comm-style" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.communicationStylePlaceholder', 'e.g. WhatsApp only, direct call')}">${clientObj.communicationStyle || ''}</textarea>
                       </div>
                       <div class="form-group">
-                        <label>Payment Behavior</label>
-                        <textarea id="m-c-payment-behavior" class="form-control" style="min-height: 50px;" placeholder="e.g. Needs 1 reminder follow-up">${clientObj.paymentBehavior || ''}</textarea>
+                        <label>${t('projectModal.paymentBehavior', 'Payment Behavior')}</label>
+                        <textarea id="m-c-payment-behavior" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.paymentBehaviorPlaceholder', 'e.g. Needs 1 reminder follow-up')}">${clientObj.paymentBehavior || ''}</textarea>
                       </div>
                       <div class="form-group">
-                        <label>Revision Pattern</label>
-                        <textarea id="m-c-revision-pattern" class="form-control" style="min-height: 50px;" placeholder="e.g. Usually asks for extra rounds">${clientObj.revisionPattern || ''}</textarea>
+                        <label>${t('projectModal.revisionPattern', 'Revision Pattern')}</label>
+                        <textarea id="m-c-revision-pattern" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.revisionPatternPlaceholder', 'e.g. Usually asks for extra rounds')}">${clientObj.revisionPattern || ''}</textarea>
                       </div>
                       <div class="form-group">
-                        <label>Delivery Preference</label>
-                        <textarea id="m-c-delivery-preference" class="form-control" style="min-height: 50px;" placeholder="e.g. Figma + Google Drive SVGs">${clientObj.deliveryPreference || ''}</textarea>
+                        <label>${t('projectModal.deliveryPreference', 'Delivery Preference')}</label>
+                        <textarea id="m-c-delivery-preference" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.deliveryPreferencePlaceholder', 'e.g. Figma + Google Drive SVGs')}">${clientObj.deliveryPreference || ''}</textarea>
                       </div>
                       <div class="form-group">
-                        <label>Client Risk Notes</label>
-                        <textarea id="m-c-risk-notes" class="form-control" style="min-height: 50px;" placeholder="e.g. Scope creep prone">${clientObj.clientRiskNotes || ''}</textarea>
+                        <label>${t('projectModal.clientRiskNotes', 'Client Risk Notes')}</label>
+                        <textarea id="m-c-risk-notes" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.clientRiskNotesPlaceholder', 'e.g. Scope creep prone')}">${clientObj.clientRiskNotes || ''}</textarea>
                       </div>
                       <div class="form-group" style="grid-column: span 2;">
-                        <label>Important Notes</label>
-                        <textarea id="m-c-important-notes" class="form-control" style="min-height: 50px;" placeholder="Other critical preferences...">${clientObj.importantNotes || ''}</textarea>
+                        <label>${t('projectModal.importantNotes', 'Important Notes')}</label>
+                        <textarea id="m-c-important-notes" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.importantNotesPlaceholder', 'Other critical preferences...')}">${clientObj.importantNotes || ''}</textarea>
                       </div>
                       <div class="form-group">
-                        <label>Last Project Summary</label>
-                        <textarea id="m-c-last-proj-summary" class="form-control" style="min-height: 50px;" placeholder="Summary of previous work...">${clientObj.lastProjectSummary || ''}</textarea>
+                        <label>${t('projectModal.lastProjectSummary', 'Last Project Summary')}</label>
+                        <textarea id="m-c-last-proj-summary" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.lastProjectSummaryPlaceholder', 'Summary of previous work...')}">${clientObj.lastProjectSummary || ''}</textarea>
                       </div>
                       <div class="form-group">
-                        <label>Last Meeting Summary</label>
-                        <textarea id="m-c-last-meet-summary" class="form-control" style="min-height: 50px;" placeholder="Notes from previous meeting...">${clientObj.lastMeetingSummary || ''}</textarea>
+                        <label>${t('projectModal.lastMeetingSummary', 'Last Meeting Summary')}</label>
+                        <textarea id="m-c-last-meet-summary" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.lastMeetingSummaryPlaceholder', 'Notes from previous meeting...')}">${clientObj.lastMeetingSummary || ''}</textarea>
                       </div>
                     </div>
                   ` : `
                     <div style="background: rgba(255,255,255,0.01); border: 1px dashed var(--border-subtle); padding: 16px; text-align: center; border-radius: 8px; font-size: 0.82rem; color: var(--text-muted);">
-                      No client associated with this project. Select a client in the sidebar to enable Client Memory.
+                      ${t('projectModal.noClientAssociated', 'No client associated with this project. Select a client in the sidebar to enable Client Memory.')}
                     </div>
                   `}
+                </div>
+              </div>
+
+              <!-- Delivery Center (Collapsible) -->
+              <div class="collapsible-section collapsed" id="section-delivery-center">
+                <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                  <span>${getIcon('checkSquare', '', 16)} ${t('projectModal.deliveryCenter', 'Delivery Center')}</span>
+                  <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
+                </h4>
+                <div class="collapsible-content">
+                  <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">
+                    ${t('projectModal.deliveryCenterDesc', 'Organize preview links, final files, source files, approval status, and handover notes before marking a project as completed.')}
+                  </p>
+                  
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div class="form-group">
+                      <label>${t('delivery.status', 'Delivery Status')}</label>
+                      <select class="form-control" id="m-p-delivery-status-select-val" style="font-size: 0.75rem;">
+                        <option value="Not Submitted" ${project.deliveryStatus === 'Not Submitted' ? 'selected' : ''}>${t('status.delivery.not_submitted', 'Not Submitted')}</option>
+                        <option value="Draft Submitted" ${project.deliveryStatus === 'Draft Submitted' ? 'selected' : ''}>${t('status.delivery.draft_submitted', 'Draft Submitted')}</option>
+                        <option value="Waiting Feedback" ${project.deliveryStatus === 'Waiting Feedback' ? 'selected' : ''}>${t('status.delivery.waiting_feedback', 'Waiting Feedback')}</option>
+                        <option value="Revision Needed" ${project.deliveryStatus === 'Revision Needed' ? 'selected' : ''}>${t('status.delivery.revision_needed', 'Revision Needed')}</option>
+                        <option value="Approved" ${project.deliveryStatus === 'Approved' ? 'selected' : ''}>${t('status.delivery.approved', 'Approved')}</option>
+                        <option value="Final Delivered" ${project.deliveryStatus === 'Final Delivered' ? 'selected' : ''}>${t('status.delivery.final_delivered', 'Final Delivered')}</option>
+                        <option value="Handover Complete" ${project.deliveryStatus === 'Handover Complete' ? 'selected' : ''}>${t('status.delivery.handover_complete', 'Handover Complete')}</option>
+                      </select>
+                      <span style="font-size: 0.68rem; color: var(--text-muted); font-style: italic; display: block; margin-top: 4px;" id="suggested-delivery-status-label">${t('projectModal.suggested', 'Suggested')}: ${t('status.delivery.not_submitted', 'Not Submitted')}</span>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>${t('delivery.deliveryDate', 'Delivery Date')}</label>
+                      <input type="date" id="m-p-delivery-date-val" class="form-control" value="${project.deliveryDate || ''}" style="font-size: 0.75rem;">
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>${getDeliveryLabels(project.templateRole).preview}</label>
+                      <input type="url" id="m-p-preview-link-val" class="form-control" value="${project.previewLink || ''}" placeholder="${t('projectModal.previewPlaceholder', 'Live link for client review...')}">
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>${t('delivery.draftLink', 'Draft Link')}</label>
+                      <input type="url" id="m-p-draft-link-val" class="form-control" value="${project.draftLink || ''}" placeholder="${t('projectModal.draftPlaceholder', 'Optional draft document/file...')}">
+                    </div>
+
+                    <div class="form-group">
+                      <label>${t('delivery.reviewLink', 'Review Link')}</label>
+                      <input type="url" id="m-p-review-link-val" class="form-control" value="${project.reviewLink || ''}" placeholder="${t('projectModal.reviewPlaceholder', 'Optional review panel link...')}">
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>${t('delivery.fileFolderLink', 'File Folder Link')}</label>
+                      <input type="url" id="m-p-file-folder-link-val" class="form-control" value="${project.fileFolderLink || ''}" placeholder="${t('projectModal.fileFolderPlaceholder', 'Link to Figma, Drive, Dropbox...')}">
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>${getDeliveryLabels(project.templateRole).final}</label>
+                      <input type="url" id="m-p-final-file-link-val" class="form-control" value="${project.finalFileLink || ''}" placeholder="${t('projectModal.finalPlaceholder', 'Link to final delivered master...')}">
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>${getDeliveryLabels(project.templateRole).raw}</label>
+                      <input type="url" id="m-p-raw-file-link-val" class="form-control" value="${project.rawFileLink || ''}" placeholder="${t('projectModal.rawPlaceholder', 'Link to raw/editable source...')}">
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>${t('projectModal.clientFeedbackSummary', 'Client Feedback Summary')}</label>
+                      <textarea id="m-p-client-feedback-summary" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.clientFeedbackPlaceholder', 'Summary of feedback provided by the client...')}">${project.clientFeedbackSummary || ''}</textarea>
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>${t('delivery.handoverNotes', 'Handover Notes')}</label>
+                      <textarea id="m-p-handover-notes-val" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.handoverNotesPlaceholder', 'Delivery and handover notes for the client...')}">${project.handoverNotes || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>${t('delivery.clientVisibleNotes', 'Client Visible Notes')}</label>
+                      <textarea id="m-p-client-visible-notes" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.clientVisibleNotesPlaceholder', 'Public project notes visible to the client...')}">${project.clientVisibleNotes || ''}</textarea>
+                      <span style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px;">${t('projectModal.clientVisibleNotesDesc', 'These notes may appear in the Client Workspace Portal.')}</span>
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2; display: flex; align-items: center; gap: 8px; margin-bottom: 0;">
+                      <input type="checkbox" id="m-p-client-confirmed-delivery" ${project.clientConfirmedDelivery ? 'checked' : ''} style="width: 16px; height: 16px; cursor: pointer;">
+                      <label for="m-p-client-confirmed-delivery" style="margin-bottom: 0; font-size: 0.8rem; cursor: pointer; font-weight: 600; color: var(--text-primary);">${t('delivery.confirmedDelivery', 'Client confirmed final delivery')}</label>
+                    </div>
+                  </div>
+
+                  <!-- Delivery Checklist (Role-aware & Editable) -->
+                  <div style="border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 14px; margin-top: 14px;">
+                    <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; display: block; margin-bottom: 8px;">${t('delivery.checklist', 'Delivery Checklist')}</span>
+                    <div id="modal-delivery-checklist-list"></div>
+                    <div style="display: flex; gap: 8px; margin-top: 10px;">
+                      <input type="text" id="m-p-delivery-chk-new-label" class="form-control" style="font-size: 0.75rem; padding: 4px 8px;" placeholder="${t('projectModal.addCustomDeliveryStep', 'Add custom delivery step...')}">
+                      <button class="btn btn-secondary" id="m-btn-delivery-chk-add" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 4px;">
+                        Add Step
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Delivery AI Helpers Grid -->
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px;">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-delivery-ai-msg" style="font-size: 0.72rem; padding: 6px; justify-content: center; display: inline-flex; align-items: center; gap: 4px;">
+                      ${getIcon('mail', '', 12)} ${t('projectModal.copyDeliveryMsg', 'Copy Delivery Msg')}
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-delivery-ai-handover" style="font-size: 0.72rem; padding: 6px; justify-content: center; display: inline-flex; align-items: center; gap: 4px;">
+                      ${getIcon('code', '', 12)} ${t('projectModal.handoverNotesPrompt', 'Handover Notes Prompt')}
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-delivery-ai-revsummary" style="font-size: 0.72rem; padding: 6px; justify-content: center; display: inline-flex; align-items: center; gap: 4px;">
+                      ${getIcon('list', '', 12)} ${t('projectModal.revisionSummaryMsg', 'Revision Summary Msg')}
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-delivery-ai-checklist" style="font-size: 0.72rem; padding: 6px; justify-content: center; display: inline-flex; align-items: center; gap: 4px;">
+                      ${getIcon('checkSquare', '', 12)} ${t('projectModal.finalChecklistPrompt', 'Final Checklist Prompt')}
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <!-- AI Prompt Helpers (Collapsible) -->
               <div class="collapsible-section collapsed" id="section-ai-prompts">
                 <h4 class="detail-section-title collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>🤖 AI Prompt Helper Pack</span>
+                  <span>🤖 ${t('projectModal.aiPromptHelpers', 'AI Prompt Helpers')}</span>
                   <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
                 </h4>
                 <div class="collapsible-content" style="display: flex; flex-direction: column; gap: 12px;">
                   <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 4px;">
-                    Choose a template to generate structured prompts pre-filled with this project's details. You can copy and paste them into ChatGPT, Claude, or other AI tools.
+                    ${t('aiPrompts.subtitle', 'Generate copy-ready prompts and client messages from your project, client, delivery, invoice, and meeting context.')}
                   </p>
 
-                  <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px; padding: 10px; font-size: 0.7rem; color: var(--color-warning); font-weight: 600; line-height: 1.4;">
-                    🔒 Privacy Reminder: Review sensitive client information before pasting this prompt into external AI tools.
+                  <!-- Category Tabs -->
+                  <div class="ai-prompt-categories" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 4px;" id="ai-categories-bar">
+                    <button type="button" class="btn btn-secondary btn-xs active" data-cat="client_communication" style="padding: 4px 8px; font-size: 0.65rem;">${t('aiPrompts.clientCommunication', 'Communication')}</button>
+                    <button type="button" class="btn btn-secondary btn-xs" data-cat="meeting_memory" style="padding: 4px 8px; font-size: 0.65rem;">${t('aiPrompts.meetingMemory', 'Meeting & Memory')}</button>
+                    <button type="button" class="btn btn-secondary btn-xs" data-cat="delivery" style="padding: 4px 8px; font-size: 0.65rem;">${t('aiPrompts.delivery', 'Delivery')}</button>
+                    <button type="button" class="btn btn-secondary btn-xs" data-cat="invoice_payment" style="padding: 4px 8px; font-size: 0.65rem;">${t('aiPrompts.invoicePayment', 'Invoice & Pay')}</button>
+                    <button type="button" class="btn btn-secondary btn-xs" data-cat="portfolio_review" style="padding: 4px 8px; font-size: 0.65rem;">${t('aiPrompts.portfolioReview', 'Portfolio')}</button>
+                    <button type="button" class="btn btn-secondary btn-xs" data-cat="planning" style="padding: 4px 8px; font-size: 0.65rem;">${t('aiPrompts.planning', 'Planning')}</button>
+                    <button type="button" class="btn btn-secondary btn-xs" data-cat="history" style="padding: 4px 8px; font-size: 0.65rem;">${t('history', 'History')}</button>
                   </div>
 
-                  <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 0.7rem; color: var(--text-muted);">Select AI Prompt Template</label>
-                    <select class="form-control" id="ai-prompt-selector" style="font-size: 0.78rem; padding: 6px 10px;">
-                      <option value="meetingSummary">Meeting Summary Prompt</option>
-                      <option value="proposalDraft">Proposal Draft Prompt</option>
-                      <option value="scopeChecker">Scope Checker Prompt</option>
-                      <option value="revisionBoundary">Revision Boundary Script Prompt</option>
-                      <option value="invoiceFollowUp">Invoice Follow-up Prompt</option>
-                      <option value="clientUpdate">Client Update Message Prompt</option>
-                      <option value="finalDelivery">Final Delivery Message Prompt</option>
-                      <option value="portfolioCaseStudy">Portfolio Case Study Prompt</option>
-                    </select>
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <!-- Prompt Selector -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label style="font-size: 0.68rem; color: var(--text-muted);">${t('projectModal.selectTemplate', 'Select Template')}</label>
+                      <select class="form-control" id="ai-prompt-selector" style="font-size: 0.78rem; padding: 6px 10px;"></select>
+                    </div>
+
+                    <!-- Tone Selector -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label style="font-size: 0.68rem; color: var(--text-muted);">${t('projectModal.selectTone', 'Select Tone')}</label>
+                      <select class="form-control" id="ai-tone-selector" style="font-size: 0.78rem; padding: 6px 10px;">
+                        <option value="Professional">${t('tone.professional', 'Professional')}</option>
+                        <option value="Friendly">${t('tone.friendly', 'Friendly')}</option>
+                        <option value="Firm">${t('tone.firm', 'Firm')}</option>
+                        <option value="Warm">${t('tone.warm', 'Warm')}</option>
+                        <option value="Concise">${t('tone.concise', 'Concise')}</option>
+                      </select>
+                    </div>
+
+                    <!-- Output Language Selector -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label style="font-size: 0.68rem; color: var(--text-muted);">${t('projectModal.outputLanguage', 'Output Language')}</label>
+                      <select class="form-control" id="ai-lang-selector" style="font-size: 0.78rem; padding: 6px 10px;">
+                        <option value="app">${t('projectModal.useAppLang', 'Use App Language')}</option>
+                        <option value="en">English</option>
+                        <option value="id">Bahasa Indonesia</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 12px; font-family: monospace; font-size: 0.72rem; color: var(--text-secondary); max-height: 200px; overflow-y: auto; white-space: pre-wrap;" id="ai-prompt-preview"></div>
+                  <!-- Client Safe Mode Toggle -->
+                  <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px;">
+                    <div style="display: flex; flex-direction: column;">
+                      <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary);">${t('projectModal.clientSafePrivacyShield', 'Client-safe privacy shield')}</span>
+                      <span style="font-size: 0.65rem; color: var(--text-muted);">${t('projectModal.clientSafePrivacyShieldDesc', 'Hides internal risk notes & private strategy fields')}</span>
+                    </div>
+                    <input type="checkbox" id="ai-client-safe-toggle" checked style="width: 16px; height: 16px; cursor: pointer;">
+                  </div>
 
-                  <button type="button" class="btn btn-primary" id="btn-copy-ai-prompt" style="font-size: 0.8rem; padding: 8px; justify-content: center; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
-                    ${getIcon('copy', '', 14)} Copy Prompt to Clipboard
-                  </button>
+                  <!-- Missing Fields Alert -->
+                  <div id="ai-missing-context-helper" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px; padding: 8px 10px; font-size: 0.68rem; color: var(--color-warning); display: none;">
+                    ${t('projectModal.missingContextHelper', '⚠️ Some project details are missing. The prompt will use safe placeholders.')}
+                  </div>
+
+                  <!-- Output Mode Type Indicator -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <span id="ai-output-type-badge" style="font-size: 0.65rem; text-transform: uppercase; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(139, 92, 246, 0.15); color: #a78bfa;">${t('aiPrompts.aiPrompt', 'AI Prompt')}</span>
+                    <span style="font-size: 0.65rem; color: var(--text-muted); font-style: italic;">${t('projectModal.reviewContentBeforeCopying', '🔒 Review content before copying')}</span>
+                  </div>
+
+                  <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 12px; font-family: monospace; font-size: 0.72rem; color: var(--text-secondary); max-height: 220px; overflow-y: auto; white-space: pre-wrap;" id="ai-prompt-preview"></div>
+
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-secondary" id="btn-ai-regenerate" style="font-size: 0.78rem; padding: 8px; justify-content: center; flex: 1;">
+                      ${getIcon('refresh', '', 14)} ${t('projectModal.regenerate', 'Regenerate')}
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btn-copy-ai-prompt" style="font-size: 0.78rem; padding: 8px; justify-content: center; flex: 2; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
+                      ${getIcon('copy', '', 14)} ${t('projectModal.copyPromptToClipboard', 'Copy Prompt to Clipboard')}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -536,7 +804,7 @@ export class ProjectModal {
                   
                   <div class="form-group" style="margin-bottom: 8px;">
                     <label style="font-size: 0.7rem; color: var(--text-muted);">Payment Status</label>
-                    <select class="form-control" id="m-p-payment-status-select" style="font-size: 0.75rem; padding: 4px 6px;">
+                    <select class="form-control" id="m-p-payment-status-select-sidebar" style="font-size: 0.75rem; padding: 4px 6px;">
                       <option value="Waiting Payment" ${project.paymentStatus === 'Waiting Payment' || project.paymentStatus === 'Waiting payment' ? 'selected' : ''}>Waiting Payment</option>
                       <option value="DP Paid" ${project.paymentStatus === 'DP Paid' || project.paymentStatus === 'DP paid' ? 'selected' : ''}>DP Paid</option>
                       <option value="Fully Paid" ${project.paymentStatus === 'Fully Paid' || project.paymentStatus === 'Paid' ? 'selected' : ''}>Fully Paid</option>
@@ -547,27 +815,27 @@ export class ProjectModal {
                   
                   <div class="form-group" style="margin-bottom: 8px;">
                     <label style="font-size: 0.7rem; color: var(--text-muted);">Payment Due Date</label>
-                    <input type="date" id="m-p-payment-due" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.paymentDueDate || ''}">
+                    <input type="date" id="m-p-payment-due-sidebar" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.paymentDueDate || ''}">
                   </div>
                   
                   <div class="form-group" style="margin-bottom: 8px;">
                     <label style="font-size: 0.7rem; color: var(--text-muted);">Last Follow-up Date</label>
-                    <input type="date" id="m-p-last-followup" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.lastFollowUpDate || ''}">
+                    <input type="date" id="m-p-last-followup-sidebar" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.lastFollowUpDate || ''}">
                   </div>
 
                   <div class="form-group" style="margin-bottom: 8px;">
                     <label style="font-size: 0.7rem; color: var(--text-muted);">Next Follow-up Date</label>
-                    <input type="date" id="m-p-next-followup" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.nextFollowUpDate || ''}">
+                    <input type="date" id="m-p-next-followup-sidebar" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.nextFollowUpDate || ''}">
                   </div>
 
                   <div class="form-group" style="margin-bottom: 8px;">
                     <label style="font-size: 0.7rem; color: var(--text-muted);">Payment Receipt Link</label>
-                    <input type="url" id="m-p-payment-receipt" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.paymentReceiptLink || ''}" placeholder="Google Drive link of proof of payment...">
+                    <input type="url" id="m-p-payment-receipt-sidebar" class="form-control" style="font-size: 0.75rem; padding: 4px 6px;" value="${project.paymentReceiptLink || ''}" placeholder="Google Drive link of proof of payment...">
                   </div>
 
                   <div class="form-group" style="margin-bottom: 0;">
                     <label style="font-size: 0.7rem; color: var(--text-muted);">Reminder Notes</label>
-                    <textarea id="m-p-reminder-note" class="form-control" style="font-size: 0.75rem; padding: 4px 6px; min-height: 40px;" placeholder="Follow-up notes...">${project.reminderNote || ''}</textarea>
+                    <textarea id="m-p-reminder-note-sidebar" class="form-control" style="font-size: 0.75rem; padding: 4px 6px; min-height: 40px;" placeholder="Follow-up notes...">${project.reminderNote || ''}</textarea>
                   </div>
                 </div>
               ` : ''}
@@ -676,12 +944,18 @@ export class ProjectModal {
 
                 <div class="form-group" style="margin-bottom: 0;">
                   <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <label class="drawer-meta-title" style="margin: 0;">Estimated Value</label>
-                     <span id="m-p-budget-formatted" style="font-size: 0.82rem; font-weight: 700; color: var(--color-secondary); font-family: 'Plus Jakarta Sans', sans-serif;">${formatCurrency(project.budget)}</span>
+                    <label class="drawer-meta-title" style="margin: 0;">${t('labels.estimatedValue', 'Estimated Value')}</label>
+                     <span id="m-p-budget-formatted" style="font-size: 0.82rem; font-weight: 700; color: var(--color-secondary); font-family: 'Plus Jakarta Sans', sans-serif;">${formatMoney(project.budget, project.projectCurrency || 'IDR')}</span>
                   </div>
                   <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px;">
-                     <span style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary);">Rp</span>
-                     <input type="number" class="form-control" id="m-p-budget" value="${project.budget}" style="padding: 6px 10px; font-weight: 700; color: var(--color-secondary); font-family: 'Plus Jakarta Sans', sans-serif;" min="0">
+                     <select id="m-p-project-currency" class="form-control" style="font-size: 0.75rem; padding: 6px; font-weight: 700; width: 80px; color: var(--color-secondary);">
+                       <option value="IDR" ${project.projectCurrency === 'IDR' ? 'selected' : ''}>IDR</option>
+                       <option value="USD" ${project.projectCurrency === 'USD' ? 'selected' : ''}>USD</option>
+                       <option value="SGD" ${project.projectCurrency === 'SGD' ? 'selected' : ''}>SGD</option>
+                       <option value="AUD" ${project.projectCurrency === 'AUD' ? 'selected' : ''}>AUD</option>
+                       <option value="EUR" ${project.projectCurrency === 'EUR' ? 'selected' : ''}>EUR</option>
+                     </select>
+                     <input type="number" class="form-control" id="m-p-budget" value="${project.budget}" style="padding: 6px 10px; font-weight: 700; color: var(--color-secondary); font-family: 'Plus Jakarta Sans', sans-serif; flex: 1;" min="0">
                   </div>
                 </div>
 
@@ -692,6 +966,51 @@ export class ProjectModal {
                   </label>
                   <input type="date" class="form-control" id="m-p-due" value="${project.dueDate}" style="font-size: 0.8rem; padding: 6px 8px;">
                 </div>
+              </div>
+
+              <!-- Client Memory Snapshot Card Wrapper -->
+              <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;">
+                <h4 style="margin: 0; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                  <span style="display: flex; align-items: center; gap: 6px;">🧠 Client Memory Snapshot</span>
+                </h4>
+                
+                ${(() => {
+                  if (!project.clientId) {
+                    return `<span style="font-size: 0.72rem; color: var(--text-muted); font-style: italic;">No client selected.</span>`;
+                  }
+                  
+                  const clientObj = state.clients.find(c => c.id === project.clientId);
+                  if (!clientObj) {
+                    return `<span style="font-size: 0.72rem; color: var(--text-muted); font-style: italic;">No client selected.</span>`;
+                  }
+                  
+                  const memory = clientObj.clientMemory;
+                  if (!memory || (!memory.preferredChannel && !memory.communicationStyle && !memory.revisionPattern && !memory.paymentBehavior && !memory.deliveryPreference && !memory.importantNotes)) {
+                    return `
+                      <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <span style="font-size: 0.72rem; color: var(--text-muted); font-style: italic;">No client memory added yet.</span>
+                        <a href="#" id="m-btn-open-memory-modal" style="font-size: 0.7rem; color: var(--color-primary); font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+                          ${getIcon('plus', '', 12)} Add memory context
+                        </a>
+                      </div>
+                    `;
+                  }
+                  
+                  return `
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.72rem; color: var(--text-secondary);">
+                      ${memory.preferredChannel ? `<div><strong style="color: var(--text-muted);">Channel:</strong> ${memory.preferredChannel}</div>` : ''}
+                      ${memory.communicationStyle ? `<div><strong style="color: var(--text-muted);">Comm Style:</strong> ${memory.communicationStyle}</div>` : ''}
+                      ${memory.revisionPattern ? `<div><strong style="color: var(--text-muted);">Revision:</strong> ${memory.revisionPattern}</div>` : ''}
+                      ${memory.paymentBehavior ? `<div><strong style="color: var(--text-muted);">Payment:</strong> ${memory.paymentBehavior}</div>` : ''}
+                      ${memory.deliveryPreference ? `<div><strong style="color: var(--text-muted);">Delivery:</strong> ${memory.deliveryPreference}</div>` : ''}
+                      ${memory.importantNotes ? `<div style="border-top: 1px dashed rgba(255,255,255,0.04); padding-top: 6px; margin-top: 2px;"><strong style="color: var(--text-muted);">Note:</strong> ${memory.importantNotes}</div>` : ''}
+                      
+                      <a href="#" id="m-btn-open-memory-modal" style="font-size: 0.7rem; color: var(--color-primary); font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 4px; margin-top: 4px;">
+                        Open Full Client Memory &rarr;
+                      </a>
+                    </div>
+                  `;
+                })()}
               </div>
 
               <!-- Payment Tracking Card Wrapper -->
@@ -863,7 +1182,7 @@ export class ProjectModal {
 
               <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: auto;">
                 <button class="btn btn-secondary" id="m-btn-delete" style="width: 100%; border-color: rgba(239, 68, 68, 0.2); color: var(--color-danger); justify-content: center; gap: 4px; padding: 8px;">
-                  ${getIcon('trash', '', 13)} Delete Project
+                  ${getIcon('trash', '', 13)} ${t('projectModal.deleteProject', 'Delete Project')}
                 </button>
               </div>
 
@@ -878,6 +1197,8 @@ export class ProjectModal {
     this.renderChecklist(project);
     this.renderDeliverables(project);
     this.renderInvoices(project);
+    this.renderDeliveryChecklist(project);
+    this.updateSuggestedDeliveryStatus(project);
 
     // Dynamic helper to safely add event listeners without crashing if elements are conditionally omitted
     const addListener = (selector, event, handler) => {
@@ -941,6 +1262,19 @@ export class ProjectModal {
         this.store.updateProject(project.id, { clientId, clientName, clientType });
         this.onStateChange();
         this.render();
+      }
+    });
+
+    modalOverlay.addEventListener('click', (e) => {
+      const openMemBtn = e.target.closest('#m-btn-open-memory-modal');
+      if (openMemBtn) {
+        e.preventDefault();
+        if (project.clientId) {
+          ClientMemoryPanel.open(project.clientId, this.store, this.onTriggerToast, () => {
+            this.onStateChange();
+            this.render();
+          });
+        }
       }
     });
 
@@ -1009,9 +1343,24 @@ export class ProjectModal {
         }
       }
       if (nextStage === 'completed') {
-        if (project.paymentStatus !== 'Fully Paid' && project.paymentStatus !== 'Paid') {
+        const lacksApproval = project.approvalStatus !== 'Approved' && project.clientApprovalStatus !== 'Approved';
+        const lacksFinalFile = !project.finalFileLink && !project.finalDeliveryLink;
+        const lacksPayment = !['Payment Received', 'Fully Paid', 'Paid'].includes(project.paymentStatus);
+
+        if (lacksApproval || lacksFinalFile || lacksPayment) {
           e.target.value = project.stage; // Revert selection
-          this.onTriggerToast('Project can only be completed if payment status is Paid.', 'text-danger');
+          showCompletionWarningModal({
+            onConfirm: () => {
+              const updates = { stage: 'completed' };
+              this.store.updateProject(project.id, updates);
+              this.onTriggerToast('Project moved to Completed.');
+              this.onStateChange();
+              this.render();
+            },
+            onReview: () => {
+              this.onTriggerToast('Reviewing project details.');
+            }
+          });
           return;
         }
       }
@@ -1086,6 +1435,8 @@ export class ProjectModal {
       const budget = Number(modalOverlay.querySelector('#m-p-budget').value) || 0;
       const dpPct = Number(modalOverlay.querySelector('#m-p-dp-percent').value) || 0;
       const mileAmt = Number(modalOverlay.querySelector('#m-p-mile-amount').value) || 0;
+      const projCurrEl = modalOverlay.querySelector('#m-p-project-currency');
+      const projCurr = projCurrEl ? projCurrEl.value : (project.projectCurrency || 'IDR');
 
       const dpAmt = Math.round(budget * (dpPct / 100));
       const finalAmt = budget - dpAmt - mileAmt;
@@ -1093,12 +1444,12 @@ export class ProjectModal {
 
       const formattedBudget = modalOverlay.querySelector('#m-p-budget-formatted');
       if (formattedBudget) {
-        formattedBudget.textContent = formatCurrency(budget);
+        formattedBudget.textContent = formatMoney(budget, projCurr);
       }
 
-      modalOverlay.querySelector('#m-p-dp-amount-lbl').textContent = formatCurrency(dpAmt);
-      modalOverlay.querySelector('#m-p-final-amount-lbl').textContent = formatCurrency(finalAmt);
-      modalOverlay.querySelector('#m-p-remaining-lbl').textContent = formatCurrency(remainingVal);
+      modalOverlay.querySelector('#m-p-dp-amount-lbl').textContent = formatMoney(dpAmt, projCurr);
+      modalOverlay.querySelector('#m-p-final-amount-lbl').textContent = formatMoney(finalAmt, projCurr);
+      modalOverlay.querySelector('#m-p-remaining-lbl').textContent = formatMoney(remainingVal, projCurr);
 
       this.store.updateProject(project.id, {
         budget: budget,
@@ -1166,9 +1517,11 @@ export class ProjectModal {
     // Client Approval Status dropdown
     addListener('#m-p-approval-status-select', 'change', (e) => {
       const nextApproval = e.target.value;
-      const updates = { clientApprovalStatus: nextApproval };
+      const updates = { clientApprovalStatus: nextApproval, approvalStatus: nextApproval };
       if (nextApproval === 'Needs Revision') {
         updates.stage = 'revision';
+      } else if (nextApproval === 'Approved') {
+        updates.approvedAt = new Date().toISOString().split('T')[0];
       }
       this.store.updateProject(project.id, updates);
       this.onTriggerToast(`Approval status updated to: ${nextApproval}`);
@@ -1232,17 +1585,307 @@ export class ProjectModal {
       this.onStateChange();
     });
 
-    // Waiting Payment Reminder card field listeners
+    // Invoice & Payment section field listeners
+    
+    // Live calculation and suggestions
+    const checkCurrencyMismatch = () => {
+      const projCurr = modalOverlay.querySelector('#m-p-project-currency')?.value || project.projectCurrency || 'IDR';
+      const invCurr = modalOverlay.querySelector('#m-p-invoice-currency')?.value || project.invoiceCurrency || 'IDR';
+      const mismatchHelper = modalOverlay.querySelector('#m-p-currency-mismatch-helper');
+      if (mismatchHelper) {
+        if (projCurr !== invCurr) {
+          mismatchHelper.textContent = t('currencyMismatchWarning', 'Invoice currency differs from project currency.');
+          mismatchHelper.style.display = 'block';
+        } else {
+          mismatchHelper.style.display = 'none';
+        }
+      }
+    };
+
+    const checkPaymentCurrencyMismatch = () => {
+      const invCurr = modalOverlay.querySelector('#m-p-invoice-currency')?.value || project.invoiceCurrency || 'IDR';
+      const payCurr = modalOverlay.querySelector('#m-p-payment-currency')?.value || project.paymentCurrency || 'IDR';
+      const mismatchHelper = modalOverlay.querySelector('#m-p-payment-currency-mismatch-helper');
+      if (mismatchHelper) {
+        if (invCurr !== payCurr) {
+          mismatchHelper.textContent = t('paymentCurrencyMismatchWarning', 'Payment currency differs from invoice currency. Amount due calculation is paused.');
+          mismatchHelper.style.display = 'block';
+        } else {
+          mismatchHelper.style.display = 'none';
+        }
+      }
+    };
+
+    const updateDueFieldAndSuggestions = () => {
+      const amtEl = modalOverlay.querySelector('#m-p-invoice-amount');
+      const paidEl = modalOverlay.querySelector('#m-p-amount-paid');
+      const dueEl = modalOverlay.querySelector('#m-p-amount-due');
+      if (amtEl && paidEl && dueEl) {
+        const amt = Number(amtEl.value) || 0;
+        const paid = Number(paidEl.value) || 0;
+        
+        const invCurr = modalOverlay.querySelector('#m-p-invoice-currency')?.value || project.invoiceCurrency || 'IDR';
+        const payCurr = modalOverlay.querySelector('#m-p-payment-currency')?.value || project.paymentCurrency || 'IDR';
+        
+        if (invCurr === payCurr) {
+          const due = Math.max(0, amt - paid);
+          dueEl.value = due;
+        }
+      }
+      renderSuggestions();
+    };
+
+    const renderSuggestions = () => {
+      const paymentSuggestionEl = modalOverlay.querySelector('#m-p-payment-suggestion');
+      const overdueSuggestionEl = modalOverlay.querySelector('#m-p-overdue-suggestion');
+      if (!paymentSuggestionEl || !overdueSuggestionEl) return;
+      
+      paymentSuggestionEl.innerHTML = '';
+      overdueSuggestionEl.innerHTML = '';
+      
+      const amtEl = modalOverlay.querySelector('#m-p-invoice-amount');
+      const paidEl = modalOverlay.querySelector('#m-p-amount-paid');
+      const dueEl = modalOverlay.querySelector('#m-p-invoice-due');
+      const paySelect = modalOverlay.querySelector('#m-p-payment-status-select');
+      
+      const amt = amtEl ? (Number(amtEl.value) || 0) : 0;
+      const paid = paidEl ? (Number(paidEl.value) || 0) : 0;
+      const dueDateStr = dueEl ? dueEl.value : '';
+      const payStatus = paySelect ? paySelect.value : '';
+      
+      // Fully Paid suggestion
+      if (paid >= amt && amt > 0 && payStatus !== 'Fully Paid' && payStatus !== 'Payment Received') {
+        paymentSuggestionEl.innerHTML = `
+          <button type="button" class="btn btn-secondary" style="font-size: 0.7rem; padding: 2px 6px; background: rgba(16, 185, 129, 0.15); color: var(--color-success); border-color: rgba(16, 185, 129, 0.3); margin-top: 4px;" id="btn-suggest-paid">
+            Suggested: Fully Paid
+          </button>
+        `;
+        paymentSuggestionEl.querySelector('#btn-suggest-paid').addEventListener('click', () => {
+          if (paySelect) {
+            paySelect.value = 'Fully Paid';
+            paySelect.dispatchEvent(new Event('change'));
+          }
+        });
+      }
+      
+      // Overdue suggestion
+      if (dueDateStr && payStatus !== 'Fully Paid' && payStatus !== 'Payment Received') {
+        const dueDate = new Date(dueDateStr);
+        dueDate.setHours(0,0,0,0);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        if (dueDate < today) {
+          overdueSuggestionEl.innerHTML = `
+            <button type="button" class="btn btn-secondary" style="font-size: 0.7rem; padding: 2px 6px; background: rgba(245, 158, 11, 0.15); color: var(--color-warning); border-color: rgba(245, 158, 11, 0.3); margin-top: 4px;" id="btn-suggest-overdue">
+              Suggested: Overdue
+            </button>
+          `;
+          overdueSuggestionEl.querySelector('#btn-suggest-overdue').addEventListener('click', () => {
+            const statusEl = modalOverlay.querySelector('#m-p-invoice-status');
+            if (statusEl) {
+              statusEl.value = 'Overdue';
+              statusEl.dispatchEvent(new Event('change'));
+            }
+          });
+        }
+      }
+    };
+
+    // Run suggestions render initially
+    renderSuggestions();
+    checkCurrencyMismatch();
+    checkPaymentCurrencyMismatch();
+
+    addListener('#m-p-invoice-amount', 'input', updateDueFieldAndSuggestions);
+    addListener('#m-p-amount-paid', 'input', updateDueFieldAndSuggestions);
+    addListener('#m-p-invoice-due', 'change', updateDueFieldAndSuggestions);
+
+    addListener('#m-p-invoice-status', 'change', (e) => {
+      const newVal = e.target.value;
+      const oldVal = project.invoiceStatus || 'Not Created';
+      this.store.updateProject(project.id, { invoiceStatus: newVal });
+      this.onStateChange();
+      
+      if (newVal === 'Sent' && oldVal !== 'Sent' && project.stage !== 'invoice_sent') {
+        showGenericConfirmationModal({
+          title: "Move this project to Invoice Sent?",
+          message: "Would you like to move this project to the Invoice Sent stage of the workspace board?",
+          confirmText: "Move Stage",
+          cancelText: "Keep Current Stage",
+          onConfirm: () => {
+            this.store.updateProject(project.id, { stage: 'invoice_sent' });
+            this.onTriggerToast("Project moved to Invoice Sent stage.", "text-success");
+            this.onStateChange();
+            this.render();
+          }
+        });
+      }
+    });
+
+    const handlePaymentStatusChange = (newVal, oldVal, selectEl) => {
+      const applyPaymentChange = () => {
+        this.store.updateProject(project.id, { paymentStatus: newVal });
+        this.onStateChange();
+        
+        if (newVal === 'Waiting Payment' && oldVal !== 'Waiting Payment' && project.stage !== 'waiting_payment') {
+          showGenericConfirmationModal({
+            title: "Move this project to Waiting Payment?",
+            message: "Would you like to move this project to the Waiting Payment stage of the workspace board?",
+            confirmText: "Move Stage",
+            cancelText: "Keep Current Stage",
+            onConfirm: () => {
+              this.store.updateProject(project.id, { stage: 'waiting_payment' });
+              this.onTriggerToast("Project moved to Waiting Payment stage.", "text-success");
+              this.onStateChange();
+              this.render();
+            }
+          });
+        }
+      };
+
+      if ((newVal === 'Fully Paid' || newVal === 'Payment Received') && oldVal !== 'Fully Paid' && oldVal !== 'Payment Received') {
+        showGenericConfirmationModal({
+          title: "Mark payment as received?",
+          message: "Are you sure you want to mark this project's payment as received?",
+          confirmText: "Confirm Paid",
+          cancelText: "Cancel",
+          onConfirm: () => {
+            applyPaymentChange();
+          },
+          onCancel: () => {
+            if (selectEl) selectEl.value = oldVal;
+          }
+        });
+      } else {
+        applyPaymentChange();
+      }
+    };
+
     addListener('#m-p-payment-status-select', 'change', (e) => {
-      this.store.updateProject(project.id, { paymentStatus: e.target.value });
+      handlePaymentStatusChange(e.target.value, project.paymentStatus || 'Not Started', e.target);
+    });
+
+    addListener('#m-p-payment-status-select-sidebar', 'change', (e) => {
+      handlePaymentStatusChange(e.target.value, project.paymentStatus || 'Not Started', e.target);
+    });
+
+    addListener('#m-p-invoice-num', 'blur', (e) => {
+      this.store.updateProject(project.id, { invoiceNumber: e.target.value.trim() });
       this.onStateChange();
     });
 
-    // TODO_AFTER_LAUNCH: Add Indonesian language toggle
-
-    addListener('#m-p-payment-due', 'change', (e) => {
-      this.store.updateProject(project.id, { paymentDueDate: e.target.value });
+    addListener('#m-p-invoice-amount', 'blur', (e) => {
+      const val = Number(e.target.value) || 0;
+      const invCurr = modalOverlay.querySelector('#m-p-invoice-currency')?.value || project.invoiceCurrency || 'IDR';
+      const payCurr = modalOverlay.querySelector('#m-p-payment-currency')?.value || project.paymentCurrency || 'IDR';
+      let due = project.amountDue;
+      if (invCurr === payCurr) {
+        due = Math.max(0, val - (Number(project.amountPaid) || 0));
+      }
+      this.store.updateProject(project.id, { invoiceAmount: val, amountDue: due });
       this.onStateChange();
+    });
+
+    addListener('#m-p-invoice-date', 'change', (e) => {
+      this.store.updateProject(project.id, { invoiceDate: e.target.value });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-invoice-due', 'change', (e) => {
+      this.store.updateProject(project.id, { invoiceDueDate: e.target.value });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-payment-terms', 'blur', (e) => {
+      this.store.updateProject(project.id, { paymentTerms: e.target.value.trim() });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-pay-method', 'blur', (e) => {
+      this.store.updateProject(project.id, { paymentMethod: e.target.value.trim() });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-amount-paid', 'blur', (e) => {
+      const val = Number(e.target.value) || 0;
+      const invCurr = modalOverlay.querySelector('#m-p-invoice-currency')?.value || project.invoiceCurrency || 'IDR';
+      const payCurr = modalOverlay.querySelector('#m-p-payment-currency')?.value || project.paymentCurrency || 'IDR';
+      let due = project.amountDue;
+      if (invCurr === payCurr) {
+        due = Math.max(0, (Number(project.invoiceAmount) || 0) - val);
+      }
+      this.store.updateProject(project.id, { amountPaid: val, amountDue: due });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-project-currency', 'change', (e) => {
+      const val = e.target.value;
+      this.store.updateProject(project.id, { projectCurrency: val });
+      this.onStateChange();
+      checkCurrencyMismatch();
+      recalculateTerms();
+    });
+
+    addListener('#m-p-invoice-currency', 'change', (e) => {
+      const val = e.target.value;
+      const payCurrEl = modalOverlay.querySelector('#m-p-payment-currency');
+      const updates = { invoiceCurrency: val };
+      
+      if (payCurrEl) {
+        payCurrEl.value = val;
+        updates.paymentCurrency = val;
+      }
+      
+      const dueCurrEl = modalOverlay.querySelector('#m-p-amount-due-currency');
+      if (dueCurrEl) {
+        dueCurrEl.textContent = val;
+      }
+      
+      const amtEl = modalOverlay.querySelector('#m-p-invoice-amount');
+      const paidEl = modalOverlay.querySelector('#m-p-amount-paid');
+      const dueEl = modalOverlay.querySelector('#m-p-amount-due');
+      if (amtEl && paidEl && dueEl) {
+        const amt = Number(amtEl.value) || 0;
+        const paid = Number(paidEl.value) || 0;
+        const due = Math.max(0, amt - paid);
+        dueEl.value = due;
+        updates.amountDue = due;
+      }
+      
+      this.store.updateProject(project.id, updates);
+      this.onStateChange();
+      checkCurrencyMismatch();
+      checkPaymentCurrencyMismatch();
+    });
+
+    addListener('#m-p-payment-currency', 'change', (e) => {
+      const val = e.target.value;
+      const updates = { paymentCurrency: val };
+      
+      const dueCurrEl = modalOverlay.querySelector('#m-p-amount-due-currency');
+      if (dueCurrEl) {
+        dueCurrEl.textContent = val;
+      }
+      
+      const invCurrEl = modalOverlay.querySelector('#m-p-invoice-currency');
+      const invCurr = invCurrEl ? invCurrEl.value : (project.invoiceCurrency || 'IDR');
+      
+      if (invCurr === val) {
+        const amtEl = modalOverlay.querySelector('#m-p-invoice-amount');
+        const paidEl = modalOverlay.querySelector('#m-p-amount-paid');
+        const dueEl = modalOverlay.querySelector('#m-p-amount-due');
+        if (amtEl && paidEl && dueEl) {
+          const amt = Number(amtEl.value) || 0;
+          const paid = Number(paidEl.value) || 0;
+          const due = Math.max(0, amt - paid);
+          dueEl.value = due;
+          updates.amountDue = due;
+        }
+      }
+      
+      this.store.updateProject(project.id, updates);
+      this.onStateChange();
+      checkPaymentCurrencyMismatch();
     });
 
     addListener('#m-p-last-followup', 'change', (e) => {
@@ -1255,19 +1898,180 @@ export class ProjectModal {
       this.onStateChange();
     });
 
-    addListener('#m-p-payment-receipt', 'blur', (e) => {
-      this.store.updateProject(project.id, { paymentReceiptLink: e.target.value.trim() });
+    addListener('#m-p-last-followup-sidebar', 'change', (e) => {
+      this.store.updateProject(project.id, { lastFollowUpDate: e.target.value });
       this.onStateChange();
     });
 
-    addListener('#m-p-reminder-note', 'blur', (e) => {
+    addListener('#m-p-next-followup-sidebar', 'change', (e) => {
+      this.store.updateProject(project.id, { nextFollowUpDate: e.target.value });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-payment-due-sidebar', 'change', (e) => {
+      this.store.updateProject(project.id, { paymentDueDate: e.target.value });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-payment-receipt', 'blur', (e) => {
+      const val = e.target.value.trim();
+      this.store.updateProject(project.id, { receiptLink: val, paymentReceiptLink: val });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-payment-receipt-sidebar', 'blur', (e) => {
+      const val = e.target.value.trim();
+      this.store.updateProject(project.id, { receiptLink: val, paymentReceiptLink: val });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-invoice-url', 'blur', (e) => {
+      this.store.updateProject(project.id, { invoiceFileLink: e.target.value.trim() });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-payment-notes', 'blur', (e) => {
+      this.store.updateProject(project.id, { paymentNotes: e.target.value.trim() });
+      this.onStateChange();
+    });
+
+    addListener('#m-p-reminder-note-sidebar', 'blur', (e) => {
       this.store.updateProject(project.id, { reminderNote: e.target.value.trim() });
       this.onStateChange();
+    });
+
+    // Copy follow-up message logic
+    addListener('#m-btn-copy-followup', 'click', () => {
+      const invStatus = project.invoiceStatus || 'Not Created';
+      const payStatus = project.paymentStatus || 'Not Started';
+      const invNum = project.invoiceNumber || 'N/A';
+      const invAmt = project.invoiceAmount ? 'Rp ' + project.invoiceAmount.toLocaleString('id-ID') : '0';
+      const amtPaid = project.amountPaid ? 'Rp ' + project.amountPaid.toLocaleString('id-ID') : '0';
+      const amtDue = project.amountDue ? 'Rp ' + project.amountDue.toLocaleString('id-ID') : '0';
+      const dueDate = project.invoiceDueDate || 'N/A';
+      const payMethod = project.paymentMethod || 'Bank Transfer';
+
+      let msg = '';
+      if (payStatus === 'Fully Paid' || payStatus === 'Payment Received') {
+        msg = `Hi ${project.clientName || 'Client'},\n\nWe have received your payment of ${invAmt} for invoice ${invNum}. Thank you so much for the prompt settlement! It has been a pleasure working with you on this project. Let me know if you need anything else.\n\nBest regards,\n[Your Name]`;
+      } else if (invStatus === 'Overdue' || (dueDate !== 'N/A' && new Date(dueDate) < new Date())) {
+        msg = `Hi ${project.clientName || 'Client'},\n\nI hope you're doing well. This is a gentle reminder that invoice ${invNum} of ${invAmt} was due on ${dueDate} and is now overdue. The outstanding balance is ${amtDue}.\n\nPlease settle the payment via ${payMethod} at your earliest convenience. If you have already sent the payment, please share the receipt so I can verify.\n\nThank you,\n[Your Name]`;
+      } else if (payStatus === 'Waiting Payment') {
+        msg = `Hi ${project.clientName || 'Client'},\n\nI hope you're having a great day. Just a quick reminder that invoice ${invNum} of ${invAmt} is currently awaiting payment. It is scheduled to be due on ${dueDate}.\n\nYou can complete the payment via ${payMethod}. Once done, please share the transfer receipt for verification.\n\nThanks so much,\n[Your Name]`;
+      } else { // Invoice Sent / Default
+        msg = `Hi ${project.clientName || 'Client'},\n\nI have successfully sent invoice ${invNum} for our project. The total amount is ${invAmt}, due by ${dueDate}.\n\nPlease review the invoice details and complete the transfer via ${payMethod}. Let me know if you have any questions.\n\nBest regards,\n[Your Name]`;
+      }
+
+      navigator.clipboard.writeText(msg)
+        .then(() => {
+          this.onTriggerToast("Invoice follow-up copied.", "text-success");
+        })
+        .catch(err => {
+          console.error("Clipboard copy failed, using fallback:", err);
+          const tempTextarea = document.createElement('textarea');
+          tempTextarea.value = msg;
+          document.body.appendChild(tempTextarea);
+          tempTextarea.select();
+          try {
+            document.execCommand('copy');
+            this.onTriggerToast("Invoice follow-up copied.", "text-success");
+          } catch (e) {
+            this.onTriggerToast("Failed to copy message.", "text-danger");
+          }
+          document.body.removeChild(tempTextarea);
+        });
     });
 
     // On Hold fields blur/change listeners
     addListener('#m-p-hold-reason', 'blur', (e) => {
       this.store.updateProject(project.id, { holdReason: e.target.value.trim() });
+    });
+
+    // Client-facing setting field listeners
+    addListener('#m-p-preview-link-val', 'blur', (e) => {
+      this.store.updateProject(project.id, { previewLink: normalizeLink(e.target.value) });
+      this.updateSuggestedDeliveryStatus(project);
+    });
+    addListener('#m-p-client-feedback-summary', 'blur', (e) => {
+      this.store.updateProject(project.id, { clientFeedbackSummary: e.target.value.trim() });
+    });
+    addListener('#m-p-client-visible-notes', 'blur', (e) => {
+      this.store.updateProject(project.id, { clientVisibleNotes: e.target.value.trim() });
+    });
+    addListener('#m-p-final-file-link-val', 'blur', (e) => {
+      this.store.updateProject(project.id, { finalFileLink: normalizeLink(e.target.value) });
+      this.updateSuggestedDeliveryStatus(project);
+    });
+    addListener('#m-p-raw-file-link-val', 'blur', (e) => {
+      this.store.updateProject(project.id, { rawFileLink: normalizeLink(e.target.value) });
+      this.updateSuggestedDeliveryStatus(project);
+    });
+    addListener('#m-p-handover-notes-val', 'blur', (e) => {
+      this.store.updateProject(project.id, { handoverNotes: e.target.value.trim() });
+      this.updateSuggestedDeliveryStatus(project);
+    });
+    addListener('#m-p-approval-status-select-val', 'change', (e) => {
+      const nextApproval = e.target.value;
+      const updates = { approvalStatus: nextApproval, clientApprovalStatus: nextApproval };
+      if (nextApproval === 'Needs Revision') {
+        updates.stage = 'revision';
+      } else if (nextApproval === 'Approved') {
+        updates.approvedAt = new Date().toISOString().split('T')[0];
+      }
+      this.store.updateProject(project.id, updates);
+      this.onTriggerToast(`Client approval status updated to: ${nextApproval}`);
+      this.onStateChange();
+      this.render();
+    });
+
+    // Delivery Center new listeners
+    addListener('#m-p-delivery-status-select-val', 'change', (e) => {
+      this.store.updateProject(project.id, { deliveryStatus: e.target.value });
+      this.onStateChange();
+    });
+    addListener('#m-p-delivery-date-val', 'change', (e) => {
+      this.store.updateProject(project.id, { deliveryDate: e.target.value });
+      this.onStateChange();
+    });
+    addListener('#m-p-draft-link-val', 'blur', (e) => {
+      this.store.updateProject(project.id, { draftLink: normalizeLink(e.target.value) });
+    });
+    addListener('#m-p-review-link-val', 'blur', (e) => {
+      this.store.updateProject(project.id, { reviewLink: normalizeLink(e.target.value) });
+    });
+    addListener('#m-p-file-folder-link-val', 'blur', (e) => {
+      this.store.updateProject(project.id, { fileFolderLink: normalizeLink(e.target.value) });
+    });
+    addListener('#m-p-client-confirmed-delivery', 'change', (e) => {
+      this.store.updateProject(project.id, { clientConfirmedDelivery: e.target.checked });
+      this.onStateChange();
+      this.updateSuggestedDeliveryStatus(project);
+    });
+    addListener('#m-btn-delivery-chk-add', 'click', () => {
+      const inputEl = modalOverlay.querySelector('#m-p-delivery-chk-new-label');
+      const label = inputEl ? inputEl.value.trim() : '';
+      if (!label) return;
+      const newItem = {
+        id: 'del_' + Math.random().toString(36).substring(2, 9),
+        label,
+        completed: false,
+        clientVisible: true
+      };
+      const deliveryChecklist = [...(project.deliveryChecklist || []), newItem];
+      this.store.updateProject(project.id, { deliveryChecklist });
+      this.onStateChange();
+      this.renderDeliveryChecklist(project);
+      this.updateSuggestedDeliveryStatus(project);
+      if (inputEl) inputEl.value = '';
+    });
+    addListener('#btn-copy-delivery-msg', 'click', () => {
+      const text = getDeliveryMessageText(project);
+      navigator.clipboard.writeText(text).then(() => {
+        this.onTriggerToast('Delivery message copied.');
+      }).catch(err => {
+        console.error('Failed to copy delivery message: ', err);
+        this.onTriggerToast('Failed to copy to clipboard', 'text-danger');
+      });
     });
     addListener('#m-p-hold-date', 'change', (e) => {
       this.store.updateProject(project.id, { holdDate: e.target.value });
@@ -1460,35 +2264,304 @@ export class ProjectModal {
       copyPromptToClipboard(templateText, this.onTriggerToast);
     });
 
-    // AI Prompt Helper selector change & copy logic
+    addListener('#btn-extract-client-memory', 'click', () => {
+      const p = this.store.getState().projects.find(x => x.id === project.id) || project;
+      const extractPrompt = `Please analyze the following meeting notes and client context, then extract structured client memory parameters:
+
+Meeting Notes:
+- Platform/Type: ${p.meetingType || 'Not specified'}
+- Link: ${p.meetingLink || 'None'}
+- Date: ${p.meetingDate || 'N/A'}
+- Time: ${p.meetingTime || 'N/A'}
+- Session Notes: ${p.meetingNotes || 'None'}
+
+Client Context:
+- Client Request: ${p.clientRequest || 'None'}
+- Key Discussion Points: ${p.keyDiscussionPoints || 'None'}
+- Decisions Made: ${p.decisionMade || 'None'}
+- Client Concern: ${p.clientConcern || 'None'}
+- Client Expectation: ${p.clientExpectation || 'None'}
+
+Please extract and format as a clean bulleted list containing:
+1. Communication preference (preferred channels, style, frequency)
+2. Decision maker (primary stakeholder / approver)
+3. Concerns (specific issues, anxieties, or pain points raised)
+4. Expectations (standards, deliverables quality, target goals)
+5. Revision style (how they give feedback, edit rounds preferences)
+6. Delivery preference (file preferences, folder/sharing structure)
+7. Payment/follow-up clues (billing preferences, reminder styles, timelines)
+8. Important notes (general relationship remarks)
+9. Recommended next action`;
+
+      navigator.clipboard.writeText(extractPrompt)
+        .then(() => {
+          this.onTriggerToast('Client memory prompt copied.', 'text-success');
+        })
+        .catch(err => {
+          console.error("Failed to copy extract prompt", err);
+          this.onTriggerToast('Failed to copy prompt to clipboard.', 'text-danger');
+        });
+    });
+
+    // Upgraded AI Prompt Helpers Navigation & Logic
     const promptSelector = modalOverlay.querySelector('#ai-prompt-selector');
+    const toneSelector = modalOverlay.querySelector('#ai-tone-selector');
+    const clientSafeToggle = modalOverlay.querySelector('#ai-client-safe-toggle');
+    const langSelector = modalOverlay.querySelector('#ai-lang-selector');
+    const missingContextHelper = modalOverlay.querySelector('#ai-missing-context-helper');
+    const outputTypeBadge = modalOverlay.querySelector('#ai-output-type-badge');
     const promptPreview = modalOverlay.querySelector('#ai-prompt-preview');
     const copyPromptBtn = modalOverlay.querySelector('#btn-copy-ai-prompt');
+    const regenerateBtn = modalOverlay.querySelector('#btn-ai-regenerate');
+    const categoriesBar = modalOverlay.querySelector('#ai-categories-bar');
 
-    const updatePromptPreview = () => {
-      if (!promptSelector || !promptPreview) return;
-      const key = promptSelector.value;
-      const template = promptTemplates[key];
-      if (template) {
-        promptPreview.textContent = template.generate(project);
-      }
+    let currentCategory = 'client_communication';
+
+    const getActiveClientAndMemory = () => {
+      const state = this.store.getState();
+      const client = state.clients.find(c => c.id === project.clientId);
+      return { client, clientMemory: client ? client.clientMemory : null };
     };
 
-    if (promptSelector) {
-      promptSelector.addEventListener('change', updatePromptPreview);
-      // Initialize preview
+    const checkRequiredFields = (key) => {
+      const template = promptTemplates[key];
+      if (!template || !template.requiredContext) return false;
+      return template.requiredContext.some(field => {
+        const mappings = {
+          projectTitle: 'title',
+          clientName: 'clientName',
+          stage: 'stage',
+          nextAction: 'nextAction',
+          revisionCount: 'revisionCount',
+          maxRevision: 'maxRevision',
+          revisionRule: 'revisionRule',
+          clientRequest: 'clientRequest',
+          invoiceNumber: 'invoiceNumber',
+          invoiceAmount: 'invoiceAmount',
+          invoiceDueDate: 'invoiceDueDate',
+          amountDue: 'amountDue',
+          amountPaid: 'amountPaid',
+          deliveryStatus: 'deliveryStatus',
+          previewLink: 'previewLink',
+          finalFileLink: 'finalFileLink',
+          sourceFileLink: 'rawFileLink',
+          clientFeedbackSummary: 'clientFeedbackSummary'
+        };
+        const projField = mappings[field] || field;
+        const val = project[projField];
+        return val === undefined || val === null || val === "";
+      });
+    };
+
+    const updatePromptPreview = () => {
+      if (!promptPreview) return;
+
+      if (currentCategory === 'history') {
+        const historyStr = localStorage.getItem('alurkarya_prompt_history') || '[]';
+        const history = JSON.parse(historyStr);
+        if (history.length === 0) {
+          promptPreview.textContent = "No prompt history recorded yet.";
+        } else {
+          promptPreview.textContent = history.map((h, i) => {
+            return `${i+1}. [${new Date(h.generatedAt).toLocaleTimeString()}] Type: ${h.promptType}\n   Preview: "${h.copiedTextPreview}"`;
+          }).join('\n\n');
+        }
+        if (outputTypeBadge) {
+          outputTypeBadge.textContent = "History";
+          outputTypeBadge.style.background = "rgba(100, 116, 139, 0.15)";
+          outputTypeBadge.style.color = "#94a3b8";
+        }
+        if (missingContextHelper) missingContextHelper.style.display = 'none';
+        return;
+      }
+
+      if (!promptSelector) return;
+      const key = promptSelector.value;
+      if (!key) {
+        promptPreview.textContent = "Please select a template.";
+        return;
+      }
+      const template = promptTemplates[key];
+      if (!template) {
+        promptPreview.textContent = "Template not found.";
+        return;
+      }
+
+      const { clientMemory } = getActiveClientAndMemory();
+      const selectedTone = toneSelector ? toneSelector.value : 'Professional';
+      const flProfile = this.store.getState().freelancerProfile;
+      const isClientSafe = clientSafeToggle ? clientSafeToggle.checked : true;
+      const targetLang = (langSelector && langSelector.value !== 'app') ? langSelector.value : getLanguage();
+
+      // Update badge
+      if (outputTypeBadge) {
+        outputTypeBadge.textContent = template.outputMode === 'client_message' ? 'Ready Message' : (template.outputMode === 'internal_summary' ? 'Internal Summary' : 'AI Prompt');
+        if (template.outputMode === 'client_message') {
+          outputTypeBadge.style.background = "rgba(16, 185, 129, 0.15)";
+          outputTypeBadge.style.color = "#34d399";
+        } else if (template.outputMode === 'internal_summary') {
+          outputTypeBadge.style.background = "rgba(245, 158, 11, 0.15)";
+          outputTypeBadge.style.color = "#fbbf24";
+        } else {
+          outputTypeBadge.style.background = "rgba(139, 92, 246, 0.15)";
+          outputTypeBadge.style.color = "#a78bfa";
+        }
+      }
+
+      // Check context
+      if (missingContextHelper) {
+        missingContextHelper.style.display = checkRequiredFields(key) ? 'block' : 'none';
+      }
+
+      // Pass privacy toggle to context options if needed or let templates use client-facing vs internal mode based on outputMode and toggle
+      // If client-safe mode toggle is checked, we force safe mode for memory inputs
+      const safeMemory = isClientSafe ? (clientMemory ? {
+        ...clientMemory,
+        clientRiskNotes: "",
+        importantNotes: "",
+        lastMeetingSummary: "",
+        paymentBehavior: "",
+        paymentReminderStyle: "",
+        relationshipStatus: ""
+      } : null) : clientMemory;
+
+      const text = template.generate(project, safeMemory, selectedTone, flProfile, targetLang);
+      promptPreview.textContent = text;
+    };
+
+    const populateTemplates = (category) => {
+      if (!promptSelector) return;
+      if (category === 'history') {
+        promptSelector.innerHTML = '<option value="">History View Only</option>';
+        if (toneSelector) toneSelector.disabled = true;
+        if (clientSafeToggle) clientSafeToggle.disabled = true;
+        updatePromptPreview();
+        return;
+      }
+
+      if (toneSelector) toneSelector.disabled = false;
+      if (clientSafeToggle) clientSafeToggle.disabled = false;
+
+      const filtered = Object.entries(promptTemplates).filter(([k, t]) => t.category === category);
+      promptSelector.innerHTML = filtered.map(([k, t]) => `<option value="${k}">${t.name}</option>`).join('');
+      
+      if (filtered.length > 0) {
+        const firstKey = filtered[0][0];
+        const firstTemplate = filtered[0][1];
+        if (clientSafeToggle) {
+          clientSafeToggle.checked = firstTemplate.outputMode === 'client_message';
+        }
+        
+        // Suggest tone if clientMemory has tonePreference
+        const { clientMemory } = getActiveClientAndMemory();
+        if (toneSelector && clientMemory && clientMemory.tonePreference) {
+          const matchingTone = ['Professional', 'Friendly', 'Firm', 'Warm', 'Concise'].find(t => t.toLowerCase() === clientMemory.tonePreference.trim().toLowerCase());
+          if (matchingTone) {
+            toneSelector.value = matchingTone;
+          } else {
+            toneSelector.value = 'Professional';
+          }
+        }
+      }
       updatePromptPreview();
+    };
+
+    if (categoriesBar) {
+      categoriesBar.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          categoriesBar.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentCategory = btn.dataset.cat;
+          populateTemplates(currentCategory);
+        });
+      });
     }
+
+    if (promptSelector) {
+      promptSelector.addEventListener('change', () => {
+        const key = promptSelector.value;
+        const template = promptTemplates[key];
+        if (template && clientSafeToggle) {
+          clientSafeToggle.checked = template.outputMode === 'client_message';
+        }
+        updatePromptPreview();
+      });
+    }
+
+    if (toneSelector) toneSelector.addEventListener('change', updatePromptPreview);
+    if (clientSafeToggle) clientSafeToggle.addEventListener('change', updatePromptPreview);
+    if (langSelector) langSelector.addEventListener('change', updatePromptPreview);
+    if (regenerateBtn) regenerateBtn.addEventListener('click', updatePromptPreview);
 
     if (copyPromptBtn && promptSelector) {
       copyPromptBtn.addEventListener('click', () => {
+        if (currentCategory === 'history') {
+          this.onTriggerToast(t('toast.promptHistoryCannotCopy', 'Prompt history view cannot be copied directly.'), "text-warning");
+          return;
+        }
         const key = promptSelector.value;
+        if (!key) return;
         const template = promptTemplates[key];
         if (template) {
-          copyPromptToClipboard(template.generate(project), this.onTriggerToast);
+          const text = promptPreview.textContent;
+          let toastKey = 'promptCopied';
+          if (template.outputMode === 'client_message') toastKey = 'messageCopied';
+          else if (template.outputMode === 'internal_summary') toastKey = 'summaryCopied';
+          
+          copyPromptToClipboard(text, null, key, project.id);
+          this.onTriggerToast(t(`toast.${toastKey}`), 'text-success');
         }
       });
     }
+
+    // Dynamic wireups for direct section buttons
+    const wireDirectBtn = (id, templateKey) => {
+      const btn = modalOverlay.querySelector(id);
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const { clientMemory } = getActiveClientAndMemory();
+          const selectedTone = toneSelector ? toneSelector.value : 'Professional';
+          const flProfile = this.store.getState().freelancerProfile;
+          const template = promptTemplates[templateKey];
+          if (template) {
+            const isClientSafe = template.outputMode === 'client_message';
+            const safeMemory = isClientSafe ? (clientMemory ? {
+              ...clientMemory,
+              clientRiskNotes: "",
+              importantNotes: "",
+              lastMeetingSummary: "",
+              paymentBehavior: "",
+              paymentReminderStyle: "",
+              relationshipStatus: ""
+            } : null) : clientMemory;
+
+            const targetLang = (langSelector && langSelector.value !== 'app') ? langSelector.value : getLanguage();
+            const text = template.generate(project, safeMemory, selectedTone, flProfile, targetLang);
+            
+            let toastKey = 'promptCopied';
+            if (template.outputMode === 'client_message') toastKey = 'messageCopied';
+            else if (template.outputMode === 'internal_summary') toastKey = 'summaryCopied';
+            
+            copyPromptToClipboard(text, null, templateKey, project.id);
+            this.onTriggerToast(t(`toast.${toastKey}`), 'text-success');
+          }
+        });
+      }
+    };
+
+    wireDirectBtn('#btn-delivery-ai-msg', 'deliveryMessage');
+    wireDirectBtn('#btn-delivery-ai-handover', 'handoverNotes');
+    wireDirectBtn('#btn-delivery-ai-revsummary', 'revisionSummary');
+    wireDirectBtn('#btn-delivery-ai-checklist', 'deliveryChecklistGen');
+
+    wireDirectBtn('#btn-invoice-ai-followup', 'invoiceFollowUp');
+    wireDirectBtn('#btn-invoice-ai-overdue', 'overduePayment');
+    wireDirectBtn('#btn-invoice-ai-confirm', 'paymentConfirmation');
+    wireDirectBtn('#btn-invoice-ai-receipt', 'receiptRequest');
+
+    populateTemplates(currentCategory);
 
     this.checkMeetingAvailabilityWarning(project.id);
   }
@@ -1569,7 +2642,13 @@ export class ProjectModal {
       customCategory = '';
     }
 
-    const clientApprovalStatus = getVal('#m-p-approval-status-select', project.clientApprovalStatus || 'Pending Review');
+    const approvalStatusVal = overlay.querySelector('#m-p-approval-status-select-val') ? getVal('#m-p-approval-status-select-val') : getVal('#m-p-approval-status-select', project.approvalStatus || project.clientApprovalStatus || 'Pending Review');
+    let approvedAtVal = project.approvedAt || '';
+    if (approvalStatusVal === 'Approved' && project.approvalStatus !== 'Approved') {
+      approvedAtVal = new Date().toISOString().split('T')[0];
+    }
+    const clientApprovalStatus = approvalStatusVal;
+    const invoiceStatus = getVal('#m-p-invoice-status', project.invoiceStatus || 'Not Created');
     const invoiceNumber = getVal('#m-p-invoice-num', project.invoiceNumber || '');
     const invoiceAmount = getNum('#m-p-invoice-amount', project.invoiceAmount || 0);
     const invoiceDate = getVal('#m-p-invoice-date', project.invoiceDate || '');
@@ -1577,8 +2656,14 @@ export class ProjectModal {
     const invoiceFileLink = getVal('#m-p-invoice-url', project.invoiceFileLink || '');
     const paymentTerms = getVal('#m-p-payment-terms', project.paymentTerms || '');
 
+    const amountPaid = getNum('#m-p-amount-paid', project.amountPaid || 0);
+    const amountDue = Math.max(0, invoiceAmount - amountPaid);
+    const paymentMethod = getVal('#m-p-pay-method', project.paymentMethod || '');
+    const paymentNotes = getVal('#m-p-payment-notes', project.paymentNotes || '');
+
     const paymentDueDate = getVal('#m-p-payment-due', project.paymentDueDate || '');
-    const paymentReceiptLink = getVal('#m-p-payment-receipt', project.paymentReceiptLink || '');
+    const receiptLink = getVal('#m-p-payment-receipt', project.receiptLink || project.paymentReceiptLink || '');
+    const paymentReceiptLink = receiptLink;
     const lastFollowUpDate = getVal('#m-p-last-followup', project.lastFollowUpDate || '');
     const nextFollowUpDate = getVal('#m-p-next-followup', project.nextFollowUpDate || '');
     const rawFileDownloadLink = getVal('#m-p-raw-download-link', project.rawFileDownloadLink || '');
@@ -1601,6 +2686,21 @@ export class ProjectModal {
     const clientReviewDate = getVal('#m-p-client-review-date', project.clientReviewDate || '');
     const finalDeliveryDate = getVal('#m-p-final-delivery-date', project.finalDeliveryDate || '');
 
+    const previewLinkVal = normalizeLink(getVal('#m-p-preview-link-val', project.previewLink || ''));
+    const clientFeedbackSummaryVal = getVal('#m-p-client-feedback-summary', project.clientFeedbackSummary || '');
+    const clientVisibleNotesVal = getVal('#m-p-client-visible-notes', project.clientVisibleNotes || '');
+    const finalFileLinkVal = normalizeLink(getVal('#m-p-final-file-link-val', project.finalFileLink || ''));
+    const rawFileLinkVal = normalizeLink(overlay.querySelector('#m-p-raw-file-link-val') ? getVal('#m-p-raw-file-link-val') : getVal('#m-p-raw-url', project.rawFileLink || ''));
+    const handoverNotesVal = getVal('#m-p-handover-notes-val', project.handoverNotes || '');
+
+    const deliveryStatusVal = getVal('#m-p-delivery-status-select-val', project.deliveryStatus || 'Not Submitted');
+    const deliveryDateVal = getVal('#m-p-delivery-date-val', project.deliveryDate || '');
+    const draftLinkVal = normalizeLink(getVal('#m-p-draft-link-val', project.draftLink || ''));
+    const reviewLinkVal = normalizeLink(getVal('#m-p-review-link-val', project.reviewLink || ''));
+    const fileFolderLinkVal = normalizeLink(getVal('#m-p-file-folder-link-val', project.fileFolderLink || ''));
+    const clientConfirmedDeliveryEl = overlay.querySelector('#m-p-client-confirmed-delivery');
+    const clientConfirmedDeliveryVal = clientConfirmedDeliveryEl ? clientConfirmedDeliveryEl.checked : (project.clientConfirmedDelivery || false);
+
     const updates = {
       title: titleVal,
       description: descVal,
@@ -1608,6 +2708,11 @@ export class ProjectModal {
       dueDate: dueVal,
       priority: priorityVal,
       paymentStatus: payStatusVal,
+      invoiceStatus,
+      amountPaid,
+      amountDue,
+      paymentNotes,
+      receiptLink,
       nextAction: nextActionVal,
       internalNotes: internalVal,
       revisionNotes: revNotesVal,
@@ -1627,13 +2732,27 @@ export class ProjectModal {
       milestonePaymentAmount: mileAmt,
       finalPaymentAmount: finalAmt,
       remainingBalance: remainingVal,
-      paymentMethod: payMethodVal,
+      paymentMethod: paymentMethod,
       clientId,
       clientName,
       clientType,
       tags,
       customCategory,
       clientApprovalStatus,
+      approvalStatus: approvalStatusVal,
+      approvedAt: approvedAtVal,
+      previewLink: previewLinkVal,
+      clientFeedbackSummary: clientFeedbackSummaryVal,
+      clientVisibleNotes: clientVisibleNotesVal,
+      finalFileLink: finalFileLinkVal,
+      rawFileLink: rawFileLinkVal,
+      handoverNotes: handoverNotesVal,
+      deliveryStatus: deliveryStatusVal,
+      deliveryDate: deliveryDateVal,
+      draftLink: draftLinkVal,
+      reviewLink: reviewLinkVal,
+      fileFolderLink: fileFolderLinkVal,
+      clientConfirmedDelivery: clientConfirmedDeliveryVal,
       invoiceNumber,
       invoiceAmount,
       invoiceDate,
@@ -1851,5 +2970,93 @@ export class ProjectModal {
 
       listEl.appendChild(row);
     });
+  }
+
+  renderDeliveryChecklist(project) {
+    const listEl = document.getElementById('modal-delivery-checklist-list');
+    if (!listEl) return;
+
+    listEl.innerHTML = '';
+    
+    if (!project.deliveryChecklist || project.deliveryChecklist.length === 0) {
+      listEl.innerHTML = `<span class="stat-subtext" style="display: block; padding: 4px; font-style: italic;">No checklist steps logged.</span>`;
+      return;
+    }
+
+    project.deliveryChecklist.forEach(item => {
+      const row = document.createElement('div');
+      row.className = `checklist-row ${item.completed ? 'completed' : ''}`;
+      row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; padding: 4px 8px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: 6px;';
+      
+      row.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+          <input type="checkbox" class="delivery-chk-checkbox" ${item.completed ? 'checked' : ''} style="cursor: pointer;">
+          <span class="checklist-text" style="font-size: 0.78rem; color: ${item.completed ? 'var(--text-muted)' : 'var(--text-primary)'}; text-decoration: ${item.completed ? 'line-through' : 'none'};">${item.label}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="btn btn-secondary delivery-chk-visible-btn" style="padding: 2px 6px; font-size: 0.65rem; background: ${item.clientVisible ? 'rgba(6,182,212,0.1)' : 'rgba(255,255,255,0.02)'}; border-color: ${item.clientVisible ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.05)'}; color: ${item.clientVisible ? 'var(--color-secondary)' : 'var(--text-muted)'}; display: flex; align-items: center; gap: 4px;" title="Toggle Client Visibility">
+            ${item.clientVisible ? '👁 Client' : '🔒 Internal'}
+          </button>
+          <button class="checklist-delete-btn delivery-chk-delete-btn" style="padding: 4px; background: none; border: none; cursor: pointer; color: var(--text-muted);">${getIcon('trash', '', 14)}</button>
+        </div>
+      `;
+
+      row.querySelector('.delivery-chk-checkbox').addEventListener('change', (e) => {
+        const deliveryChecklist = project.deliveryChecklist.map(x => x.id === item.id ? { ...x, completed: e.target.checked } : x);
+        this.store.updateProject(project.id, { deliveryChecklist });
+        this.onStateChange();
+        this.updateSuggestedDeliveryStatus(project);
+        row.classList.toggle('completed', e.target.checked);
+        const textSpan = row.querySelector('.checklist-text');
+        if (textSpan) {
+          textSpan.style.color = e.target.checked ? 'var(--text-muted)' : 'var(--text-primary)';
+          textSpan.style.textDecoration = e.target.checked ? 'line-through' : 'none';
+        }
+      });
+
+      row.querySelector('.delivery-chk-visible-btn').addEventListener('click', () => {
+        const deliveryChecklist = project.deliveryChecklist.map(x => x.id === item.id ? { ...x, clientVisible: !x.clientVisible } : x);
+        this.store.updateProject(project.id, { deliveryChecklist });
+        this.onStateChange();
+        this.renderDeliveryChecklist(project);
+      });
+
+      row.querySelector('.delivery-chk-delete-btn').addEventListener('click', () => {
+        const deliveryChecklist = project.deliveryChecklist.filter(x => x.id !== item.id);
+        this.store.updateProject(project.id, { deliveryChecklist });
+        this.onStateChange();
+        this.renderDeliveryChecklist(project);
+        this.updateSuggestedDeliveryStatus(project);
+      });
+
+      listEl.appendChild(row);
+    });
+  }
+
+  updateSuggestedDeliveryStatus(project) {
+    const labelEl = document.getElementById('suggested-delivery-status-label');
+    if (!labelEl) return;
+
+    let suggested = 'Not Submitted';
+    
+    const lacksApproval = project.approvalStatus !== 'Approved' && project.clientApprovalStatus !== 'Approved';
+    const lacksFinalFile = !project.finalFileLink && !project.finalDeliveryLink;
+    const hasPreview = !!(project.previewLink || project.draftFileLink || project.briefLink);
+
+    if (project.clientConfirmedDelivery) {
+      suggested = 'Handover Complete';
+    } else if (!lacksFinalFile && project.handoverNotes && project.deliveryChecklist && project.deliveryChecklist.every(item => item.completed)) {
+      suggested = 'Handover Complete';
+    } else if (!lacksFinalFile) {
+      suggested = 'Final Delivered';
+    } else if (project.approvalStatus === 'Approved' || project.clientApprovalStatus === 'Approved') {
+      suggested = 'Approved';
+    } else if (project.approvalStatus === 'Needs Revision' || project.clientApprovalStatus === 'Needs Revision' || project.stage === 'revision') {
+      suggested = 'Revision Needed';
+    } else if (hasPreview) {
+      suggested = 'Waiting Feedback';
+    }
+
+    labelEl.textContent = `Suggested: ${suggested}`;
   }
 }

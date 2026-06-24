@@ -2,6 +2,8 @@
    FREELANCER PROJECT OS - UTILITY HELPERS
    ========================================================================== */
 
+import { getLanguage } from './i18n.js';
+
 /**
  * Generates a unique secure pseudo-random identifier.
  * @returns {string}
@@ -15,34 +17,50 @@ export function generateId() {
  * IDR uses dot separators (e.g., Rp27.300.000).
  * USD, SGD, MYR, EUR use comma separators (e.g., $2,500).
  * @param {number} value
- * @param {string} currency - IDR, USD, SGD, MYR, EUR
+ * @param {string} currency - IDR, USD, SGD, AUD, EUR
  * @returns {string}
  */
-export function formatCurrency(value, currency = 'IDR') {
-  if (typeof value !== 'number') return 'Rp0';
-  
-  if (currency === 'IDR') {
-    const formatted = new Intl.NumberFormat('id-ID', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-    return `Rp${formatted}`;
+export function formatMoney(amount, currency = 'IDR', locale = null) {
+  if (amount === null || amount === undefined || amount === '') return '—';
+  const num = Number(amount);
+  if (isNaN(num)) return '—';
+
+  const cur = (currency || 'IDR').toUpperCase();
+  const decimals = (cur === 'IDR') ? 0 : 2;
+  const targetLocale = locale || (cur === 'IDR' ? 'id-ID' : 'en-US');
+
+  let formattedNumber;
+  try {
+    formattedNumber = new Intl.NumberFormat(targetLocale, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(num);
+  } catch (err) {
+    try {
+      formattedNumber = num.toFixed(decimals);
+    } catch (e2) {
+      formattedNumber = String(num);
+    }
   }
-  
-  // USD, SGD, MYR, EUR formatting
-  const formatted = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value);
-  
-  const symbol = {
+
+  const symbols = {
+    IDR: 'Rp',
     USD: '$',
     SGD: 'S$',
-    MYR: 'RM',
+    AUD: 'A$',
     EUR: '€'
-  }[currency] || '$';
-  
-  return `${symbol}${formatted}`;
+  };
+
+  const symbol = symbols[cur];
+  if (symbol) {
+    return `${symbol}${formattedNumber}`;
+  }
+
+  return `${cur} ${formattedNumber}`;
+}
+
+export function formatCurrency(value, currency = 'IDR') {
+  return formatMoney(value, currency);
 }
 
 /**
@@ -51,7 +69,8 @@ export function formatCurrency(value, currency = 'IDR') {
  * @returns {string}
  */
 export function formatDate(dateString) {
-  if (!dateString) return 'No Date';
+  const lang = getLanguage() || 'en';
+  if (!dateString) return lang === 'id' ? 'Tanpa Tanggal' : 'No Date';
   const parts = dateString.split('-');
   if (parts.length !== 3) return dateString;
   
@@ -60,6 +79,12 @@ export function formatDate(dateString) {
   const day = parseInt(parts[2], 10);
   
   const date = new Date(year, month, day);
+  
+  if (lang === 'id') {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return `${day} ${months[month]} ${year}`;
+  }
+  
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -73,7 +98,8 @@ export function formatDate(dateString) {
  * @returns {{isOverdue: boolean, text: string, daysDiff: number}}
  */
 export function getDueDateStatus(dueDateStr) {
-  if (!dueDateStr) return { isOverdue: false, text: 'No deadline', daysDiff: 999 };
+  const lang = getLanguage() || 'en';
+  if (!dueDateStr) return { isOverdue: false, text: lang === 'id' ? 'Tanpa tenggat' : 'No deadline', daysDiff: 999 };
   
   const [y, m, d] = dueDateStr.split('-').map(Number);
   const due = new Date(y, m - 1, d);
@@ -88,25 +114,25 @@ export function getDueDateStatus(dueDateStr) {
   if (diffDays < 0) {
     return {
       isOverdue: true,
-      text: `${Math.abs(diffDays)}d overdue`,
+      text: lang === 'id' ? `${Math.abs(diffDays)}h terlambat` : `${Math.abs(diffDays)}d overdue`,
       daysDiff: diffDays
     };
   } else if (diffDays === 0) {
     return {
       isOverdue: false,
-      text: 'due today',
+      text: lang === 'id' ? 'jatuh tempo hari ini' : 'due today',
       daysDiff: 0
     };
   } else if (diffDays === 1) {
     return {
       isOverdue: false,
-      text: 'due tomorrow',
+      text: lang === 'id' ? 'jatuh tempo besok' : 'due tomorrow',
       daysDiff: 1
     };
   } else {
     return {
       isOverdue: false,
-      text: `${diffDays} days left`,
+      text: lang === 'id' ? `${diffDays} hari tersisa` : `${diffDays} days left`,
       daysDiff: diffDays
     };
   }
@@ -118,10 +144,11 @@ export function getDueDateStatus(dueDateStr) {
  * @returns {{status: string, text: string, isOverdue: boolean, daysDiff: number}}
  */
 export function getLocalizedDueDateStatus(dueDateStr) {
+  const lang = getLanguage() || 'en';
   if (!dueDateStr) {
     return {
       status: 'none',
-      text: 'No deadline',
+      text: lang === 'id' ? 'Tanpa tenggat' : 'No deadline',
       isOverdue: false,
       daysDiff: 999
     };
@@ -140,28 +167,35 @@ export function getLocalizedDueDateStatus(dueDateStr) {
   if (diffDays < 0) {
     return {
       status: 'overdue',
-      text: 'Overdue',
+      text: lang === 'id' ? 'Terlambat' : 'Overdue',
       isOverdue: true,
       daysDiff: diffDays
     };
   } else if (diffDays === 0) {
     return {
       status: 'today',
-      text: 'Due today',
+      text: lang === 'id' ? 'Jatuh tempo hari ini' : 'Due today',
       isOverdue: false,
       daysDiff: 0
+    };
+  } else if (diffDays === 1) {
+    return {
+      status: 'soon',
+      text: lang === 'id' ? 'Jatuh tempo besok' : 'Due tomorrow',
+      isOverdue: false,
+      daysDiff: 1
     };
   } else if (diffDays <= 3) {
     return {
       status: 'soon',
-      text: 'Due soon',
+      text: lang === 'id' ? `${diffDays} hari tersisa` : `${diffDays} days left`,
       isOverdue: false,
       daysDiff: diffDays
     };
   } else {
     return {
       status: 'normal',
-      text: formatDate(dueDateStr),
+      text: lang === 'id' ? `${diffDays} hari tersisa` : `${diffDays} days left`,
       isOverdue: false,
       daysDiff: diffDays
     };
@@ -275,20 +309,22 @@ export function getTzOffset(tz, date = new Date()) {
  */
 export function formatDateRange(dateStart, dateEnd, timezone) {
   const cleanTz = timezone ? getEffectiveTimezone(timezone) : 'UTC';
+  const lang = getLanguage() || 'en';
+  const locale = lang === 'id' ? 'id-ID' : 'en-US';
   
   const format = (dStr) => {
     if (!dStr) return '';
     if (dStr instanceof Date) {
-      return dStr.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: cleanTz });
+      return dStr.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric', timeZone: cleanTz });
     }
     const parts = dStr.split('-');
     if (parts.length === 3) {
       const [y, m, d] = parts.map(Number);
       // Construct at noon to ensure formatting in other timezones doesn't shift the day boundary
       const date = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: cleanTz });
+      return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric', timeZone: cleanTz });
     }
-    return new Date(dStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: cleanTz });
+    return new Date(dStr).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric', timeZone: cleanTz });
   };
   
   const startStr = format(dateStart);
@@ -310,6 +346,11 @@ export function formatTimeForTimezone(time, timezone) {
   
   const hours = parseInt(parts[0], 10);
   const minutes = parseInt(parts[1], 10);
+  
+  const lang = getLanguage() || 'en';
+  if (lang === 'id') {
+    return `${String(hours).padStart(2, '0')}.${String(minutes).padStart(2, '0')}`;
+  }
   
   const ampm = hours >= 12 ? 'PM' : 'AM';
   const displayHours = hours % 12 || 12;
@@ -422,4 +463,213 @@ export function isOutsideWorkingHours(dateStr, timeStr, availability, meetingTim
   }
 
   return false;
+}
+
+/**
+ * Generates initials from a full name (e.g. "Aris Aulia" -> "AA", "Mohammad Irsyad Ridwan" -> "MR").
+ * If the name is empty, returns "YK".
+ * @param {string} name
+ * @returns {string}
+ */
+export function getInitials(name) {
+  if (!name) return 'YK';
+  const clean = name.trim().replace(/\s+/g, ' ');
+  if (!clean) return 'YK';
+  const parts = clean.split(' ');
+  if (parts.length === 1) {
+    return parts[0].substring(0, 2).toUpperCase() || 'YK';
+  }
+  const first = parts[0][0] || '';
+  const last = parts[parts.length - 1][0] || '';
+  return (first + last).toUpperCase() || 'YK';
+}
+
+/**
+ * Returns customized delivery input/display labels based on freelancer template role.
+ * @param {string} templateRole
+ * @returns {{preview: string, final: string, raw: string}}
+ */
+export function getDeliveryLabels(templateRole) {
+  const labels = {
+    designer: {
+      preview: "Design Preview",
+      final: "Final Design Files",
+      raw: "Editable Source Files"
+    },
+    video_editor: {
+      preview: "First Cut",
+      final: "Final Export",
+      raw: "Source Project File"
+    },
+    copywriter: {
+      preview: "Draft Document",
+      final: "Final Copy",
+      raw: "Usage Notes"
+    },
+    web_developer: {
+      preview: "Staging Link",
+      final: "Final URL",
+      raw: "Handover Notes"
+    },
+    social_media_manager: {
+      preview: "Content Calendar",
+      final: "Caption Batch",
+      raw: "Monthly Report"
+    },
+    ai_consultant: {
+      preview: "Workflow Map",
+      final: "Prompt Documentation",
+      raw: "Demo Video"
+    }
+  };
+  return labels[templateRole] || {
+    preview: "Preview Link",
+    final: "Final File Link",
+    raw: "Source File Link"
+  };
+}
+
+/**
+ * Normalizes a URL link, ensuring it starts with http:// or https://
+ * @param {string} url
+ * @returns {string}
+ */
+export function normalizeLink(url) {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
+/**
+ * Displays a glassmorphic confirmation warning modal prior to setting a project as completed.
+ * @param {object} params
+ * @param {function} params.onConfirm
+ * @param {function} params.onReview
+ * @param {string} [params.title]
+ * @param {string} [params.message]
+ * @param {string} [params.confirmText]
+ * @param {string} [params.cancelText]
+ */
+export function showCompletionWarningModal({ onConfirm, onReview, title, message, confirmText, cancelText }) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(5, 8, 16, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 100000; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;';
+  
+  const displayTitle = title || 'Complete this project?';
+  const displayMsg = message || 'Some completion items may still be missing: client approval, final delivery, or payment confirmation.';
+  const displayConfirm = confirmText || 'Move to Completed Anyway';
+  const displayCancel = cancelText || 'Review Project';
+
+  overlay.innerHTML = `
+    <div style="background: rgba(30, 41, 59, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 28px; width: 440px; max-width: 90%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6); animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+      <style>
+        @keyframes scaleUp {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+      </style>
+      <div style="font-size: 2.5rem; margin-bottom: 16px; filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.4));">⚠️</div>
+      <h3 style="font-size: 1.35rem; font-family: 'Space Grotesk', sans-serif; font-weight: 800; color: #fff; margin-bottom: 10px; letter-spacing: -0.01em;">${displayTitle}</h3>
+      <p style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5; margin-bottom: 26px;">
+        ${displayMsg}
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn btn-primary" id="btn-warn-confirm" style="width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px 16px; border-radius: 8px; font-weight: 700; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
+          ${displayConfirm}
+        </button>
+        <button class="btn btn-secondary" id="btn-warn-review" style="width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px 16px; border-radius: 8px; font-weight: 600; background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); color: #fff;">
+          ${displayCancel}
+        </button>
+      </div>
+    </div>
+  `;
+  
+  overlay.querySelector('#btn-warn-confirm').addEventListener('click', () => {
+    overlay.remove();
+    onConfirm();
+  });
+  
+  overlay.querySelector('#btn-warn-review').addEventListener('click', () => {
+    overlay.remove();
+    onReview();
+  });
+  
+  document.body.appendChild(overlay);
+}
+
+/**
+ * Displays a glassmorphic confirmation modal for generic prompts.
+ * @param {object} params
+ * @param {string} params.title
+ * @param {string} params.message
+ * @param {string} [params.confirmText]
+ * @param {string} [params.cancelText]
+ * @param {function} params.onConfirm
+ * @param {function} params.onCancel
+ */
+export function showGenericConfirmationModal({ title, message, confirmText = 'Confirm', cancelText = 'Cancel', onConfirm, onCancel }) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(5, 8, 16, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 100000; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;';
+  
+  overlay.innerHTML = `
+    <div style="background: rgba(30, 41, 59, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 28px; width: 420px; max-width: 90%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6); animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+      <style>
+        @keyframes scaleUp {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+      </style>
+      <div style="font-size: 2.2rem; margin-bottom: 14px; filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.4));">💼</div>
+      <h3 style="font-size: 1.3rem; font-family: 'Space Grotesk', sans-serif; font-weight: 800; color: #fff; margin-bottom: 10px; letter-spacing: -0.01em;">${title}</h3>
+      <p style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5; margin-bottom: 24px;">
+        ${message}
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn btn-primary" id="btn-generic-confirm" style="width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px 16px; border-radius: 8px; font-weight: 700; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
+          ${confirmText}
+        </button>
+        <button class="btn btn-secondary" id="btn-generic-cancel" style="width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px 16px; border-radius: 8px; font-weight: 600; background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); color: #fff;">
+          ${cancelText}
+        </button>
+      </div>
+    </div>
+  `;
+  
+  overlay.querySelector('#btn-generic-confirm').addEventListener('click', () => {
+    overlay.remove();
+    if (onConfirm) onConfirm();
+  });
+  
+  overlay.querySelector('#btn-generic-cancel').addEventListener('click', () => {
+    overlay.remove();
+    if (onCancel) onCancel();
+  });
+  
+  document.body.appendChild(overlay);
+}
+
+/**
+ * Generates a professional client delivery message based on the project's delivery status.
+ * @param {object} project
+ * @returns {string}
+ */
+export function getDeliveryMessageText(project) {
+  const clientName = project.clientName ? project.clientName.split('(')[0].trim() : 'Client';
+  const projectName = project.title;
+  const previewLink = project.previewLink || project.draftFileLink || project.briefLink || '[Preview Link]';
+  const finalLink = project.finalFileLink || project.finalDeliveryLink || '[Final File Link]';
+  const handoverNotes = project.handoverNotes || '[Handover Notes]';
+
+  if (project.deliveryStatus === 'Handover Complete') {
+    return `Hi ${clientName}, ${projectName} is now complete. Final files and handover notes have been delivered. Thank you for working together on this project.`;
+  }
+  if (project.deliveryStatus === 'Final Delivered') {
+    return `Hi ${clientName}, the final files for ${projectName} have been delivered. You can access them here: ${finalLink}. I’ve also included handover notes below:\n\n${handoverNotes}`;
+  }
+  if (project.deliveryStatus === 'Waiting Feedback' || project.deliveryStatus === 'Draft Submitted') {
+    return `Hi ${clientName}, I’ve submitted the latest version of ${projectName} for your review. You can check it here: ${previewLink}. Please send your feedback when ready.`;
+  }
+  return `Hi ${clientName}, here is the latest delivery update for ${projectName}. You can review the submitted work here: ${previewLink}. Please let me know if you have any feedback or approval.`;
 }

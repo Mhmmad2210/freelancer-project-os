@@ -3,6 +3,8 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
+import { store } from '../store.js';
+import { getLanguage, setLanguage, t } from '../i18n.js';
 
 export class SidebarNav {
   /**
@@ -45,7 +47,7 @@ export class SidebarNav {
           <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.88rem; font-weight: 800; letter-spacing: 0.25em; color: var(--text-primary); text-transform: uppercase; line-height: 1; margin-left: 2px;">ΛLURKΛRYΛ</span>
         </div>
         <span style="font-size: 0.62rem; font-weight: 500; color: var(--text-muted); line-height: 1.3; font-family: 'Plus Jakarta Sans', sans-serif; display: block; letter-spacing: 0.01em;">
-          Manage freelance projects from lead to paid.
+          ${t('sidebar.tagline', 'Manage freelance projects from client to paid.')}
         </span>
       </div>
     `;
@@ -56,13 +58,13 @@ export class SidebarNav {
     menuEl.style.padding = '16px 12px';
 
     const menuItems = [
-      { id: 'kanban', label: 'Workspace Board', icon: 'layers' },
-      { id: 'planner', label: 'Planner Hub', icon: 'calendar' },
-      { id: 'focus', label: 'Weekly Focus', icon: 'clock' },
-      { id: 'clients', label: 'Client Hub', icon: 'user' },
-      { id: 'invoices', label: 'Invoice Ledger', icon: 'fileText' },
-      { id: 'quotations', label: 'Quotations', icon: 'briefcase' },
-      { id: 'portfolio', label: 'Portfolio Sandbox', icon: 'folder' }
+      { id: 'kanban', label: t('sidebar.workspaceBoard', 'Workspace Board'), icon: 'layers' },
+      { id: 'planner', label: t('sidebar.plannerHub', 'Planner Hub'), icon: 'calendar' },
+      { id: 'focus', label: t('sidebar.weeklyFocus', 'Weekly Focus'), icon: 'clock' },
+      { id: 'clients', label: t('sidebar.clientHub', 'Client Hub'), icon: 'user' },
+      { id: 'invoices', label: t('sidebar.invoiceLedger', 'Invoice Ledger'), icon: 'fileText' },
+      { id: 'quotations', label: t('sidebar.quotations', 'Quotations'), icon: 'briefcase' },
+      { id: 'portfolio', label: t('sidebar.portfolioSandbox', 'Portfolio Sandbox'), icon: 'folder' }
     ];
 
     menuItems.forEach(item => {
@@ -92,22 +94,61 @@ export class SidebarNav {
     // Footer section with profile summary acting as Profile Freelancer
     const footerEl = document.createElement('div');
     footerEl.className = 'sidebar-footer';
-    footerEl.style.cursor = 'pointer';
+    
+    const profile = store.getFreelancerProfile();
+    const name = profile.freelancerName || 'Your Name';
+    const role = profile.freelancerRole || 'Freelancer';
+    const initials = profile.freelancerInitials || store.getInitials(name);
+    
+    const avatarHtml = profile.freelancerAvatar ?
+      `<img src="${profile.freelancerAvatar}" alt="${name}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` :
+      initials;
+
+    const activeLang = getLanguage();
+    const langSwitcherHtml = `
+      <div class="lang-switcher-sidebar" style="padding: 0 12px 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
+        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">
+          ${t('sidebar.settings', 'Language')}
+        </span>
+        <select id="sidebar-lang-select" style="font-size: 0.68rem; padding: 2px 4px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 4px; outline: none; cursor: pointer;">
+          <option value="en" ${activeLang === 'en' ? 'selected' : ''}>English</option>
+          <option value="id" ${activeLang === 'id' ? 'selected' : ''}>Bahasa Indonesia</option>
+        </select>
+      </div>
+    `;
+
     footerEl.innerHTML = `
-      <div class="user-profile ${this.activeTab === 'client-view' ? 'active' : ''}" style="transition: all var(--transition-fast); display: flex; align-items: center; width: 100%; border: 1px solid transparent; border-radius: var(--border-radius-md);">
-        <div class="user-avatar">JD</div>
-        <div class="user-info" style="flex: 1; margin-left: 12px;">
-          <span class="user-name">Jane Doe</span>
-          <span class="user-role">Creative Freelancer</span>
+      ${langSwitcherHtml}
+      <div class="user-profile ${this.activeTab === 'profile' ? 'active' : ''}" style="transition: all var(--transition-fast); display: flex; align-items: center; width: 100%; border: 1px solid transparent; border-radius: var(--border-radius-md); cursor: pointer;">
+        <div class="user-avatar" id="sidebar-avatar-box" style="${profile.freelancerAvatar ? 'background: none;' : ''}">
+          ${avatarHtml}
         </div>
-        <div class="profile-preview-btn" style="color: var(--text-secondary); display: flex; align-items: center; padding: 4px;" title="Preview Client View">
+        <div class="user-info" style="flex: 1; margin-left: 12px;">
+          <span class="user-name" id="sidebar-freelancer-name">${name}</span>
+          <span class="user-role" id="sidebar-freelancer-role">${role}</span>
+        </div>
+        <div class="profile-preview-btn" style="color: var(--text-secondary); display: flex; align-items: center; padding: 4px; cursor: pointer;" title="${t('clientView.timeline', 'Client Workspace Portal')}">
           ${getIcon('externalLink', '', 14)}
         </div>
       </div>
     `;
 
-    footerEl.querySelector('.user-profile').addEventListener('click', () => {
-      this.onTabChange('client-view');
+    const langSelect = footerEl.querySelector('#sidebar-lang-select');
+    if (langSelect) {
+      langSelect.addEventListener('change', (e) => {
+        setLanguage(e.target.value);
+      });
+    }
+
+    const userProfileEl = footerEl.querySelector('.user-profile');
+    userProfileEl.addEventListener('click', (e) => {
+      const previewBtn = e.target.closest('.profile-preview-btn');
+      if (previewBtn) {
+        e.stopPropagation();
+        this.onTabChange('client-view');
+      } else {
+        this.onTabChange('profile');
+      }
       
       // Auto-close sidebar on mobile after clicking
       if (window.app && typeof window.app.closeMobileMenu === 'function') {

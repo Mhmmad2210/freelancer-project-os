@@ -4,6 +4,8 @@
 
 import { getIcon } from '../icons.js';
 import { formatCurrency, formatDate } from '../utils.js';
+import { ClientMemoryPanel } from './ClientMemoryPanel.js';
+import { t } from '../i18n.js';
 
 export class ClientsView {
   /**
@@ -16,6 +18,8 @@ export class ClientsView {
     this.store = store;
     this.onTriggerToast = onTriggerToast;
     this.searchQuery = '';
+    this.filterRelationship = '';
+    this.filterChannel = '';
   }
 
   update() {
@@ -32,8 +36,8 @@ export class ClientsView {
     const headerIntro = document.createElement('div');
     headerIntro.className = 'portfolio-intro-box';
     headerIntro.innerHTML = `
-      <h2>Client Hub</h2>
-      <p>Track your clients, active projects, and total project value in one place. Keep notes, log WhatsApp details, and track follow-ups.</p>
+      <h2>${t('sidebar.clientHub', 'Client Hub')}</h2>
+      <p>${t('clientHub.introText', 'Track your clients, active projects, and total project value in one place. Keep notes, log WhatsApp details, and track follow-ups.')}</p>
     `;
     viewEl.appendChild(headerIntro);
 
@@ -45,7 +49,7 @@ export class ClientsView {
     searchWrapper.className = 'search-input-wrapper';
     searchWrapper.innerHTML = `
       ${getIcon('search', 'search-icon', 18)}
-      <input type="text" id="client-search" placeholder="Search name, brand, WhatsApp, or email..." value="${this.searchQuery}">
+      <input type="text" id="client-search" placeholder="${t('clientHub.searchPlaceholder', 'Search name, brand, WhatsApp, or email...')}" value="${this.searchQuery}">
     `;
     const searchInput = searchWrapper.querySelector('input');
     searchInput.addEventListener('input', (e) => {
@@ -53,12 +57,50 @@ export class ClientsView {
       this.renderTableOnly();
     });
 
+    const filtersWrapper = document.createElement('div');
+    filtersWrapper.style.display = 'flex';
+    filtersWrapper.style.gap = '8px';
+    filtersWrapper.style.alignItems = 'center';
+    filtersWrapper.style.flexWrap = 'wrap';
+    filtersWrapper.innerHTML = `
+      <select id="filter-relationship" class="form-control" style="font-size: 0.8rem; padding: 6px 12px; min-width: 145px; background: var(--card-bg); border-color: rgba(255,255,255,0.1); cursor: pointer; color: var(--text-primary);">
+        <option value="">${t('clientHub.allStatuses', '-- All Statuses --')}</option>
+        <option value="New Client" ${this.filterRelationship === 'New Client' ? 'selected' : ''}>${t('status.relationship.new_client', 'New Client')}</option>
+        <option value="Active Client" ${this.filterRelationship === 'Active Client' ? 'selected' : ''}>${t('status.relationship.active_client', 'Active Client')}</option>
+        <option value="Repeat Client" ${this.filterRelationship === 'Repeat Client' ? 'selected' : ''}>${t('status.relationship.repeat_client', 'Repeat Client')}</option>
+        <option value="VIP Client" ${this.filterRelationship === 'VIP Client' ? 'selected' : ''}>${t('status.relationship.vip_client', 'VIP Client')}</option>
+        <option value="At Risk" ${this.filterRelationship === 'At Risk' ? 'selected' : ''}>${t('status.relationship.at_risk', 'At Risk')}</option>
+        <option value="Dormant" ${this.filterRelationship === 'Dormant' ? 'selected' : ''}>${t('status.relationship.dormant', 'Dormant')}</option>
+      </select>
+      <select id="filter-channel" class="form-control" style="font-size: 0.8rem; padding: 6px 12px; min-width: 145px; background: var(--card-bg); border-color: rgba(255,255,255,0.1); cursor: pointer; color: var(--text-primary);">
+        <option value="">${t('clientHub.allChannels', '-- All Channels --')}</option>
+        <option value="WhatsApp" ${this.filterChannel === 'WhatsApp' ? 'selected' : ''}>${t('clientHub.whatsapp', 'WhatsApp')}</option>
+        <option value="Email" ${this.filterChannel === 'Email' ? 'selected' : ''}>${t('clientHub.email', 'Email')}</option>
+        <option value="Slack" ${this.filterChannel === 'Slack' ? 'selected' : ''}>${t('clientHub.slack', 'Slack')}</option>
+        <option value="Zoom" ${this.filterChannel === 'Zoom' ? 'selected' : ''}>${t('clientHub.zoom', 'Zoom')}</option>
+        <option value="Google Meet" ${this.filterChannel === 'Google Meet' ? 'selected' : ''}>${t('clientHub.meet', 'Google Meet')}</option>
+        <option value="Call" ${this.filterChannel === 'Call' ? 'selected' : ''}>${t('clientHub.directCall', 'Direct Call')}</option>
+        <option value="Other" ${this.filterChannel === 'Other' ? 'selected' : ''}>${t('clientHub.other', 'Other')}</option>
+      </select>
+    `;
+    
+    filtersWrapper.querySelector('#filter-relationship').addEventListener('change', (e) => {
+      this.filterRelationship = e.target.value;
+      this.renderTableOnly();
+    });
+    
+    filtersWrapper.querySelector('#filter-channel').addEventListener('change', (e) => {
+      this.filterChannel = e.target.value;
+      this.renderTableOnly();
+    });
+
     const addBtn = document.createElement('button');
     addBtn.className = 'btn btn-primary';
-    addBtn.innerHTML = `${getIcon('plus', '', 18)} Add Client`;
+    addBtn.innerHTML = `${getIcon('plus', '', 18)} ${t('clientHub.addClient', 'Add Client')}`;
     addBtn.addEventListener('click', () => this.showClientDrawer());
 
     controls.appendChild(searchWrapper);
+    controls.appendChild(filtersWrapper);
     controls.appendChild(addBtn);
     viewEl.appendChild(controls);
 
@@ -81,22 +123,30 @@ export class ClientsView {
 
     // Filter list
     const filteredClients = clients.filter(c => {
-      if (!this.searchQuery) return true;
-      return (
+      const matchesSearch = !this.searchQuery ? true : (
         c.name.toLowerCase().includes(this.searchQuery) ||
         (c.businessName || '').toLowerCase().includes(this.searchQuery) ||
         (c.email || '').toLowerCase().includes(this.searchQuery) ||
         (c.phone || '').toLowerCase().includes(this.searchQuery)
       );
+
+      const memory = c.clientMemory || {};
+      const relStatus = memory.relationshipStatus || '';
+      const matchesRel = !this.filterRelationship ? true : (relStatus === this.filterRelationship);
+
+      const prefChan = memory.preferredChannel || '';
+      const matchesChan = !this.filterChannel ? true : (prefChan === this.filterChannel);
+
+      return matchesSearch && matchesRel && matchesChan;
     });
 
     if (filteredClients.length === 0) {
       canvas.innerHTML = `
         <div class="empty-state-box" style="border: none; background: none; padding: 64px 24px;">
           ${getIcon('user', '', 48)}
-          <h3>No clients in directory</h3>
-          <p>Add your first client to start launching custom proposals and invoicing workflows.</p>
-          <button class="btn btn-primary" id="btn-empty-add-client">${getIcon('plus', '', 16)} Register Client</button>
+          <h3>${t('clientHub.noClientsTitle', 'No clients in directory')}</h3>
+          <p>${t('clientHub.noClientsDesc', 'Add your first client to start launching custom proposals and invoicing workflows.')}</p>
+          <button class="btn btn-primary" id="btn-empty-add-client">${getIcon('plus', '', 16)} ${t('clientHub.registerClient', 'Register Client')}</button>
         </div>
       `;
       canvas.querySelector('#btn-empty-add-client').addEventListener('click', () => this.showClientDrawer());
@@ -107,13 +157,13 @@ export class ClientsView {
       <table class="hub-table">
         <thead>
           <tr>
-            <th>Client & Business Name</th>
-            <th>Contact Details</th>
-            <th>Client Status</th>
-            <th>Client Follow-Up</th>
-            <th>Active Projects</th>
-            <th>Total Project Value</th>
-            <th style="text-align: right;">Actions</th>
+            <th>${t('clientHub.colName', 'Client & Business Name')}</th>
+            <th>${t('clientHub.colContact', 'Contact Details')}</th>
+            <th>${t('clientHub.colStatus', 'Client Status')}</th>
+            <th>${t('clientHub.colFollowUp', 'Client Follow-Up')}</th>
+            <th>${t('clientHub.colProjects', 'Active Projects')}</th>
+            <th>${t('clientHub.colValue', 'Total Project Value')}</th>
+            <th style="text-align: right;">${t('clientHub.colActions', 'Actions')}</th>
           </tr>
         </thead>
         <tbody id="client-rows"></tbody>
@@ -136,25 +186,104 @@ export class ClientsView {
       if (c.status === 'Completed') pillClass = 'status-completed';
       if (c.status === 'Inactive') pillClass = 'status-lead text-danger';
 
+      const getStatusLabel = (status) => {
+        if (status === 'Lead') return t('clientHub.statusLead', 'Lead (Prospect)');
+        if (status === 'Active') return t('clientHub.statusActive', 'Active Client');
+        if (status === 'Completed') return t('clientHub.statusCompleted', 'Completed Client');
+        if (status === 'Inactive') return t('clientHub.statusInactive', 'Inactive Client');
+        return status;
+      };
+
+      // 2-3 Useful Client Memory Indicators
+      let memoryIndicators = '';
+      if (c.clientMemory) {
+        const mem = c.clientMemory;
+        const indicators = [];
+        if (mem.preferredChannel) {
+          const channelMap = {
+            'WhatsApp': t('clientHub.whatsapp', 'WhatsApp'),
+            'Email': t('clientHub.email', 'Email'),
+            'Slack': t('clientHub.slack', 'Slack'),
+            'Zoom': t('clientHub.zoom', 'Zoom'),
+            'Google Meet': t('clientHub.meet', 'Google Meet'),
+            'Call': t('clientHub.directCall', 'Direct Call'),
+            'Other': t('clientHub.other', 'Other')
+          };
+          const chLabel = channelMap[mem.preferredChannel] || mem.preferredChannel;
+          indicators.push(`💬 ${chLabel}`);
+        }
+        if (mem.paymentReminderStyle) {
+          indicators.push(`💳 ${mem.paymentReminderStyle}`);
+        } else if (mem.paymentBehavior && mem.paymentBehavior.toLowerCase().includes('reminder')) {
+          indicators.push('💳 ' + t('clientHub.needsReminder', 'Needs reminder'));
+        }
+        if (mem.revisionPattern) {
+          const revWords = mem.revisionPattern.split(' ');
+          const shortRev = revWords.length > 2 ? revWords.slice(0, 2).join(' ') + '...' : mem.revisionPattern;
+          indicators.push(`🔄 ${shortRev}`);
+        }
+        
+        if (indicators.length > 0) {
+          memoryIndicators = `
+            <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+              ${indicators.slice(0, 3).map(ind => `
+                <span class="client-status-badge" style="font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; background: rgba(139, 92, 246, 0.05); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.15); display: inline-flex; align-items: center; font-weight: normal;">
+                  ${ind}
+                </span>
+              `).join('')}
+            </div>
+          `;
+        }
+      }
+
+      // Relationship Status badge
+      let relBadge = '';
+      if (c.clientMemory && c.clientMemory.relationshipStatus) {
+        const relStatus = c.clientMemory.relationshipStatus;
+        let relPillClass = 'status-lead';
+        if (relStatus === 'VIP Client') relPillClass = 'status-active';
+        else if (relStatus === 'Active Client') relPillClass = 'status-active';
+        else if (relStatus === 'Repeat Client') relPillClass = 'status-completed';
+        else if (relStatus === 'At Risk') relPillClass = 'status-lead text-warning';
+        else if (relStatus === 'Dormant') relPillClass = 'status-lead';
+        else if (relStatus === 'New Client') relPillClass = 'status-lead';
+
+        const getRelationshipStatusLabel = (rel) => {
+          if (rel === 'New Client') return t('status.relationship.new_client', 'New Client');
+          if (rel === 'Active Client') return t('status.relationship.active_client', 'Active Client');
+          if (rel === 'Repeat Client') return t('status.relationship.repeat_client', 'Repeat Client');
+          if (rel === 'VIP Client') return t('status.relationship.vip_client', 'VIP Client');
+          if (rel === 'At Risk') return t('status.relationship.at_risk', 'At Risk');
+          if (rel === 'Dormant') return t('status.relationship.dormant', 'Dormant');
+          return rel;
+        };
+
+        relBadge = `<span class="client-status-badge ${relPillClass}" style="margin-top: 4px; display: inline-flex; align-items: center; gap: 2px;">🤝 ${getRelationshipStatusLabel(relStatus)}</span>`;
+      }
+
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>
-          <div style="display: flex; flex-direction: column;">
+          <div style="display: flex; flex-direction: column; align-items: flex-start;">
             <span style="font-weight: 600; color: var(--text-primary);">${c.name}</span>
-            <span style="font-size: 0.78rem; color: var(--text-muted);">${c.businessName || 'Freelance Personal Contract'}</span>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">${c.businessName || t('clientHub.personalContract', 'Freelance Personal Contract')}</span>
+            ${memoryIndicators}
           </div>
         </td>
         <td>
           <div style="display: flex; flex-direction: column; gap: 2px;">
-            <span style="font-size: 0.85rem; color: var(--text-secondary);">${c.email || 'No email logged'}</span>
-            ${c.phone ? `<span style="font-size: 0.78rem; color: var(--color-secondary); display: flex; align-items: center; gap: 4px;">WhatsApp: ${c.phone}</span>` : ''}
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">${c.email || t('clientHub.noEmail', 'No email logged')}</span>
+            ${c.phone ? `<span style="font-size: 0.78rem; color: var(--color-secondary); display: flex; align-items: center; gap: 4px;">${t('clientHub.whatsapp', 'WhatsApp')}: ${c.phone}</span>` : ''}
           </div>
         </td>
         <td>
-          <span class="client-status-badge ${pillClass}">${c.status}</span>
+          <div style="display: flex; flex-direction: column; align-items: flex-start;">
+            <span class="client-status-badge ${pillClass}">${getStatusLabel(c.status)}</span>
+            ${relBadge}
+          </div>
         </td>
         <td>
-          <span style="font-size: 0.85rem; color: var(--text-secondary);">${c.lastFollowUpDate ? formatDate(c.lastFollowUpDate) : 'No follow-up logged'}</span>
+          <span style="font-size: 0.85rem; color: var(--text-secondary);">${c.lastFollowUpDate ? formatDate(c.lastFollowUpDate) : t('clientHub.noFollowUp', 'No follow-up logged')}</span>
         </td>
         <td>
           <span style="font-weight: 600; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem;">${projectCount}</span>
@@ -163,20 +292,25 @@ export class ClientsView {
           <span style="font-weight: 700; color: var(--color-secondary); font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem;">${formatCurrency(totalProjectVal)}</span>
         </td>
         <td style="text-align: right;">
-          <div style="display: flex; gap: 8px; justify-content: flex-end;">
-            <button class="invoice-btn-small edit-trigger" style="padding: 4px 8px;">Edit</button>
+          <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
+            <button class="invoice-btn-small memory-trigger" style="padding: 4px 8px; display: inline-flex; align-items: center; gap: 2px;">🧠 ${t('clientMemory.titleShort', 'Memory')}</button>
+            <button class="invoice-btn-small edit-trigger" style="padding: 4px 8px;">${t('edit', 'Edit')}</button>
             <button class="invoice-btn-small delete-trigger text-danger" style="padding: 4px 8px; flex: 0 0 auto;">${getIcon('trash', '', 12)}</button>
           </div>
         </td>
       `;
 
+      row.querySelector('.memory-trigger').addEventListener('click', () => {
+        ClientMemoryPanel.open(c.id, this.store, this.onTriggerToast, () => this.update());
+      });
       row.querySelector('.edit-trigger').addEventListener('click', () => this.showClientDrawer(c));
       
       row.querySelector('.delete-trigger').addEventListener('click', () => {
-        if (confirm(`Remove "${c.name}" from directory?\nExisting project billing indexes will be preserved.`)) {
+        const confirmMsg = t('toast.removeClientConfirm', 'Remove "{name}" from directory?\nExisting project billing indexes will be preserved.').replace('{name}', c.name);
+        if (confirm(confirmMsg)) {
           this.store.clients = state.clients.filter(x => x.id !== c.id);
           this.store.saveState();
-          this.onTriggerToast('Client successfully removed');
+          this.onTriggerToast(t('toast.clientRemoved', 'Client successfully removed'));
           this.update();
         }
       });
@@ -212,94 +346,94 @@ export class ClientsView {
         <div class="drawer-body">
           <form id="client-drawer-form">
             <div class="form-group">
-              <label for="c-name">Full Client Name</label>
-              <input type="text" id="c-name" class="form-control" value="${nameVal}" placeholder="e.g. Sarah Connor" required>
+              <label for="c-name">${t('clientHub.fullName', 'Full Client Name')}</label>
+              <input type="text" id="c-name" class="form-control" value="${nameVal}" placeholder="${t('projectModal.newClientNamePlaceholder', 'e.g. Sarah Connor')}" required>
             </div>
 
             <div class="form-group">
-              <label for="c-business">Business / Brand Name</label>
-              <input type="text" id="c-business" class="form-control" value="${businessVal}" placeholder="e.g. Cyberdyne Systems">
+              <label for="c-business">${t('clientHub.businessBrandName', 'Business / Brand Name')}</label>
+              <input type="text" id="c-business" class="form-control" value="${businessVal}" placeholder="${t('clientHub.businessBrandPlaceholder', 'e.g. Cyberdyne Systems')}">
             </div>
 
             <div class="form-group">
-              <label for="c-email">Contact Email</label>
+              <label for="c-email">${t('clientHub.contactEmail', 'Contact Email')}</label>
               <input type="email" id="c-email" class="form-control" value="${emailVal}" placeholder="e.g. sconnor@cyberdyne.io" required>
             </div>
 
             <div class="form-group">
-              <label for="c-phone">Phone or WhatsApp</label>
+              <label for="c-phone">${t('clientHub.phoneWhatsApp', 'Phone or WhatsApp')}</label>
               <input type="text" id="c-phone" class="form-control" value="${phoneVal}" placeholder="e.g. +62 812-3456-7890">
             </div>
 
             <div class="form-group">
-              <label for="c-followup">Last Client Follow-Up Date</label>
+              <label for="c-followup">${t('clientHub.lastFollowUpDate', 'Last Client Follow-Up Date')}</label>
               <input type="date" id="c-followup" class="form-control" value="${followUpVal}">
             </div>
 
             <div class="form-group">
-              <label for="c-status">Client Status</label>
+              <label for="c-status">${t('clientHub.clientStatus', 'Client Status')}</label>
               <select id="c-status" class="form-control">
-                <option value="Lead" ${statusVal === 'Lead' ? 'selected' : ''}>Lead (Prospect)</option>
-                <option value="Active" ${statusVal === 'Active' ? 'selected' : ''}>Active Client</option>
-                <option value="Completed" ${statusVal === 'Completed' ? 'selected' : ''}>Completed Client</option>
-                <option value="Inactive" ${statusVal === 'Inactive' ? 'selected' : ''}>Inactive Client</option>
+                <option value="Lead" ${statusVal === 'Lead' ? 'selected' : ''}>${t('clientHub.statusLead', 'Lead (Prospect)')}</option>
+                <option value="Active" ${statusVal === 'Active' ? 'selected' : ''}>${t('clientHub.statusActive', 'Active Client')}</option>
+                <option value="Completed" ${statusVal === 'Completed' ? 'selected' : ''}>${t('clientHub.statusCompleted', 'Completed Client')}</option>
+                <option value="Inactive" ${statusVal === 'Inactive' ? 'selected' : ''}>${t('clientHub.statusInactive', 'Inactive Client')}</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="c-notes">Client Notes</label>
-              <textarea id="c-notes" class="form-control" placeholder="Add contact summaries, specific request details...">${notesVal}</textarea>
+              <label for="c-notes">${t('clientHub.clientNotes', 'Client Notes')}</label>
+              <textarea id="c-notes" class="form-control" placeholder="${t('clientHub.clientNotesPlaceholder', 'Add contact summaries, specific request details...')}">${notesVal}</textarea>
             </div>
 
             <!-- Client Memory Section (Collapsible) -->
             <div class="collapsible-section collapsed" id="section-client-drawer-memory" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
               <h4 class="collapsible-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">
-                <span>🧠 Client Memory Fields</span>
+                <span>🧠 ${t('clientHub.clientMemoryFields', 'Client Memory Fields')}</span>
                 <span class="toggle-icon">${getIcon('chevronRight', '', 14)}</span>
               </h4>
               <div class="collapsible-content" style="display: flex; flex-direction: column; gap: 10px;">
                 <div class="form-group">
-                  <label for="c-preference">Client Preference</label>
-                  <textarea id="c-preference" class="form-control" placeholder="e.g. Prefers Monday updates">${existingClient ? existingClient.clientPreference || '' : ''}</textarea>
+                  <label for="c-preference">${t('projectModal.clientPreference', 'Client Preference')}</label>
+                  <textarea id="c-preference" class="form-control" placeholder="${t('projectModal.clientPreferencePlaceholder', 'e.g. Prefers Monday updates')}">${existingClient ? existingClient.clientPreference || '' : ''}</textarea>
                 </div>
                 <div class="form-group">
-                  <label for="c-comm-style">Communication Style</label>
-                  <textarea id="c-comm-style" class="form-control" placeholder="e.g. WhatsApp only, Slack">${existingClient ? existingClient.communicationStyle || '' : ''}</textarea>
+                  <label for="c-comm-style">${t('projectModal.communicationStyle', 'Communication Style')}</label>
+                  <textarea id="c-comm-style" class="form-control" placeholder="${t('projectModal.communicationStylePlaceholder', 'e.g. WhatsApp only, direct call')}">${existingClient ? existingClient.communicationStyle || '' : ''}</textarea>
                 </div>
                 <div class="form-group">
-                  <label for="c-payment-behavior">Payment Behavior</label>
-                  <textarea id="c-payment-behavior" class="form-control" placeholder="e.g. Always pays within Net 14">${existingClient ? existingClient.paymentBehavior || '' : ''}</textarea>
+                  <label for="c-payment-behavior">${t('projectModal.paymentBehavior', 'Payment Behavior')}</label>
+                  <textarea id="c-payment-behavior" class="form-control" placeholder="${t('projectModal.paymentBehaviorPlaceholder', 'e.g. Needs 1 reminder follow-up')}">${existingClient ? existingClient.paymentBehavior || '' : ''}</textarea>
                 </div>
                 <div class="form-group">
-                  <label for="c-revision-pattern">Revision Pattern</label>
-                  <textarea id="c-revision-pattern" class="form-control" placeholder="e.g. Likes minimal edits">${existingClient ? existingClient.revisionPattern || '' : ''}</textarea>
+                  <label for="c-revision-pattern">${t('projectModal.revisionPattern', 'Revision Pattern')}</label>
+                  <textarea id="c-revision-pattern" class="form-control" placeholder="${t('projectModal.revisionPatternPlaceholder', 'e.g. Usually asks for extra rounds')}">${existingClient ? existingClient.revisionPattern || '' : ''}</textarea>
                 </div>
                 <div class="form-group">
-                  <label for="c-delivery-preference">Delivery Preference</label>
-                  <textarea id="c-delivery-preference" class="form-control" placeholder="e.g. Google Drive folder">${existingClient ? existingClient.deliveryPreference || '' : ''}</textarea>
+                  <label for="c-delivery-preference">${t('projectModal.deliveryPreference', 'Delivery Preference')}</label>
+                  <textarea id="c-delivery-preference" class="form-control" placeholder="${t('projectModal.deliveryPreferencePlaceholder', 'e.g. Figma + Google Drive SVGs')}">${existingClient ? existingClient.deliveryPreference || '' : ''}</textarea>
                 </div>
                 <div class="form-group">
-                  <label for="c-risk-notes">Client Risk Notes</label>
-                  <textarea id="c-risk-notes" class="form-control" placeholder="e.g. Prone to scope additions">${existingClient ? existingClient.clientRiskNotes || '' : ''}</textarea>
+                  <label for="c-risk-notes">${t('projectModal.clientRiskNotes', 'Client Risk Notes')}</label>
+                  <textarea id="c-risk-notes" class="form-control" placeholder="${t('projectModal.clientRiskNotesPlaceholder', 'e.g. Prone to scope additions')}">${existingClient ? existingClient.clientRiskNotes || '' : ''}</textarea>
                 </div>
                 <div class="form-group">
-                  <label for="c-important-notes">Important Notes</label>
-                  <textarea id="c-important-notes" class="form-control" placeholder="Other key preferences...">${existingClient ? existingClient.importantNotes || '' : ''}</textarea>
+                  <label for="c-important-notes">${t('projectModal.importantNotes', 'Important Notes')}</label>
+                  <textarea id="c-important-notes" class="form-control" placeholder="${t('projectModal.importantNotesPlaceholder', 'Other critical preferences...')}">${existingClient ? existingClient.importantNotes || '' : ''}</textarea>
                 </div>
                 <div class="form-group">
-                  <label for="c-last-proj-summary">Last Project Summary</label>
-                  <textarea id="c-last-proj-summary" class="form-control" placeholder="Previous project context...">${existingClient ? existingClient.lastProjectSummary || '' : ''}</textarea>
+                  <label for="c-last-proj-summary">${t('projectModal.lastProjectSummary', 'Last Project Summary')}</label>
+                  <textarea id="c-last-proj-summary" class="form-control" placeholder="${t('projectModal.lastProjectSummaryPlaceholder', 'Summary of previous work...')}">${existingClient ? existingClient.lastProjectSummary || '' : ''}</textarea>
                 </div>
                 <div class="form-group">
-                  <label for="c-last-meet-summary">Last Meeting Summary</label>
-                  <textarea id="c-last-meet-summary" class="form-control" placeholder="Previous meeting context...">${existingClient ? existingClient.lastMeetingSummary || '' : ''}</textarea>
+                  <label for="c-last-meet-summary">${t('projectModal.lastMeetingSummary', 'Last Meeting Summary')}</label>
+                  <textarea id="c-last-meet-summary" class="form-control" placeholder="${t('projectModal.lastMeetingSummaryPlaceholder', 'Notes from previous meeting...')}">${existingClient ? existingClient.lastMeetingSummary || '' : ''}</textarea>
                 </div>
               </div>
             </div>
 
             <div class="modal-footer" style="padding: 16px 0 0 0; border: none;">
-              <button type="button" class="btn btn-secondary" id="cancel-c-drawer">Cancel</button>
-              <button type="submit" class="btn btn-primary">Save Client Directory</button>
+              <button type="button" class="btn btn-secondary" id="cancel-c-drawer">${t('cancel', 'Cancel')}</button>
+              <button type="submit" class="btn btn-primary">${t('clientHub.saveClientDirectory', 'Save Client Directory')}</button>
             </div>
           </form>
         </div>
@@ -353,18 +487,46 @@ export class ClientsView {
       const lastProjectSummary = form.querySelector('#c-last-proj-summary').value.trim();
       const lastMeetingSummary = form.querySelector('#c-last-meet-summary').value.trim();
 
+      const clientMemory = {
+        communicationStyle,
+        preferredChannel: existingClient && existingClient.clientMemory ? existingClient.clientMemory.preferredChannel : '',
+        preferredUpdateFrequency: existingClient && existingClient.clientMemory ? existingClient.clientMemory.preferredUpdateFrequency : '',
+        decisionMaker: existingClient && existingClient.clientMemory ? existingClient.clientMemory.decisionMaker : '',
+        approvalStyle: existingClient && existingClient.clientMemory ? existingClient.clientMemory.approvalStyle : '',
+        revisionPattern,
+        paymentBehavior,
+        paymentReminderStyle: existingClient && existingClient.clientMemory ? existingClient.clientMemory.paymentReminderStyle : '',
+        deliveryPreference,
+        filePreference: existingClient && existingClient.clientMemory ? existingClient.clientMemory.filePreference : '',
+        tonePreference: existingClient && existingClient.clientMemory ? existingClient.clientMemory.tonePreference : '',
+        importantNotes,
+        clientRiskNotes,
+        lastProjectSummary,
+        lastMeetingSummary,
+        relationshipStatus: existingClient && existingClient.clientMemory ? existingClient.clientMemory.relationshipStatus : '',
+        clientVisibleNotes: existingClient && existingClient.clientMemory ? existingClient.clientMemory.clientVisibleNotes : '',
+        shareDeliveryPref: existingClient && existingClient.clientMemory ? existingClient.clientMemory.shareDeliveryPref : false,
+        commonFeedbackNotes: existingClient && existingClient.clientMemory ? existingClient.clientMemory.commonFeedbackNotes : '',
+        revisionBoundaryNotes: existingClient && existingClient.clientMemory ? existingClient.clientMemory.revisionBoundaryNotes : '',
+        usualPaymentTiming: existingClient && existingClient.clientMemory ? existingClient.clientMemory.usualPaymentTiming : '',
+        paymentNotes: existingClient && existingClient.clientMemory ? existingClient.clientMemory.paymentNotes : '',
+        folderLinkMethod: existingClient && existingClient.clientMemory ? existingClient.clientMemory.folderLinkMethod : '',
+        handoverPreference: existingClient && existingClient.clientMemory ? existingClient.clientMemory.handoverPreference : ''
+      };
+
       const fields = { 
         name, businessName, email, phone, lastFollowUpDate, status, notes,
         clientPreference, communicationStyle, paymentBehavior, revisionPattern,
-        deliveryPreference, clientRiskNotes, importantNotes, lastProjectSummary, lastMeetingSummary
+        deliveryPreference, clientRiskNotes, importantNotes, lastProjectSummary, lastMeetingSummary,
+        clientMemory
       };
 
       if (existingClient) {
         this.store.updateClient(existingClient.id, fields);
-        this.onTriggerToast('Client directory records updated');
+        this.onTriggerToast(t('toast.clientRecordsUpdated', 'Client directory records updated'));
       } else {
         this.store.addClient(fields);
-        this.onTriggerToast('Client successfully registered');
+        this.onTriggerToast(t('toast.clientRegistered', 'Client successfully registered'));
       }
 
       closeActions();

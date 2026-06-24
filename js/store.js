@@ -2,7 +2,7 @@
    FREELANCER PROJECT OS - CENTRAL STORAGE & STORE COMPONENT
    ========================================================================== */
 
-import { generateId, getBrowserTimezone } from './utils.js';
+import { generateId, getBrowserTimezone, getInitials } from './utils.js';
 import { applyTemplateProjects } from './components/FreelancerTemplates.js';
 
 
@@ -378,6 +378,9 @@ export class WorkspaceStore {
         this.quotations = parsed.quotations || [];
         this.weeklyReflections = parsed.weeklyReflections || this.getDefaultReflections();
         this.availability = parsed.availability || this.getDefaultAvailability();
+        
+        const storedProfile = localStorage.getItem('alurkarya_freelancer_profile');
+        this.freelancerProfile = storedProfile ? JSON.parse(storedProfile) : (parsed.freelancerProfile || this.getDefaultFreelancerProfile());
 
         let migrated = false;
 
@@ -403,7 +406,7 @@ export class WorkspaceStore {
           p.title === 'Brand Identity & Guidelines Redesign' || 
           p.title === 'AI Workflow Integration Consulting'
         );
-        if (hasOldSeeds || this.projects.length === 0) {
+        if (hasOldSeeds) {
           const seed = getInitialSeedData();
           this.projects = seed.projects;
           this.clients = seed.clients;
@@ -422,6 +425,19 @@ export class WorkspaceStore {
           }
           if (!p.currency) {
             p.currency = 'IDR';
+            migrated = true;
+          }
+          const defaultCurrency = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+          if (!p.projectCurrency) {
+            p.projectCurrency = defaultCurrency;
+            migrated = true;
+          }
+          if (!p.invoiceCurrency) {
+            p.invoiceCurrency = p.projectCurrency || defaultCurrency;
+            migrated = true;
+          }
+          if (!p.paymentCurrency) {
+            p.paymentCurrency = p.invoiceCurrency || p.projectCurrency || defaultCurrency;
             migrated = true;
           }
           if (p.downPaymentPercent === undefined) {
@@ -476,6 +492,55 @@ export class WorkspaceStore {
           if (p.clientExpectation === undefined) { p.clientExpectation = ''; migrated = true; }
           if (p.clientReviewDate === undefined) { p.clientReviewDate = ''; migrated = true; }
           if (p.finalDeliveryDate === undefined) { p.finalDeliveryDate = ''; migrated = true; }
+          if (p.clientVisibleNotes === undefined) { p.clientVisibleNotes = ''; migrated = true; }
+          if (p.previewLink === undefined) { p.previewLink = ''; migrated = true; }
+          if (p.draftLink === undefined) { p.draftLink = ''; migrated = true; }
+          if (p.reviewLink === undefined) { p.reviewLink = ''; migrated = true; }
+          if (p.fileFolderLink === undefined) { p.fileFolderLink = ''; migrated = true; }
+          if (p.stagingLink === undefined) { p.stagingLink = ''; migrated = true; }
+          if (p.finalFileLink === undefined) { p.finalFileLink = ''; migrated = true; }
+          if (p.deliveryDate === undefined) { p.deliveryDate = ''; migrated = true; }
+          if (p.handoverNotes === undefined) { p.handoverNotes = ''; migrated = true; }
+          if (p.approvalStatus === undefined) { p.approvalStatus = 'Pending Review'; migrated = true; }
+          if (p.approvedAt === undefined) { p.approvedAt = ''; migrated = true; }
+          if (p.clientFeedbackSummary === undefined) { p.clientFeedbackSummary = ''; migrated = true; }
+          if (p.invoiceStatus === undefined) { p.invoiceStatus = 'Not Created'; migrated = true; }
+          if (p.paymentStatus === undefined) { p.paymentStatus = 'Not Started'; migrated = true; }
+          if (p.amountPaid === undefined) { p.amountPaid = 0; migrated = true; }
+          if (p.amountDue === undefined) { p.amountDue = 0; migrated = true; }
+          if (p.paymentMethod === undefined) { p.paymentMethod = ''; migrated = true; }
+          if (p.paymentNotes === undefined) { p.paymentNotes = ''; migrated = true; }
+          if (p.receiptLink === undefined) { p.receiptLink = p.paymentReceiptLink || ''; migrated = true; }
+          if (p.invoiceFileLink === undefined) { p.invoiceFileLink = ''; migrated = true; }
+          if (p.deliveryStatus === undefined) { p.deliveryStatus = 'Not Submitted'; migrated = true; }
+          if (p.clientConfirmedDelivery === undefined) { p.clientConfirmedDelivery = false; migrated = true; }
+          if (p.firstCutLink === undefined) { p.firstCutLink = ''; migrated = true; }
+          if (p.designPreviewLink === undefined) { p.designPreviewLink = ''; migrated = true; }
+          if (p.sourceFileLink === undefined) { p.sourceFileLink = ''; migrated = true; }
+          if (!p.deliveryChecklist || !Array.isArray(p.deliveryChecklist)) {
+            const generalChecklist = ["Brief", "Draft", "Review", "Revision", "Invoice", "Payment", "Final delivery"];
+            let defaultLabels = generalChecklist;
+            if (p.templateRole) {
+              const roleChecklists = {
+                designer: ["Preview file link", "Final PNG/JPG/PDF", "Editable source file", "Brand guideline document", "Raw/source file link", "Client approval"],
+                video_editor: ["Raw footage received", "First cut link", "Revision notes", "Final export link", "Thumbnail file", "Source project file if included", "Client approval"],
+                copywriter: ["Brief confirmed", "Draft link", "Revision notes", "Final copy document", "Approved version", "Usage notes"],
+                web_developer: ["Content received", "Asset folder", "Staging link", "Client approval", "Final URL", "Backup file", "Handover notes"],
+                social_media_manager: ["Content calendar", "Caption document", "Design folder", "Posting schedule", "Monthly report", "Approval notes"],
+                ai_consultant: ["Discovery notes", "Workflow map", "Prompt documentation", "Demo video", "Training notes", "Final handover file"]
+              };
+              if (roleChecklists[p.templateRole]) {
+                defaultLabels = roleChecklists[p.templateRole];
+              }
+            }
+            p.deliveryChecklist = defaultLabels.map(label => ({
+              id: 'del_' + Math.random().toString(36).substring(2, 9),
+              label,
+              completed: false,
+              clientVisible: true
+            }));
+            migrated = true;
+          }
           return p;
         });
 
@@ -491,31 +556,22 @@ export class WorkspaceStore {
           return inv;
         });
 
-        this.clients = this.clients.map(c => {
-          if (c.clientPreference === undefined) { c.clientPreference = ''; migrated = true; }
-          if (c.communicationStyle === undefined) { c.communicationStyle = ''; migrated = true; }
-          if (c.paymentBehavior === undefined) { c.paymentBehavior = ''; migrated = true; }
-          if (c.revisionPattern === undefined) { c.revisionPattern = ''; migrated = true; }
-          if (c.deliveryPreference === undefined) { c.deliveryPreference = ''; migrated = true; }
-          if (c.lastProjectSummary === undefined) { c.lastProjectSummary = ''; migrated = true; }
-          if (c.lastMeetingSummary === undefined) { c.lastMeetingSummary = ''; migrated = true; }
-          if (c.importantNotes === undefined) { c.importantNotes = ''; migrated = true; }
-          if (c.clientRiskNotes === undefined) { c.clientRiskNotes = ''; migrated = true; }
-          return c;
-        });
+        if (this.migrateClients()) {
+          migrated = true;
+        }
 
         if (migrated) {
           this.saveState();
         }
 
       } else {
-        const seed = getInitialSeedData();
-        this.projects = seed.projects;
-        this.clients = seed.clients;
-        this.invoices = seed.invoices;
-        this.quotations = seed.quotations;
+        this.projects = [];
+        this.clients = [];
+        this.invoices = [];
+        this.quotations = [];
         this.weeklyReflections = this.getDefaultReflections();
         this.availability = this.getDefaultAvailability();
+        this.freelancerProfile = this.getDefaultFreelancerProfile();
         this.saveState();
       }
     } catch (e) {
@@ -527,6 +583,7 @@ export class WorkspaceStore {
       this.quotations = seed.quotations;
       this.weeklyReflections = this.getDefaultReflections();
       this.availability = this.getDefaultAvailability();
+      this.freelancerProfile = this.getDefaultFreelancerProfile();
     }
   }
 
@@ -545,9 +602,15 @@ export class WorkspaceStore {
         invoices: this.invoices,
         quotations: this.quotations,
         weeklyReflections: this.weeklyReflections,
-        availability: this.availability
+        availability: this.availability,
+        freelancerProfile: this.freelancerProfile
       };
       localStorage.setItem('freelancer_os_workspace', JSON.stringify(bundle));
+      
+      if (this.freelancerProfile) {
+        localStorage.setItem('alurkarya_freelancer_profile', JSON.stringify(this.freelancerProfile));
+      }
+      
       this.notifyListeners();
     } catch (e) {
       console.error('Failed to write to localStorage.', e);
@@ -558,13 +621,13 @@ export class WorkspaceStore {
    * Resets local context back to default clean values.
    */
   resetToDefaults() {
-    const seed = getInitialSeedData();
-    this.projects = seed.projects;
-    this.clients = seed.clients;
-    this.invoices = seed.invoices;
-    this.quotations = seed.quotations;
+    this.projects = [];
+    this.clients = [];
+    this.invoices = [];
+    this.quotations = [];
     this.weeklyReflections = this.getDefaultReflections();
     this.availability = this.getDefaultAvailability();
+    this.freelancerProfile = this.getDefaultFreelancerProfile();
     this.saveState();
   }
 
@@ -654,6 +717,9 @@ export class WorkspaceStore {
       createdAt: new Date().toISOString(),
       budget: budget,
       currency: projectData.currency || 'IDR', // Currency field default ready
+      projectCurrency: projectData.projectCurrency || localStorage.getItem('alurkarya_default_currency') || 'IDR',
+      invoiceCurrency: projectData.invoiceCurrency || projectData.projectCurrency || localStorage.getItem('alurkarya_default_currency') || 'IDR',
+      paymentCurrency: projectData.paymentCurrency || projectData.invoiceCurrency || projectData.projectCurrency || localStorage.getItem('alurkarya_default_currency') || 'IDR',
       stage: projectData.stage || 'new_lead',
       description: projectData.description || '',
       dueDate: projectData.dueDate || new Date().toISOString().split('T')[0],
@@ -719,7 +785,60 @@ export class WorkspaceStore {
       isCompletedLocked: false,
       holdReason: projectData.holdReason || '',
       holdDate: projectData.holdDate || '',
-      holdFollowUpDate: projectData.holdFollowUpDate || ''
+      holdFollowUpDate: projectData.holdFollowUpDate || '',
+
+      // Client portal upgrade fields
+      clientVisibleNotes: projectData.clientVisibleNotes || '',
+      previewLink: projectData.previewLink || '',
+      draftLink: projectData.draftLink || '',
+      reviewLink: projectData.reviewLink || '',
+      fileFolderLink: projectData.fileFolderLink || '',
+      stagingLink: projectData.stagingLink || '',
+      finalFileLink: projectData.finalFileLink || '',
+      deliveryDate: projectData.deliveryDate || '',
+      handoverNotes: projectData.handoverNotes || '',
+      approvalStatus: projectData.approvalStatus || 'Pending Review',
+      approvedAt: projectData.approvedAt || '',
+      clientFeedbackSummary: projectData.clientFeedbackSummary || '',
+      invoiceStatus: projectData.invoiceStatus || 'Not Created',
+      paymentStatus: projectData.paymentStatus || 'Not Started',
+      amountPaid: Number(projectData.amountPaid) || 0,
+      amountDue: Number(projectData.amountDue) || 0,
+      paymentMethod: projectData.paymentMethod || '',
+      paymentNotes: projectData.paymentNotes || '',
+      receiptLink: projectData.receiptLink || projectData.paymentReceiptLink || '',
+      invoiceFileLink: projectData.invoiceFileLink || '',
+      deliveryStatus: projectData.deliveryStatus || 'Not Submitted',
+      clientConfirmedDelivery: projectData.clientConfirmedDelivery !== undefined ? Boolean(projectData.clientConfirmedDelivery) : false,
+      firstCutLink: projectData.firstCutLink || '',
+      designPreviewLink: projectData.designPreviewLink || '',
+      sourceFileLink: projectData.sourceFileLink || '',
+      deliveryChecklist: (() => {
+        if (projectData.deliveryChecklist && Array.isArray(projectData.deliveryChecklist)) {
+          return projectData.deliveryChecklist;
+        }
+        const generalChecklist = ["Brief", "Draft", "Review", "Revision", "Invoice", "Payment", "Final delivery"];
+        let defaultLabels = generalChecklist;
+        if (projectData.templateRole) {
+          const roleChecklists = {
+            designer: ["Preview file link", "Final PNG/JPG/PDF", "Editable source file", "Brand guideline document", "Raw/source file link", "Client approval"],
+            video_editor: ["Raw footage received", "First cut link", "Revision notes", "Final export link", "Thumbnail file", "Source project file if included", "Client approval"],
+            copywriter: ["Brief confirmed", "Draft link", "Revision notes", "Final copy document", "Approved version", "Usage notes"],
+            web_developer: ["Content received", "Asset folder", "Staging link", "Client approval", "Final URL", "Backup file", "Handover notes"],
+            social_media_manager: ["Content calendar", "Caption document", "Design folder", "Posting schedule", "Monthly report", "Approval notes"],
+            ai_consultant: ["Discovery notes", "Workflow map", "Prompt documentation", "Demo video", "Training notes", "Final handover file"]
+          };
+          if (roleChecklists[projectData.templateRole]) {
+            defaultLabels = roleChecklists[projectData.templateRole];
+          }
+        }
+        return defaultLabels.map(label => ({
+          id: 'del_' + Math.random().toString(36).substring(2, 9),
+          label,
+          completed: false,
+          clientVisible: true
+        }));
+      })()
     };
     this.projects.push(newProject);
     this.saveState();
@@ -840,8 +959,8 @@ export class WorkspaceStore {
     return newProject;
   }
 
-  /* --- Clients Modifiers --- */
   addClient(clientData) {
+    const memoryInput = clientData.clientMemory || {};
     const newClient = {
       id: generateId(),
       name: clientData.name || 'New Client',
@@ -851,15 +970,37 @@ export class WorkspaceStore {
       status: clientData.status || 'Lead',
       lastFollowUpDate: clientData.lastFollowUpDate || new Date().toISOString().split('T')[0],
       notes: clientData.notes || '',
-      clientPreference: clientData.clientPreference || '',
-      communicationStyle: clientData.communicationStyle || '',
-      paymentBehavior: clientData.paymentBehavior || '',
-      revisionPattern: clientData.revisionPattern || '',
-      deliveryPreference: clientData.deliveryPreference || '',
-      lastProjectSummary: clientData.lastProjectSummary || '',
-      lastMeetingSummary: clientData.lastMeetingSummary || '',
-      importantNotes: clientData.importantNotes || '',
-      clientRiskNotes: clientData.clientRiskNotes || '',
+      // root levels for old compatibility
+      clientPreference: clientData.clientPreference || memoryInput.clientPreference || '',
+      communicationStyle: clientData.communicationStyle || memoryInput.communicationStyle || '',
+      paymentBehavior: clientData.paymentBehavior || memoryInput.paymentBehavior || '',
+      revisionPattern: clientData.revisionPattern || memoryInput.revisionPattern || '',
+      deliveryPreference: clientData.deliveryPreference || memoryInput.deliveryPreference || '',
+      lastProjectSummary: clientData.lastProjectSummary || memoryInput.lastProjectSummary || '',
+      lastMeetingSummary: clientData.lastMeetingSummary || memoryInput.lastMeetingSummary || '',
+      importantNotes: clientData.importantNotes || memoryInput.importantNotes || '',
+      clientRiskNotes: clientData.clientRiskNotes || memoryInput.clientRiskNotes || '',
+      // nested clientMemory structure
+      clientMemory: {
+        communicationStyle: clientData.communicationStyle || memoryInput.communicationStyle || '',
+        preferredChannel: clientData.preferredChannel || memoryInput.preferredChannel || '',
+        preferredUpdateFrequency: clientData.preferredUpdateFrequency || memoryInput.preferredUpdateFrequency || '',
+        decisionMaker: clientData.decisionMaker || memoryInput.decisionMaker || '',
+        approvalStyle: clientData.approvalStyle || memoryInput.approvalStyle || '',
+        revisionPattern: clientData.revisionPattern || memoryInput.revisionPattern || '',
+        paymentBehavior: clientData.paymentBehavior || memoryInput.paymentBehavior || '',
+        paymentReminderStyle: clientData.paymentReminderStyle || memoryInput.paymentReminderStyle || '',
+        deliveryPreference: clientData.deliveryPreference || memoryInput.deliveryPreference || '',
+        filePreference: clientData.filePreference || memoryInput.filePreference || '',
+        tonePreference: clientData.tonePreference || memoryInput.tonePreference || '',
+        importantNotes: clientData.importantNotes || memoryInput.importantNotes || '',
+        clientRiskNotes: clientData.clientRiskNotes || memoryInput.clientRiskNotes || '',
+        lastProjectSummary: clientData.lastProjectSummary || memoryInput.lastProjectSummary || '',
+        lastMeetingSummary: clientData.lastMeetingSummary || memoryInput.lastMeetingSummary || '',
+        relationshipStatus: clientData.relationshipStatus || memoryInput.relationshipStatus || '',
+        clientVisibleNotes: clientData.clientVisibleNotes || memoryInput.clientVisibleNotes || '',
+        shareDeliveryPref: clientData.shareDeliveryPref || memoryInput.shareDeliveryPref || false
+      },
       createdAt: new Date().toISOString().split('T')[0]
     };
     this.clients.push(newClient);
@@ -868,7 +1009,47 @@ export class WorkspaceStore {
   }
 
   updateClient(id, updates) {
-    this.clients = this.clients.map(c => (c.id === id ? { ...c, ...updates } : c));
+    this.clients = this.clients.map(c => {
+      if (c.id === id) {
+        const clientMemory = c.clientMemory ? { ...c.clientMemory } : {};
+        if (updates.clientMemory) {
+          Object.assign(clientMemory, updates.clientMemory);
+        }
+        
+        const memoryKeys = [
+          'communicationStyle', 'preferredChannel', 'preferredUpdateFrequency', 'decisionMaker',
+          'approvalStyle', 'revisionPattern', 'paymentBehavior', 'paymentReminderStyle',
+          'deliveryPreference', 'filePreference', 'tonePreference', 'importantNotes',
+          'clientRiskNotes', 'lastProjectSummary', 'lastMeetingSummary', 'relationshipStatus',
+          'clientVisibleNotes', 'shareDeliveryPref'
+        ];
+        
+        memoryKeys.forEach(k => {
+          if (updates[k] !== undefined) {
+            clientMemory[k] = updates[k];
+          }
+        });
+
+        const nextClient = {
+          ...c,
+          ...updates,
+          clientMemory
+        };
+        
+        // sync root fields for old compatibility
+        nextClient.communicationStyle = clientMemory.communicationStyle;
+        nextClient.paymentBehavior = clientMemory.paymentBehavior;
+        nextClient.revisionPattern = clientMemory.revisionPattern;
+        nextClient.deliveryPreference = clientMemory.deliveryPreference;
+        nextClient.clientRiskNotes = clientMemory.clientRiskNotes;
+        nextClient.importantNotes = clientMemory.importantNotes;
+        nextClient.lastProjectSummary = clientMemory.lastProjectSummary;
+        nextClient.lastMeetingSummary = clientMemory.lastMeetingSummary;
+
+        return nextClient;
+      }
+      return c;
+    });
     
     if (updates.name || updates.businessName) {
       this.projects = this.projects.map(p => {
@@ -880,6 +1061,78 @@ export class WorkspaceStore {
       });
     }
     this.saveState();
+  }
+
+  migrateClients() {
+    let migrated = false;
+    this.clients = this.clients.map(c => {
+      if (c.clientPreference === undefined) { c.clientPreference = ''; migrated = true; }
+      if (c.communicationStyle === undefined) { c.communicationStyle = ''; migrated = true; }
+      if (c.paymentBehavior === undefined) { c.paymentBehavior = ''; migrated = true; }
+      if (c.revisionPattern === undefined) { c.revisionPattern = ''; migrated = true; }
+      if (c.deliveryPreference === undefined) { c.deliveryPreference = ''; migrated = true; }
+      if (c.lastProjectSummary === undefined) { c.lastProjectSummary = ''; migrated = true; }
+      if (c.lastMeetingSummary === undefined) { c.lastMeetingSummary = ''; migrated = true; }
+      if (c.importantNotes === undefined) { c.importantNotes = ''; migrated = true; }
+      if (c.clientRiskNotes === undefined) { c.clientRiskNotes = ''; migrated = true; }
+
+      if (!c.clientMemory) {
+        c.clientMemory = {
+          communicationStyle: c.communicationStyle || '',
+          preferredChannel: '',
+          preferredUpdateFrequency: '',
+          decisionMaker: '',
+          approvalStyle: '',
+          revisionPattern: c.revisionPattern || '',
+          paymentBehavior: c.paymentBehavior || '',
+          paymentReminderStyle: '',
+          deliveryPreference: c.deliveryPreference || '',
+          filePreference: '',
+          tonePreference: '',
+          importantNotes: c.importantNotes || '',
+          clientRiskNotes: c.clientRiskNotes || '',
+          lastProjectSummary: c.lastProjectSummary || '',
+          lastMeetingSummary: c.lastMeetingSummary || '',
+          relationshipStatus: '',
+          clientVisibleNotes: '',
+          shareDeliveryPref: false
+        };
+        migrated = true;
+      } else {
+        const defaults = {
+          communicationStyle: '',
+          preferredChannel: '',
+          preferredUpdateFrequency: '',
+          decisionMaker: '',
+          approvalStyle: '',
+          revisionPattern: '',
+          paymentBehavior: '',
+          paymentReminderStyle: '',
+          deliveryPreference: '',
+          filePreference: '',
+          tonePreference: '',
+          importantNotes: '',
+          clientRiskNotes: '',
+          lastProjectSummary: '',
+          lastMeetingSummary: '',
+          relationshipStatus: '',
+          clientVisibleNotes: '',
+          shareDeliveryPref: false
+        };
+        let updatedMemory = false;
+        for (const key in defaults) {
+          if (c.clientMemory[key] === undefined) {
+            c.clientMemory[key] = c[key] !== undefined ? c[key] : defaults[key];
+            updatedMemory = true;
+          }
+        }
+        if (updatedMemory) {
+          migrated = true;
+        }
+      }
+      return c;
+    });
+    return migrated;
   }
 
   /* --- Invoices Modifiers --- */
@@ -950,7 +1203,9 @@ export class WorkspaceStore {
       invoices: this.invoices,
       quotations: this.quotations,
       weeklyReflections: this.weeklyReflections,
-      availability: this.availability
+      availability: this.availability,
+      freelancerProfile: this.freelancerProfile,
+      defaultCurrency: localStorage.getItem('alurkarya_default_currency') || 'IDR'
     };
     return JSON.stringify(bundle, null, 2);
   }
@@ -959,16 +1214,28 @@ export class WorkspaceStore {
     try {
       const parsed = JSON.parse(jsonString);
       if (parsed.projects && parsed.clients && parsed.invoices) {
+        if (parsed.defaultCurrency) {
+          localStorage.setItem('alurkarya_default_currency', parsed.defaultCurrency);
+        } else {
+          if (!localStorage.getItem('alurkarya_default_currency')) {
+            localStorage.setItem('alurkarya_default_currency', 'IDR');
+          }
+        }
         this.projects = parsed.projects;
         this.clients = parsed.clients;
         this.invoices = parsed.invoices;
         this.quotations = parsed.quotations || [];
         this.weeklyReflections = parsed.weeklyReflections || this.getDefaultReflections();
         this.availability = parsed.availability || this.getDefaultAvailability();
+        this.freelancerProfile = parsed.freelancerProfile || this.getDefaultFreelancerProfile();
         
         this.projects = this.projects.map(p => {
           if (p.budget < 1000000) p.budget *= 1000;
           if (!p.currency) p.currency = 'IDR';
+          const defaultCurrency = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+          if (!p.projectCurrency) p.projectCurrency = defaultCurrency;
+          if (!p.invoiceCurrency) p.invoiceCurrency = p.projectCurrency || defaultCurrency;
+          if (!p.paymentCurrency) p.paymentCurrency = p.invoiceCurrency || p.projectCurrency || defaultCurrency;
           if (p.downPaymentPercent === undefined) {
             p.downPaymentPercent = 50;
             p.downPaymentAmount = Math.round(p.budget * 0.5);
@@ -1001,6 +1268,55 @@ export class WorkspaceStore {
           if (p.clientExpectation === undefined) { p.clientExpectation = ''; }
           if (p.clientReviewDate === undefined) { p.clientReviewDate = ''; }
           if (p.finalDeliveryDate === undefined) { p.finalDeliveryDate = ''; }
+          if (p.clientVisibleNotes === undefined) { p.clientVisibleNotes = ''; }
+          if (p.previewLink === undefined) { p.previewLink = ''; }
+          if (p.draftLink === undefined) { p.draftLink = ''; }
+          if (p.reviewLink === undefined) { p.reviewLink = ''; }
+          if (p.fileFolderLink === undefined) { p.fileFolderLink = ''; }
+          if (p.stagingLink === undefined) { p.stagingLink = ''; }
+          if (p.finalFileLink === undefined) { p.finalFileLink = ''; }
+          if (p.deliveryDate === undefined) { p.deliveryDate = ''; }
+          if (p.handoverNotes === undefined) { p.handoverNotes = ''; }
+          if (p.approvalStatus === undefined) { p.approvalStatus = 'Pending Review'; }
+          if (p.approvedAt === undefined) { p.approvedAt = ''; }
+          if (p.clientFeedbackSummary === undefined) { p.clientFeedbackSummary = ''; }
+          if (p.revisionRule === undefined) { p.revisionRule = ''; }
+          if (p.invoiceStatus === undefined) { p.invoiceStatus = 'Not Created'; }
+          if (p.paymentStatus === undefined) { p.paymentStatus = 'Not Started'; }
+          if (p.amountPaid === undefined) { p.amountPaid = 0; }
+          if (p.amountDue === undefined) { p.amountDue = 0; }
+          if (p.paymentMethod === undefined) { p.paymentMethod = ''; }
+          if (p.paymentNotes === undefined) { p.paymentNotes = ''; }
+          if (p.receiptLink === undefined) { p.receiptLink = p.paymentReceiptLink || ''; }
+          if (p.invoiceFileLink === undefined) { p.invoiceFileLink = ''; }
+          if (p.deliveryStatus === undefined) { p.deliveryStatus = 'Not Submitted'; }
+          if (p.clientConfirmedDelivery === undefined) { p.clientConfirmedDelivery = false; }
+          if (p.firstCutLink === undefined) { p.firstCutLink = ''; }
+          if (p.designPreviewLink === undefined) { p.designPreviewLink = ''; }
+          if (p.sourceFileLink === undefined) { p.sourceFileLink = ''; }
+          if (!p.deliveryChecklist || !Array.isArray(p.deliveryChecklist)) {
+            const generalChecklist = ["Brief", "Draft", "Review", "Revision", "Invoice", "Payment", "Final delivery"];
+            let defaultLabels = generalChecklist;
+            if (p.templateRole) {
+              const roleChecklists = {
+                designer: ["Preview file link", "Final PNG/JPG/PDF", "Editable source file", "Brand guideline document", "Raw/source file link", "Client approval"],
+                video_editor: ["Raw footage received", "First cut link", "Revision notes", "Final export link", "Thumbnail file", "Source project file if included", "Client approval"],
+                copywriter: ["Brief confirmed", "Draft link", "Revision notes", "Final copy document", "Approved version", "Usage notes"],
+                web_developer: ["Content received", "Asset folder", "Staging link", "Client approval", "Final URL", "Backup file", "Handover notes"],
+                social_media_manager: ["Content calendar", "Caption document", "Design folder", "Posting schedule", "Monthly report", "Approval notes"],
+                ai_consultant: ["Discovery notes", "Workflow map", "Prompt documentation", "Demo video", "Training notes", "Final handover file"]
+              };
+              if (roleChecklists[p.templateRole]) {
+                defaultLabels = roleChecklists[p.templateRole];
+              }
+            }
+            p.deliveryChecklist = defaultLabels.map(label => ({
+              id: 'del_' + Math.random().toString(36).substring(2, 9),
+              label,
+              completed: false,
+              clientVisible: true
+            }));
+          }
           return p;
         });
         this.invoices = this.invoices.map(inv => {
@@ -1009,6 +1325,7 @@ export class WorkspaceStore {
           return inv;
         });
 
+        this.migrateClients();
         this.saveState();
         return true;
       }
@@ -1046,6 +1363,41 @@ export class WorkspaceStore {
 
   loadTemplateProjects(roleName) {
     return applyTemplateProjects(this, roleName);
+  }
+
+  getDefaultFreelancerProfile() {
+    return {
+      freelancerName: '',
+      freelancerRole: '',
+      freelancerInitials: '',
+      freelancerAvatar: '',
+      freelancerEmail: '',
+      freelancerBio: '',
+      freelancerPortfolioLink: '',
+      freelancerLocation: ''
+    };
+  }
+
+  getFreelancerProfile() {
+    if (!this.freelancerProfile) {
+      this.freelancerProfile = this.getDefaultFreelancerProfile();
+    }
+    return this.freelancerProfile;
+  }
+
+  updateFreelancerProfile(updates) {
+    this.freelancerProfile = { ...this.getFreelancerProfile(), ...updates };
+    
+    if (this.freelancerProfile.freelancerName && !this.freelancerProfile.freelancerInitials) {
+      this.freelancerProfile.freelancerInitials = getInitials(this.freelancerProfile.freelancerName);
+    }
+    
+    this.saveState();
+    this.notifyListeners();
+  }
+
+  getInitials(name) {
+    return getInitials(name);
   }
 }
 export const store = new WorkspaceStore();

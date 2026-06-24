@@ -16,6 +16,8 @@ import { ClientProjectView } from './components/ClientView.js';
 import { AccessGate } from './components/AccessGate.js';
 import { PlannerHub } from './components/PlannerHub.js';
 import { WorkflowDiagnose } from './components/WorkflowDiagnose.js';
+import { FreelancerProfile } from './components/FreelancerProfile.js';
+import { getLanguage, setLanguage, t } from './i18n.js';
 
 class FreelancerApp {
   constructor() {
@@ -101,30 +103,30 @@ class FreelancerApp {
           ${getIcon('menu', '', 16)}
         </button>
         <div class="header-title-container" style="display: flex; align-items: center; gap: 10px;">
-          <h1 id="header-viewport-title" style="font-size: 1.25rem; font-family: 'Space Grotesk', sans-serif;">Workspace Board</h1>
-          <button class="btn btn-text" id="btn-reopen-onboarding" style="font-size: 0.75rem; color: var(--text-secondary); padding: 4px 8px; display: none; align-items: center; gap: 4px; border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); background: var(--bg-surface);" title="Open Quick Start Guide">
-            ${getIcon('help', '', 12)} View Guide
+          <h1 id="header-viewport-title" style="font-size: 1.25rem; font-family: 'Space Grotesk', sans-serif;">${t('sidebar.workspaceBoard', 'Workspace Board')}</h1>
+          <button class="btn btn-text" id="btn-reopen-onboarding" style="font-size: 0.75rem; color: var(--text-secondary); padding: 4px 8px; display: none; align-items: center; gap: 4px; border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); background: var(--bg-surface);" title="${t('viewGuideTitle', 'Open Quick Start Guide')}">
+            ${getIcon('help', '', 12)} ${t('viewGuide', 'View Guide')}
           </button>
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn btn-primary" id="btn-workflow-diagnose" title="Start Workflow Diagnosis" style="background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
-          🧠 Diagnose
+        <button class="btn btn-primary" id="btn-workflow-diagnose" title="${t('diagnoseTitle', 'Start Workflow Diagnosis')}" style="background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
+          🧠 ${t('diagnose', 'Diagnose')}
         </button>
-        <button class="btn btn-secondary" id="btn-backup-export" title="Export workspace backup file">
-          ${getIcon('download', '', 14)} Export Backup
+        <button class="btn btn-secondary" id="btn-backup-export" title="${t('exportBackupTitle', 'Export workspace backup file')}">
+          ${getIcon('download', '', 14)} ${t('sidebar.exportBackup', 'Export Backup')}
         </button>
-        <button class="btn btn-secondary" id="btn-backup-import" title="Import workspace backup file">
-          ${getIcon('upload', '', 14)} Import Backup
+        <button class="btn btn-secondary" id="btn-backup-import" title="${t('importBackupTitle', 'Import workspace backup file')}">
+          ${getIcon('upload', '', 14)} ${t('sidebar.importBackup', 'Import Backup')}
         </button>
         <input type="file" id="backup-file-picker" style="display: none;" accept=".json">
         
-        <button class="btn btn-text" id="btn-access-reset" style="font-size: 0.8rem; color: var(--color-warning);" title="Reset access screen status">
-          Reset Access
+        <button class="btn btn-text" id="btn-access-reset" style="font-size: 0.8rem; color: var(--color-warning);" title="${t('resetAccessTitle', 'Reset access screen status')}">
+          ${t('resetAccess', 'Reset Access')}
         </button>
         
-        <button class="btn btn-text text-danger" id="btn-workspace-reset" style="font-size: 0.8rem;" title="Reset workspace back to seed defaults">
-          Wipe & Reset
+        <button class="btn btn-text text-danger" id="btn-workspace-reset" style="font-size: 0.8rem;" title="${t('wipeResetTitle', 'Reset workspace back to seed defaults')}">
+          ${t('wipeReset', 'Wipe & Reset')}
         </button>
       </div>
     `;
@@ -193,7 +195,7 @@ class FreelancerApp {
     // View switching router mapping
     switch (tabId) {
       case 'kanban':
-        headerTitle.textContent = 'Workspace Board';
+        headerTitle.textContent = t('sidebar.workspaceBoard', 'Workspace Board');
         this.currentView = new KanbanBoard(
           viewportAnchor,
           store,
@@ -202,7 +204,7 @@ class FreelancerApp {
         );
         break;
       case 'planner':
-        headerTitle.textContent = 'Planner Hub';
+        headerTitle.textContent = t('sidebar.plannerHub', 'Planner Hub');
         this.currentView = new PlannerHub(
           viewportAnchor,
           store,
@@ -211,7 +213,7 @@ class FreelancerApp {
         );
         break;
       case 'focus':
-        headerTitle.textContent = 'Weekly Focus Journal';
+        headerTitle.textContent = t('sidebar.weeklyFocus', 'Weekly Focus');
         this.currentView = new WeeklyFocusView(
           viewportAnchor,
           store,
@@ -219,7 +221,7 @@ class FreelancerApp {
         );
         break;
       case 'clients':
-        headerTitle.textContent = 'Client Directory';
+        headerTitle.textContent = t('sidebar.clientHub', 'Client Hub');
         this.currentView = new ClientsView(
           viewportAnchor,
           store,
@@ -227,7 +229,7 @@ class FreelancerApp {
         );
         break;
       case 'invoices':
-        headerTitle.textContent = 'Invoice Ledger';
+        headerTitle.textContent = t('sidebar.invoiceLedger', 'Invoice Ledger');
         this.currentView = new InvoicesView(
           viewportAnchor,
           store,
@@ -235,7 +237,7 @@ class FreelancerApp {
         );
         break;
       case 'portfolio':
-        headerTitle.textContent = 'Portfolio Staging Sandbox';
+        headerTitle.textContent = t('sidebar.portfolioSandbox', 'Portfolio Sandbox');
         this.currentView = new PortfolioView(
           viewportAnchor,
           store,
@@ -243,7 +245,7 @@ class FreelancerApp {
         );
         break;
       case 'quotations':
-        headerTitle.textContent = 'Quotations Ledger';
+        headerTitle.textContent = t('sidebar.quotations', 'Quotations');
         this.currentView = new QuotationsView(
           viewportAnchor,
           store,
@@ -251,7 +253,7 @@ class FreelancerApp {
         );
         break;
       case 'client-view':
-        headerTitle.textContent = 'Client Workspace Portal';
+        headerTitle.textContent = t('clientView.projectStatus', 'Client Workspace Portal');
         const clientPortal = new ClientProjectView(
           viewportAnchor,
           store,
@@ -261,6 +263,14 @@ class FreelancerApp {
           clientPortal.selectedProjectId = extraData;
         }
         this.currentView = clientPortal;
+        break;
+      case 'profile':
+        headerTitle.textContent = t('sidebar.freelancerProfile', 'Freelancer Profile');
+        this.currentView = new FreelancerProfile(
+          viewportAnchor,
+          store,
+          (msg, c) => this.triggerToast(msg, c)
+        );
         break;
     }
 
@@ -274,59 +284,99 @@ class FreelancerApp {
   }
 
   bindGlobalEvents() {
-    // 1. Backup Export
-    document.getElementById('btn-backup-export').addEventListener('click', () => {
-      const dataStr = store.exportBackup();
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute('href', dataUri);
-      downloadAnchor.setAttribute('download', `freelancer_os_backup_${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+    this.bindDOMEvents();
 
-      this.triggerToast('Workspace backup file exported successfully', 'text-success');
+    if (this.globalEventsBound) return;
+
+    // Window/global events that persist across page re-renders:
+    window.addEventListener('resize', () => {
+      const hamburger = document.getElementById('mobile-hamburger-btn');
+      if (hamburger) {
+        if (window.innerWidth <= 1024) {
+          hamburger.classList.remove('d-none');
+        } else {
+          hamburger.classList.add('d-none');
+        }
+      }
     });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.closeMobileMenu();
+      }
+    });
+
+    this.globalEventsBound = true;
+  }
+
+  bindDOMEvents() {
+    // 1. Backup Export
+    const btnBackupExport = document.getElementById('btn-backup-export');
+    if (btnBackupExport) {
+      btnBackupExport.addEventListener('click', () => {
+        const dataStr = store.exportBackup();
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute('href', dataUri);
+        downloadAnchor.setAttribute('download', `freelancer_os_backup_${new Date().toISOString().split('T')[0]}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+
+        this.triggerToast(t('toast.backupExported', 'Workspace backup file exported successfully'), 'text-success');
+      });
+    }
 
     // 2. Backup Import triggers
     const picker = document.getElementById('backup-file-picker');
-    document.getElementById('btn-backup-import').addEventListener('click', () => {
-      picker.click();
-    });
+    const btnBackupImport = document.getElementById('btn-backup-import');
+    if (btnBackupImport && picker) {
+      btnBackupImport.addEventListener('click', () => {
+        picker.click();
+      });
+    }
 
-    picker.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    if (picker) {
+      picker.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = store.importBackup(event.target.result);
-        if (result) {
-          this.triggerToast('Workspace restored successfully from backup', 'text-success');
-          picker.value = '';
-          this.switchView(this.activeTab); // Reload active views
-        } else {
-          this.triggerToast('Structural check failed. Invalid workspace backup format.', 'text-danger');
-        }
-      };
-      reader.readAsText(file);
-    });
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = store.importBackup(event.target.result);
+          if (result) {
+            this.triggerToast(t('toast.backupImported', 'Workspace restored successfully from backup'), 'text-success');
+            picker.value = '';
+            this.switchView(this.activeTab); // Reload active views
+          } else {
+            this.triggerToast(t('toast.backupImportFailed', 'Structural check failed. Invalid workspace backup format.'), 'text-danger');
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
 
     // 3. Reset Workspace Data
-    document.getElementById('btn-workspace-reset').addEventListener('click', () => {
-      if (confirm('Warning: This will clear all your custom contracts, checklist revisions, invoice items, and reflection notes, reloading the default sample workspace.\nAre you sure you want to proceed?')) {
-        store.resetToDefaults();
-        this.triggerToast('Workspace reset to baseline defaults');
-        this.switchView('kanban'); // Back to main Kanban board
-      }
-    });
+    const btnWorkspaceReset = document.getElementById('btn-workspace-reset');
+    if (btnWorkspaceReset) {
+      btnWorkspaceReset.addEventListener('click', () => {
+        const warnText = getLanguage() === 'id' ? 
+          'Peringatan: Ini akan menghapus semua kontrak kustom Anda, revisi checklist, item invoice, dan catatan refleksi, memuat ulang default workspace.\nApakah Anda yakin ingin melanjutkan?' :
+          'Warning: This will clear all your custom contracts, checklist revisions, invoice items, and reflection notes, reloading the default sample workspace.\nAre you sure you want to proceed?';
+        if (confirm(warnText)) {
+          store.resetToDefaults();
+          this.triggerToast(t('toast.workspaceReset', 'Workspace reset to baseline defaults'));
+          this.switchView('kanban'); // Back to main Kanban board
+        }
+      });
+    }
 
     // 3.5 Reset Access Password Status
     const resetAccessBtn = document.getElementById('btn-access-reset');
     if (resetAccessBtn) {
       resetAccessBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset access? You will need to enter the access password again.')) {
+        if (confirm(t('toast.accessResetConfirm', 'Are you sure you want to reset access? You will need to enter the access password again.'))) {
           localStorage.removeItem('alurkarya_access_granted');
           window.location.reload();
         }
@@ -343,8 +393,6 @@ class FreelancerApp {
           hamburger.classList.add('d-none');
         }
       };
-
-      window.addEventListener('resize', adjustHamburgerVisibility);
       adjustHamburgerVisibility(); // Initial run
 
       hamburger.addEventListener('click', () => {
@@ -365,19 +413,12 @@ class FreelancerApp {
       });
     }
 
-    // 4.6 Keyboard Escape key listener
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        this.closeMobileMenu();
-      }
-    });
-
     // 4.7 Reopen Onboarding Guide listener
     const reopenOnboardingBtn = document.getElementById('btn-reopen-onboarding');
     if (reopenOnboardingBtn) {
       reopenOnboardingBtn.addEventListener('click', () => {
         localStorage.removeItem('alurkarya_onboarding_dismissed');
-        this.triggerToast('Onboarding guide reopened.');
+        this.triggerToast(t('toast.profileUpdated', 'Onboarding guide reopened.')); // Using existing for simplicity or will resolve
         if (this.activeTab === 'kanban' && this.currentView) {
           this.currentView.update();
         }
@@ -391,6 +432,27 @@ class FreelancerApp {
         this.openDiagnoseModal();
       });
     }
+  }
+
+  reRenderApp() {
+    this.renderShell();
+    
+    const sidebarAnchor = document.getElementById('sidebar-mount-box');
+    this.sidebar = new SidebarNav(
+      sidebarAnchor, 
+      this.activeTab, 
+      (nextTab) => this.switchView(nextTab)
+    );
+    this.sidebar.render();
+    
+    this.projectModal = new ProjectModal(
+      store,
+      () => this.refreshActiveView(),
+      (msg, c) => this.triggerToast(msg, c)
+    );
+    
+    this.switchView(this.activeTab);
+    this.bindDOMEvents();
   }
 
   /**
