@@ -95,32 +95,43 @@ export class KanbanBoard {
       <div class="onboarding-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 1.15rem;">🚀</span>
-          <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; font-weight: 800; color: var(--text-primary);">Start in 3 steps</h4>
+          <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; font-weight: 800; color: var(--text-primary);">${t('onboarding.cardTitle', 'Mulai dari 1 project aktif')}</h4>
         </div>
         <button class="onboarding-close-btn" style="color: var(--text-muted); background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 4px;" title="Dismiss Onboarding">&times;</button>
       </div>
       
       <div class="onboarding-steps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 16px;">
         <div class="onboarding-step" style="display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
-          <span style="font-size: 0.72rem; color: var(--color-primary); font-weight: 700; text-transform: uppercase;">Step 1: Add your active projects</span>
-          <span style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">Input client, deadline, priority, and next action.</span>
+          <span style="font-size: 0.72rem; color: var(--color-primary); font-weight: 700; text-transform: uppercase;">1. ${t('onboarding.cardStep1', 'Pilih role')}</span>
         </div>
         <div class="onboarding-step" style="display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
-          <span style="font-size: 0.72rem; color: var(--color-secondary); font-weight: 700; text-transform: uppercase;">Step 2: Move projects through the workflow</span>
-          <span style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">Use New Lead, Queue, In Progress, Client Review, Revision, Invoice Sent, Waiting Payment, On Hold, and Completed.</span>
+          <span style="font-size: 0.72rem; color: var(--color-secondary); font-weight: 700; text-transform: uppercase;">2. ${t('onboarding.cardStep2', 'Tambah project')}</span>
         </div>
         <div class="onboarding-step" style="display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
-          <span style="font-size: 0.72rem; color: var(--color-accent); font-weight: 700; text-transform: uppercase;">Step 3: Focus on what matters this week</span>
-          <span style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">Use Weekly Focus and Planner Hub to see deadlines, meetings, invoice follow-ups, and on-hold projects.</span>
+          <span style="font-size: 0.72rem; color: var(--color-accent); font-weight: 700; text-transform: uppercase;">3. ${t('onboarding.cardStep3', 'Isi next action')}</span>
         </div>
       </div>
 
-      <div class="onboarding-footer" style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="btn btn-primary btn-sm" id="onboarding-btn-add" style="padding: 6px 12px; font-size: 0.75rem;">Add Project</button>
-        <button class="btn btn-secondary btn-sm" id="onboarding-btn-diagnose" style="padding: 6px 12px; font-size: 0.75rem;">Diagnose My Workflow</button>
-        <button class="btn btn-secondary btn-sm" id="onboarding-btn-demo" style="padding: 6px 12px; font-size: 0.75rem;">Load Demo Workspace</button>
+      <div class="onboarding-footer" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button class="btn btn-primary btn-sm" id="onboarding-btn-setup" style="padding: 6px 12px; font-size: 0.75rem; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">${t('onboarding.ctaPrimary', 'Mulai Setup')}</button>
+        <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+          ${getIcon('help', '', 12)} ${t('viewGuide', 'View Guide')}
+        </a>
       </div>
     `;
+
+    // Event listeners
+    onboardingEl.querySelector('#onboarding-btn-setup').addEventListener('click', () => {
+      this.showTemplatesModal();
+    });
+
+    onboardingEl.querySelector('.onboarding-close-btn').addEventListener('click', () => {
+      onboardingEl.style.display = 'none';
+      localStorage.setItem('alurkarya_onboarding_dismissed', 'true');
+    });
+
+    return onboardingEl;
+  }
 
     // Event listeners
     onboardingEl.querySelector('#onboarding-btn-add').addEventListener('click', () => {
@@ -502,13 +513,16 @@ export class KanbanBoard {
       canvas.innerHTML = `
         <div class="empty-state-box" style="margin-top: 24px; padding: 40px 20px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); backdrop-filter: var(--glass-backdrop);">
           <div style="font-size: 2.8rem; margin-bottom: 16px; color: var(--color-primary-glow); filter: drop-shadow(0 2px 8px rgba(139,92,246,0.3));">💼</div>
-          <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Start with a freelancer template</h3>
+          <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">${t('kanban.emptyStateTitle', 'Start with a freelancer template')}</h3>
           <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.55;">
-            Choose your freelance type and AlurKarya will create a sample client-to-paid workflow for you.
+            ${t('kanban.emptyStateDesc', 'Choose your freelance type and AlurKarya will create a sample client-to-paid workflow for you.')}
           </p>
-          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-            <button class="btn btn-primary" id="btn-empty-choose-template" style="padding: 10px 22px; font-weight: 600; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">${getIcon('layers', '', 16)} Choose Template</button>
-            <button class="btn btn-secondary" id="btn-empty-add-project" style="padding: 10px 22px; font-weight: 600;">${getIcon('plus', '', 16)} Create Project Manually</button>
+          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; align-items: center;">
+            <button class="btn btn-primary" id="btn-empty-choose-template" style="padding: 10px 22px; font-weight: 600; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">${getIcon('layers', '', 16)} ${t('kanban.chooseTemplate', 'Choose Template')}</button>
+            <button class="btn btn-secondary" id="btn-empty-add-project" style="padding: 10px 22px; font-weight: 600;">${getIcon('plus', '', 16)} ${t('kanban.createProject', 'Create Project')}</button>
+            <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="padding: 10px 22px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+              ${getIcon('help', '', 16)} ${t('viewGuide', 'View Guide')}
+            </a>
           </div>
         </div>
       `;

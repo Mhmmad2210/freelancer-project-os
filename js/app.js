@@ -17,6 +17,7 @@ import { AccessGate } from './components/AccessGate.js';
 import { PlannerHub } from './components/PlannerHub.js';
 import { WorkflowDiagnose } from './components/WorkflowDiagnose.js';
 import { FreelancerProfile } from './components/FreelancerProfile.js';
+import { TemplatesModal } from './components/TemplatesModal.js';
 import { getLanguage, setLanguage, t } from './i18n.js';
 
 class FreelancerApp {
@@ -65,6 +66,8 @@ class FreelancerApp {
     this.renderShell();
     this.mountViews();
     this.bindGlobalEvents();
+    
+    this.checkGuidedStartModal();
 
     // Subscribe to central state changes to refresh views dynamically
     store.subscribe(() => {
@@ -417,11 +420,7 @@ class FreelancerApp {
     const reopenOnboardingBtn = document.getElementById('btn-reopen-onboarding');
     if (reopenOnboardingBtn) {
       reopenOnboardingBtn.addEventListener('click', () => {
-        localStorage.removeItem('alurkarya_onboarding_dismissed');
-        this.triggerToast(t('toast.profileUpdated', 'Onboarding guide reopened.')); // Using existing for simplicity or will resolve
-        if (this.activeTab === 'kanban' && this.currentView) {
-          this.currentView.update();
-        }
+        window.open('alurpandu-guided-start.html', '_blank', 'noopener,noreferrer');
       });
     }
 
@@ -482,6 +481,142 @@ class FreelancerApp {
     this.toastTimer = setTimeout(() => {
       toast.classList.remove('active');
     }, 3000);
+  }
+
+  checkGuidedStartModal() {
+    const seen = localStorage.getItem('alurkarya_guided_start_seen');
+    if (!seen) {
+      const state = store.getState();
+      const isWorkspaceEmpty = !state.projects || state.projects.length <= 1;
+      if (isWorkspaceEmpty) {
+        this.openGuidedStartModal();
+      } else {
+        localStorage.setItem('alurkarya_guided_start_seen', 'true');
+      }
+    }
+  }
+
+  openTemplatesModal() {
+    try {
+      const modal = new TemplatesModal(store, () => this.refreshActiveView(), (msg, c) => this.triggerToast(msg, c));
+      modal.open();
+    } catch (e) {
+      console.error('TemplatesModal loading failed, falling back to manual project creation:', e);
+      // Fallback: trigger "Create Project Manually" drawer/modal
+      const addBtn = document.getElementById('btn-empty-add-project');
+      if (addBtn) {
+        addBtn.click();
+      } else if (this.currentView && typeof this.currentView.showNewProjectDrawer === 'function') {
+        this.currentView.showNewProjectDrawer();
+      } else {
+        this.triggerToast(t('toast.templateApplyFailed', 'Failed to start setup. Please add a project manually.'), 'text-danger');
+      }
+    }
+  }
+
+  openGuidedStartModal() {
+    let overlay = document.getElementById('guided-start-modal-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      overlay.id = 'guided-start-modal-overlay';
+      document.body.appendChild(overlay);
+    }
+
+    const t_title = t('onboarding.modalTitle', 'Mulai dari 1 project aktif');
+    const t_subtitle = t('onboarding.modalSubtitle', 'Jangan setup semuanya sekaligus. Pilih satu project client yang sedang berjalan, lalu isi alurnya pelan-pelan.');
+    const t_step1 = t('onboarding.step1Title', 'Pilih jenis kerja Anda');
+    const t_step1Desc = t('onboarding.step1Desc', 'Designer, video editor, copywriter, web developer, social media manager, AI consultant, atau general freelancer.');
+    const t_step2 = t('onboarding.step2Title', 'Tambahkan 1 project aktif');
+    const t_step2Desc = t('onboarding.step2Desc', 'Mulai dari project yang sedang Anda kerjakan sekarang, bukan dari workspace kosong.');
+    const t_step3 = t('onboarding.step3Title', 'Isi next action dan deadline');
+    const t_step3Desc = t('onboarding.step3Desc', 'Cukup tentukan apa langkah berikutnya dan kapan harus selesai.');
+    const t_ctaPrimary = t('onboarding.ctaPrimary', 'Mulai Setup');
+    const t_ctaSecondary = t('onboarding.ctaSecondary', 'Lewati dulu');
+    const t_linkFullGuide = t('onboarding.linkFullGuide', 'Lihat panduan lengkap');
+
+    overlay.innerHTML = `
+      <div class="modal-container" style="max-width: 520px; border-radius: var(--border-radius-lg); background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: var(--glass-backdrop); -webkit-backdrop-filter: var(--glass-backdrop); box-shadow: var(--shadow-premium), 0 0 40px rgba(139, 92, 246, 0.15);">
+        <div class="modal-body" style="padding: 30px; display: flex; flex-direction: column; gap: 20px;">
+          
+          <div style="text-align: center; margin-bottom: 8px;">
+            <div style="font-size: 2.2rem; margin-bottom: 12px; color: var(--color-primary-glow); filter: drop-shadow(0 2px 8px rgba(139,92,246,0.3));">🚀</div>
+            <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin: 0 0 8px 0; background: linear-gradient(135deg, #fff 30%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${t_title}</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0; max-width: 440px; margin-left: auto; margin-right: auto;">${t_subtitle}</p>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Step 1 -->
+            <div style="display: flex; gap: 12px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.03); padding: 12px; border-radius: var(--border-radius-md); transition: all var(--transition-fast);">
+              <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--color-primary); flex-shrink: 0; margin-top: 2px;">1</div>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">${t_step1}</h4>
+                <p style="margin: 0; font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4;">${t_step1Desc}</p>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div style="display: flex; gap: 12px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.03); padding: 12px; border-radius: var(--border-radius-md); transition: all var(--transition-fast);">
+              <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--color-secondary); flex-shrink: 0; margin-top: 2px;">2</div>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">${t_step2}</h4>
+                <p style="margin: 0; font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4;">${t_step2Desc}</p>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div style="display: flex; gap: 12px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.03); padding: 12px; border-radius: var(--border-radius-md); transition: all var(--transition-fast);">
+              <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(236, 72, 153, 0.15); border: 1px solid rgba(236, 72, 153, 0.3); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--color-accent); flex-shrink: 0; margin-top: 2px;">3</div>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">${t_step3}</h4>
+                <p style="margin: 0; font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4;">${t_step3Desc}</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 8px;">
+            <div style="display: flex; gap: 12px; width: 100%;">
+              <button class="btn btn-secondary" id="guided-start-skip-btn" style="flex: 1; justify-content: center; font-weight: 600; padding: 10px 16px; border-radius: var(--border-radius-md); font-size: 0.8rem;">
+                ${t_ctaSecondary}
+              </button>
+              <button class="btn btn-primary" id="guided-start-setup-btn" style="flex: 1; justify-content: center; font-weight: 600; padding: 10px 16px; border-radius: var(--border-radius-md); font-size: 0.8rem; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
+                ${t_ctaPrimary}
+              </button>
+            </div>
+            <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" id="guided-start-guide-link" style="font-size: 0.72rem; color: var(--text-muted); text-decoration: none; transition: color var(--transition-fast); border-bottom: 1px dotted var(--border-subtle); padding-bottom: 2px;">
+              ${t_linkFullGuide}
+            </a>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    overlay.classList.add('active');
+
+    const closeModal = () => {
+      overlay.classList.remove('active');
+      setTimeout(() => overlay.remove(), 300);
+    };
+
+    overlay.querySelector('#guided-start-skip-btn').addEventListener('click', () => {
+      localStorage.setItem('alurkarya_guided_start_seen', 'true');
+      closeModal();
+    });
+
+    overlay.querySelector('#guided-start-setup-btn').addEventListener('click', () => {
+      localStorage.setItem('alurkarya_guided_start_seen', 'true');
+      closeModal();
+      this.openTemplatesModal();
+    });
+
+    const guideLink = overlay.querySelector('#guided-start-guide-link');
+    guideLink.addEventListener('mouseenter', () => guideLink.style.color = 'var(--color-primary)');
+    guideLink.addEventListener('mouseleave', () => guideLink.style.color = 'var(--text-muted)');
+    guideLink.addEventListener('click', () => {
+      localStorage.setItem('alurkarya_guided_start_seen', 'true');
+      closeModal();
+    });
   }
 }
 

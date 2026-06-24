@@ -1,0 +1,3388 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  
+  <title>AlurPandu - Guided Start for AlurKarya</title>
+  <meta name="description" content="AlurPandu adalah panduan setup workspace mandiri untuk memulai project aktif Anda di AlurKarya secara bertahap dan rapi.">
+  
+  <style>
+    /* --- Design Tokens / Core Variables --- */
+    :root {
+      --bg-primary: hsl(224, 60%, 2%);
+      --bg-secondary: hsl(222, 47%, 6%);
+      --bg-surface: hsl(217, 33%, 10%);
+      --bg-surface-hover: hsl(217, 33%, 14%);
+      
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-focus: rgba(139, 92, 246, 0.4);
+      
+      /* HSL Tailored Accents */
+      --color-primary: hsl(263, 90%, 65%);       /* Neon Violet */
+      --color-primary-glow: rgba(139, 92, 246, 0.15);
+      --color-secondary: hsl(190, 95%, 50%);     /* Electric Cyan */
+      --color-secondary-glow: rgba(6, 182, 212, 0.12);
+      --color-accent: hsl(32, 95%, 55%);         /* Amber / Revisions */
+      
+      /* Semantic Colors */
+      --color-success: hsl(142, 70%, 45%);       /* Completed */
+      --color-success-bg: rgba(16, 185, 129, 0.1);
+      --color-warning: hsl(38, 92%, 50%);        /* Review */
+      --color-warning-bg: rgba(245, 158, 11, 0.1);
+      --color-danger: hsl(350, 80%, 50%);        /* Alert */
+      --color-danger-bg: rgba(239, 68, 68, 0.1);
+      --color-info: hsl(214, 90%, 55%);          /* Info */
+      --color-info-bg: rgba(59, 130, 246, 0.1);
+
+      /* Neutrals */
+      --text-primary: hsl(210, 40%, 98%);
+      --text-secondary: hsl(215, 20%, 70%);
+      --text-muted: hsl(215, 12%, 50%);
+      
+      /* Glassmorphism & Shadow Tokens */
+      --glass-bg: rgba(11, 17, 32, 0.42);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-backdrop: blur(10px);
+      --shadow-premium: 0 16px 48px 0 rgba(0, 0, 0, 0.5);
+      --shadow-inset: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+      
+      /* Dimensions */
+      --sidebar-width: 300px;
+      --header-height: 80px;
+      --border-radius-sm: 10px;
+      --border-radius-md: 16px;
+      --border-radius-lg: 24px;
+      
+      /* Transitions */
+      --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* --- Base Resets --- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 50%, hsl(224, 45%, 6%) 0%, hsl(224, 60%, 2%) 100%) fixed;
+      color: var(--text-primary);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.8;
+      transition: opacity var(--transition-normal);
+    }
+
+    body::before {
+      width: 600px;
+      height: 600px;
+      top: -100px;
+      left: -100px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+    }
+
+    body::after {
+      width: 700px;
+      height: 700px;
+      bottom: -150px;
+      right: -150px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.04) 0%, transparent 70%);
+    }
+
+    /* --- Scrollbar Customization --- */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-surface-hover);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--color-primary-glow);
+    }
+
+    /* --- App Shell Structure --- */
+    .app-container {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* --- Left Sidebar --- */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: var(--glass-backdrop);
+      -webkit-backdrop-filter: var(--glass-backdrop);
+      margin: 16px 8px 16px 16px;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-premium), 0 0 30px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      z-index: 100;
+      transition: transform var(--transition-normal), margin var(--transition-normal);
+    }
+
+    .sidebar-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .sidebar-logo {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.25em;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+    }
+
+    .sidebar-logo svg {
+      color: var(--color-primary);
+      flex-shrink: 0;
+    }
+
+    .sidebar-tagline {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .sidebar-menu {
+      flex: 1;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: var(--border-radius-md);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all var(--transition-fast);
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .menu-item:hover {
+      color: var(--text-primary);
+      background-color: var(--bg-surface-hover);
+    }
+
+    .menu-item.active {
+      color: var(--text-primary);
+      background: linear-gradient(90deg, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.02) 100%);
+      border-left: 3px solid var(--color-primary);
+      padding-left: 11px;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .menu-icon {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .lang-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .lang-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      background: var(--bg-surface-hover);
+      color: var(--color-secondary);
+      border: 1px solid var(--border-subtle);
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--border-radius-md);
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+      flex-shrink: 0;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .user-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-role {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* --- Main Canvas --- */
+    .main-canvas {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: var(--glass-backdrop);
+      -webkit-backdrop-filter: var(--glass-backdrop);
+      margin: 16px 16px 16px 8px;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-premium), 0 0 30px rgba(0,0,0,0.2);
+      transition: margin var(--transition-normal), border-radius var(--transition-normal);
+    }
+
+    /* --- Topbar / Header --- */
+    .top-header {
+      height: var(--header-height);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-subtle);
+      background-color: rgba(15, 23, 42, 0.2);
+      z-index: 10;
+      border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    }
+
+    .top-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .menu-toggle-btn {
+      display: none;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      transition: background-color var(--transition-fast);
+    }
+
+    .menu-toggle-btn:hover {
+      background-color: var(--bg-surface-hover);
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+      font-weight: 500;
+    }
+
+    .breadcrumbs-separator {
+      color: rgba(255,255,255,0.15);
+    }
+
+    .header-title-container h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      background: rgba(139, 92, 246, 0.08);
+      color: var(--color-primary);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      padding: 3px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-badge::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--color-secondary);
+      box-shadow: 0 0 8px var(--color-secondary);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* --- Buttons --- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: var(--border-radius-md);
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-primary), hsl(263, 90%, 55%));
+      color: var(--text-primary);
+      box-shadow: 0 4px 14px 0 var(--color-primary-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+      box-shadow: 0 6px 20px 0 var(--color-primary-glow);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg-surface-hover);
+      border-color: var(--text-muted);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-outline:hover {
+      color: var(--text-primary);
+      background-color: var(--bg-surface-hover);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    /* --- Profile Setup / Settings Panel --- */
+    .profile-setup-container {
+      background: rgba(15, 23, 42, 0.2);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      padding: 20px;
+      margin-top: 24px;
+    }
+    
+    .profile-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .form-group-full {
+      grid-column: 1 / -1;
+    }
+    
+    .form-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .form-input, .form-textarea {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      color: var(--text-primary);
+      outline: none;
+      transition: all var(--transition-fast);
+      width: 100%;
+    }
+    
+    .form-input:focus, .form-textarea:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px var(--color-primary-glow);
+    }
+    
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .sidebar-avatar-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* --- Content Layout --- */
+    .content-wrapper {
+      flex: 1;
+      padding: 28px 32px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .section-anchor {
+      scroll-margin-top: 24px;
+    }
+
+    /* --- Dashboard Cards / Panels --- */
+    .dashboard-panel {
+      background: hsl(222, 47%, 8%);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-inset);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      padding-bottom: 14px;
+    }
+
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--color-primary);
+    }
+
+    .panel-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Welcome/Overview Card (Compact Dashboard Panel) */
+    .welcome-panel {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(6, 182, 212, 0.02) 100%), hsl(222, 47%, 8%);
+      border: 1px solid rgba(139, 92, 246, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-panel::before {
+      content: '';
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+      top: -50px;
+      right: -50px;
+      pointer-events: none;
+    }
+
+    .welcome-content {
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .welcome-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(120deg, var(--text-primary) 50%, var(--color-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .welcome-text {
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .welcome-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Start Here Section Card */
+    .start-here-card {
+      background: rgba(30, 41, 59, 0.2);
+      border-left: 3px solid var(--color-secondary);
+    }
+
+    /* Audit workflow question styling */
+    .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .audit-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      padding: 16px;
+      transition: all var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .audit-card:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      background: rgba(15, 23, 42, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .audit-q-num {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .audit-q-text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .audit-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .audit-btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .audit-btn {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      font-weight: 600;
+      text-align: center;
+      transition: all var(--transition-fast);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      background: rgba(255,255,255,0.02);
+      color: var(--text-secondary);
+    }
+
+    .audit-btn:hover {
+      background: var(--bg-surface-hover);
+      color: var(--text-primary);
+    }
+
+    .audit-btn.active-ya {
+      background: var(--color-danger-bg);
+      border-color: var(--color-danger);
+      color: var(--color-danger);
+    }
+
+    .audit-btn.active-tidak {
+      background: var(--color-success-bg);
+      border-color: var(--color-success);
+      color: var(--color-success);
+    }
+
+    .diagnosis-panel {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, transparent 100%);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: var(--border-radius-md);
+      padding: 18px 20px;
+      display: none;
+      animation: fadeIn 0.4s ease-out forwards;
+      gap: 12px;
+      align-items: flex-start;
+      margin-top: 8px;
+    }
+
+    .diagnosis-panel.visible {
+      display: flex;
+    }
+
+    .diagnosis-icon {
+      color: var(--color-primary);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .diagnosis-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .diagnosis-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .diagnosis-text {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Checklist Section */
+    .checklist-progress-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      padding: 16px 20px;
+      margin-bottom: 8px;
+    }
+
+    .checklist-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .progress-bar-bg {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+      width: 0%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .checklist-items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.2);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .checklist-item:hover {
+      border-color: rgba(255,255,255,0.1);
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .checklist-item.checked {
+      background: rgba(139, 92, 246, 0.03);
+      border-color: rgba(139, 92, 246, 0.15);
+    }
+
+    .checklist-checkbox-wrapper {
+      position: relative;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--text-muted);
+      border-radius: 4px;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .checklist-item.checked .checklist-checkbox-wrapper {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary);
+    }
+
+    .checklist-checkbox-wrapper svg {
+      width: 12px;
+      height: 12px;
+      stroke: var(--text-primary);
+      stroke-width: 3;
+      fill: none;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .checklist-item.checked .checklist-checkbox-wrapper svg {
+      opacity: 1;
+    }
+
+    .checklist-item-text {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: color var(--transition-fast);
+    }
+
+    .checklist-item.checked .checklist-item-text {
+      color: var(--text-primary);
+      text-decoration: line-through;
+      opacity: 0.65;
+    }
+
+    /* Client-to-Paid Flow Map */
+    .flow-map-container {
+      position: relative;
+      padding: 16px 0;
+      margin-top: 10px;
+    }
+
+    .flow-stages-row {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+    }
+
+    .flow-stage-node {
+      flex: 1;
+      min-width: 105px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      padding: 12px 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+
+    .flow-stage-node:hover {
+      border-color: rgba(255,255,255,0.12);
+      transform: translateY(-2px);
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .flow-stage-node.active-stage {
+      background: rgba(139, 92, 246, 0.06);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.15);
+    }
+
+    .flow-stage-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--bg-surface-hover);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .flow-stage-node.active-stage .flow-stage-num {
+      background: var(--color-primary);
+      color: var(--text-primary);
+      border-color: var(--color-primary);
+    }
+
+    .flow-stage-name {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .flow-stage-node.active-stage .flow-stage-name {
+      color: var(--text-primary);
+    }
+
+    .flow-node-badge {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 3px;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-lead { background: rgba(59, 130, 246, 0.12); color: hsl(214, 90%, 65%); }
+    .badge-queue { background: rgba(139, 92, 246, 0.12); color: hsl(263, 90%, 75%); }
+    .badge-progress { background: rgba(6, 182, 212, 0.12); color: hsl(190, 95%, 60%); }
+    .badge-review { background: rgba(245, 158, 11, 0.12); color: hsl(38, 92%, 60%); }
+    .badge-payment { background: rgba(16, 185, 129, 0.12); color: hsl(142, 70%, 55%); }
+
+    .flow-details-panel {
+      background: rgba(15, 23, 42, 0.2);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      padding: 16px 20px;
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: fadeIn var(--transition-fast) ease-out forwards;
+    }
+
+    .flow-details-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .flow-details-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Template Role Guide */
+    .role-guide-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .role-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .role-btn {
+      padding: 10px 14px;
+      border-radius: var(--border-radius-md);
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .role-btn:hover {
+      background: var(--bg-surface-hover);
+      color: var(--text-primary);
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    .role-btn.active-role {
+      background: linear-gradient(90deg, rgba(6, 182, 212, 0.1) 0%, transparent 100%);
+      color: var(--color-secondary);
+      border-color: rgba(6, 182, 212, 0.25);
+      border-left: 3px solid var(--color-secondary);
+      padding-left: 11px;
+    }
+
+    .role-detail-card {
+      background: rgba(15, 23, 42, 0.25);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .role-detail-header {
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      padding-bottom: 12px;
+    }
+
+    .role-detail-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .role-detail-for {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .role-grid-items {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .role-info-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .role-info-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .role-info-content {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .role-info-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .role-info-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .role-info-list li::before {
+      content: '•';
+      color: var(--color-secondary);
+      font-weight: bold;
+    }
+
+    /* Client Portal & Copy scripts */
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .feature-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .feature-card-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .feature-card-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .privacy-box {
+      background: rgba(245, 158, 11, 0.04);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+      border-radius: var(--border-radius-md);
+      padding: 12px 16px;
+      font-size: 0.8rem;
+      color: hsl(38, 92%, 70%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .privacy-box svg {
+      width: 16px;
+      height: 16px;
+      color: var(--color-warning);
+      flex-shrink: 0;
+    }
+
+    /* Scripts Selector */
+    .scripts-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .scripts-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .script-tab-btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all var(--transition-fast);
+    }
+
+    .script-tab-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface-hover);
+    }
+
+    .script-tab-btn.active-tab {
+      background: rgba(139, 92, 246, 0.08);
+      color: var(--color-primary);
+      box-shadow: inset 0 0 1px rgba(139, 92, 246, 0.3);
+    }
+
+    .script-content-area {
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .script-text-box {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: hsl(222, 47%, 10%);
+      border: 1px solid var(--color-primary);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 12px var(--color-primary-glow);
+      color: var(--text-primary);
+      border-radius: var(--border-radius-sm);
+      padding: 12px 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast svg {
+      width: 14px;
+      height: 14px;
+      color: var(--color-secondary);
+    }
+
+    /* Delivery Checklist & Payment flow */
+    .guide-checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .guide-checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.2);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--border-radius-md);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .guide-checklist-item:hover {
+      background: rgba(15, 23, 42, 0.3);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .guide-checkbox {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--text-muted);
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+      flex-shrink: 0;
+      transition: all var(--transition-fast);
+    }
+
+    .guide-checklist-item.checked .guide-checkbox {
+      background: var(--color-secondary);
+      border-color: var(--color-secondary);
+    }
+
+    .guide-checkbox svg {
+      width: 10px;
+      height: 10px;
+      stroke: var(--bg-primary);
+      stroke-width: 4;
+      fill: none;
+      opacity: 0;
+    }
+
+    .guide-checklist-item.checked .guide-checkbox svg {
+      opacity: 1;
+    }
+
+    .guide-checklist-item.checked span {
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    /* Accordion FAQ */
+    .faq-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .faq-item {
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: var(--border-radius-md);
+      overflow: hidden;
+      transition: border-color var(--transition-fast);
+    }
+
+    .faq-item:hover {
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .faq-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.5);
+      user-select: none;
+    }
+
+    .faq-question {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .faq-icon {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.25s ease;
+      color: var(--text-muted);
+    }
+
+    .faq-item.active .faq-icon {
+      transform: rotate(180deg);
+      color: var(--color-primary);
+    }
+
+    .faq-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s cubic-bezier(0, 1, 0, 1);
+      background: rgba(15, 23, 42, 0.2);
+    }
+
+    .faq-item.active .faq-body {
+      max-height: 500px;
+      transition: max-height 0.25s cubic-bezier(1, 0, 1, 0);
+    }
+
+    .faq-content {
+      padding: 14px 18px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- Responsive Styles (Media Queries) --- */
+    @media (max-width: 1024px) {
+      :root {
+        --glass-backdrop: blur(6px) !important;
+        --glass-bg: rgba(11, 17, 32, 0.75) !important;
+      }
+      body::before, body::after {
+        display: none !important;
+      }
+      .app-container {
+        flex-direction: column;
+      }
+      .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        transform: translateX(-100%);
+        margin: 0 !important;
+        border-radius: 0 !important;
+        height: 100% !important;
+        border: none !important;
+        backdrop-filter: none !important;
+        background: var(--bg-secondary) !important;
+        z-index: 1000;
+        box-shadow: 20px 0 40px rgba(0,0,0,0.6);
+      }
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      .main-canvas {
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        backdrop-filter: none !important;
+        background: var(--bg-primary) !important;
+        height: 100vh;
+      }
+      .top-header {
+        border-radius: 0 !important;
+        padding: 0 20px;
+      }
+      .menu-toggle-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .content-wrapper {
+        padding: 20px;
+        gap: 24px;
+      }
+      .role-guide-layout {
+        grid-template-columns: 1fr;
+      }
+      .role-list {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 6px;
+      }
+      .role-btn {
+        white-space: nowrap;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .top-header {
+        padding: 0 16px;
+      }
+      .header-title-container h1 {
+        font-size: 1.15rem;
+      }
+      .status-badge {
+        display: none; /* Hide badge on small mobile headers to prevent overflow */
+      }
+      .btn {
+        padding: 8px 14px;
+        font-size: 0.8rem;
+      }
+      .role-grid-items {
+        grid-template-columns: 1fr;
+      }
+      .audit-grid {
+        grid-template-columns: 1fr;
+      }
+      .checklist-items-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .top-header-left {
+        gap: 8px;
+      }
+      .top-header-left h1 {
+        font-size: 1.1rem;
+      }
+      .content-wrapper {
+        padding: 16px 12px;
+      }
+      .welcome-title {
+        font-size: 1.25rem;
+      }
+      .welcome-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+      .welcome-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Shell Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <!-- Logo SVG matching AlurKarya -->
+          <svg width="24" height="20" viewBox="0 0 48 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 0H32L16 40H0L16 0Z" fill="currentColor"/>
+            <path d="M26 20H35L48 40H20L26 20Z" fill="currentColor"/>
+          </svg>
+          <span>ALURKARYA</span>
+        </div>
+        <div class="sidebar-tagline" data-i18n="sidebar_tagline">Guided Start</div>
+      </div>
+      
+      <nav class="sidebar-menu">
+        <button class="menu-item active" data-target="#start-here">
+          <!-- layers icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          <span data-i18n="menu_start">Start Here</span>
+        </button>
+        <button class="menu-item" data-target="#audit-workflow">
+          <!-- calendar icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span data-i18n="menu_audit">Workflow Audit</span>
+        </button>
+        <button class="menu-item" data-target="#setup-checklist">
+          <!-- clock/checkSquare icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          <span data-i18n="menu_setup">Workspace Setup</span>
+        </button>
+        <button class="menu-item" data-target="#flow-map">
+          <!-- calendar/clock icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span data-i18n="menu_flow">Main Workflow</span>
+        </button>
+        <button class="menu-item" data-target="#role-template">
+          <!-- folder icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span data-i18n="menu_template">Choose Template</span>
+        </button>
+        <button class="menu-item" data-target="#client-portal">
+          <!-- user icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span data-i18n="menu_portal">Client Portal</span>
+        </button>
+        <button class="menu-item" data-target="#delivery-guide">
+          <!-- briefcase icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+          <span data-i18n="menu_delivery">Delivery</span>
+        </button>
+        <button class="menu-item" data-target="#invoice-payment">
+          <!-- fileText icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          <span data-i18n="menu_invoice">Invoice & Payment</span>
+        </button>
+        <button class="menu-item" data-target="#client-scripts">
+          <!-- send icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          <span data-i18n="menu_scripts">Client Scripts</span>
+        </button>
+        <button class="menu-item" data-target="#help-section">
+          <!-- help icon -->
+          <svg class="menu-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <span data-i18n="menu_help">Help</span>
+        </button>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="lang-indicator" style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 8px; padding: 4px 6px;">
+          <span id="lang-label" data-i18n="lang_label" style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">Language</span>
+          <select id="lang-select" aria-labelledby="lang-label" style="font-size: 0.68rem; padding: 2px 6px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 4px; outline: none; cursor: pointer; font-weight: 600;">
+            <option value="en">English</option>
+            <option value="id">Bahasa Indonesia</option>
+          </select>
+        </div>
+        
+        <div class="user-profile" id="sidebar-user-profile">
+          <!-- Will be dynamically populated by JS -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Area -->
+    <main class="main-canvas">
+      
+      <!-- Topbar Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="menu-toggle-btn" id="sidebar-toggle" aria-label="Toggle Sidebar">
+            <!-- menu icon -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <div class="header-title-container">
+            <div class="breadcrumbs">
+              <span data-i18n="crumb_workspace">AlurKarya Workspace</span>
+              <span class="breadcrumbs-separator">/</span>
+              <span data-i18n="crumb_start">Guided Start</span>
+            </div>
+            <h1>
+              <span>AlurPandu</span>
+              <span class="status-badge" data-i18n="header_badge">Guided Start Ready</span>
+            </h1>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="scrollToSection('#setup-checklist')" data-i18n="header_setup_btn">Start Setup</button>
+        </div>
+      </header>
+      
+      <!-- Content Wrapper -->
+      <div class="content-wrapper" id="content-scrollable">
+        
+        <!-- Welcome Dashboard Panel -->
+        <section class="welcome-panel dashboard-panel">
+          <div class="welcome-content">
+            <h2 class="welcome-title" data-i18n="welcome_title">Welcome to AlurPandu</h2>
+            <p class="welcome-text" data-i18n="welcome_text">
+              Do not start from a blank dashboard. Use AlurPandu to set up AlurKarya step by step, from your active project to your first client update.
+            </p>
+          </div>
+          <div class="welcome-actions">
+            <button class="btn btn-primary" onclick="scrollToSection('#setup-checklist')" data-i18n="welcome_setup_btn">Start Setup</button>
+            <button class="btn btn-secondary" onclick="scrollToSection('#audit-workflow')" data-i18n="welcome_audit_btn">Check Workflow First</button>
+          </div>
+        </section>
+
+        <!-- Section 1: Mulai di Sini -->
+        <section id="start-here" class="section-anchor dashboard-panel start-here-card">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              <span data-i18n="start_title">Start Here</span>
+            </h3>
+          </div>
+          <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="start_headline">Start from an active project, not an empty system.</h4>
+          <p class="panel-subtitle" data-i18n="start_desc">
+            Choose one active client project. Then fill in the client, stage, next action, deadline, review, invoice, and delivery details step by step. This helps you understand the AlurKarya workflow without feeling overwhelmed.
+          </p>
+        </section>
+
+        <!-- Section 2: Audit Workflow -->
+        <section id="audit-workflow" class="section-anchor dashboard-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span data-i18n="audit_title">Workflow Audit</span>
+            </h3>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="audit_headline">Try answering without opening old chats</h4>
+            <p class="panel-subtitle" data-i18n="audit_subtitle">Answer the following questions honestly about your current workflow status:</p>
+          </div>
+          
+          <div class="audit-grid">
+            <div class="audit-card" data-card-idx="0">
+              <div>
+                <span class="audit-q-num" data-i18n="audit_num_1">Question 1</span>
+                <p class="audit-q-text" data-i18n="audit_q1">Which project needs follow-up today?</p>
+              </div>
+              <div class="audit-btn-group">
+                <button class="audit-btn" onclick="selectAudit(0, 'ya')" data-i18n="audit_btn_ya_1">Know for Sure</button>
+                <button class="audit-btn" onclick="selectAudit(0, 'tidak')" data-i18n="audit_btn_tidak_1">Search Chat First</button>
+              </div>
+            </div>
+            
+            <div class="audit-card" data-card-idx="1">
+              <div>
+                <span class="audit-q-num" data-i18n="audit_num_2">Question 2</span>
+                <p class="audit-q-text" data-i18n="audit_q2">Which client is waiting for review?</p>
+              </div>
+              <div class="audit-btn-group">
+                <button class="audit-btn" onclick="selectAudit(1, 'ya')" data-i18n="audit_btn_ya_2">Know by Heart</button>
+                <button class="audit-btn" onclick="selectAudit(1, 'tidak')" data-i18n="audit_btn_tidak_2">Need to Check Notes</button>
+              </div>
+            </div>
+
+            <div class="audit-card" data-card-idx="2">
+              <div>
+                <span class="audit-q-num" data-i18n="audit_num_3">Question 3</span>
+                <p class="audit-q-text" data-i18n="audit_q3">Which revision is still unfinished?</p>
+              </div>
+              <div class="audit-btn-group">
+                <button class="audit-btn" onclick="selectAudit(2, 'ya')" data-i18n="audit_btn_ya_3">Already Logged</button>
+                <button class="audit-btn" onclick="selectAudit(2, 'tidak')" data-i18n="audit_btn_tidak_3">Scroll WA Group</button>
+              </div>
+            </div>
+
+            <div class="audit-card" data-card-idx="3">
+              <div>
+                <span class="audit-q-num" data-i18n="audit_num_4">Question 4</span>
+                <p class="audit-q-text" data-i18n="audit_q4">Which invoice has not been paid?</p>
+              </div>
+              <div class="audit-btn-group">
+                <button class="audit-btn" onclick="selectAudit(3, 'ya')" data-i18n="audit_btn_ya_4">Have a Recap</button>
+                <button class="audit-btn" onclick="selectAudit(3, 'tidak')" data-i18n="audit_btn_tidak_4">Check M-Banking</button>
+              </div>
+            </div>
+
+            <div class="audit-card" data-card-idx="4">
+              <div>
+                <span class="audit-q-num" data-i18n="audit_num_5">Question 5</span>
+                <p class="audit-q-text" data-i18n="audit_q5">Which final file has not been delivered yet?</p>
+              </div>
+              <div class="audit-btn-group">
+                <button class="audit-btn" onclick="selectAudit(4, 'ya')" data-i18n="audit_btn_ya_5">Drive Link Ready</button>
+                <button class="audit-btn" onclick="selectAudit(4, 'tidak')" data-i18n="audit_btn_tidak_5">Forgot if Sent</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diagnosis Outcome Panel -->
+          <div class="diagnosis-panel" id="diagnosis-result">
+            <!-- alert icon -->
+            <svg class="diagnosis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <div class="diagnosis-content">
+              <span class="diagnosis-title" id="diagnosis-title-text" data-i18n="diagnosis_title_text">Workflow Audit Result</span>
+              <p class="diagnosis-text" id="diagnosis-text">
+                If everything still needs to be searched from WhatsApp, notes, Drive, and memory, it means AlurKarya can help you unify the workflow.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3: Setup Workspace -->
+        <section id="setup-checklist" class="section-anchor dashboard-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+              <span data-i18n="setup_title">Workspace Setup</span>
+            </h3>
+            <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.75rem;" onclick="resetChecklist()">
+              <!-- refresh icon -->
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              <span data-i18n="setup_reset_btn">Reset Progress</span>
+            </button>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="setup_headline">First setup in 15 minutes</h4>
+            <p class="panel-subtitle" data-i18n="setup_subtitle">Complete the following basic steps to activate your AlurKarya workspace:</p>
+          </div>
+
+          <!-- Dynamic Progress Bar -->
+          <div class="checklist-progress-container">
+            <div class="checklist-progress-header">
+              <span data-i18n="setup_progress_title">Setup Integration Progress</span>
+              <span id="checklist-counter">0/10 steps completed</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="checklist-progress-bar"></div>
+            </div>
+          </div>
+
+          <!-- Interactive Checklist -->
+          <div class="checklist-items-grid">
+            <div class="checklist-item" onclick="toggleChecklist(0)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_0">Fill Freelancer Profile</span>
+            </div>
+            <div class="checklist-item" onclick="toggleChecklist(1)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_1">Choose role template</span>
+            </div>
+            <div class="checklist-item" onclick="toggleChecklist(2)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_2">Add first client</span>
+            </div>
+            <div class="checklist-item" onclick="toggleChecklist(3)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_3">Create first active project</span>
+            </div>
+            <div class="checklist-item" onclick="toggleChecklist(4)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_4">Set project stage</span>
+            </div>
+            <div class="checklist-item" onclick="toggleChecklist(5)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_5">Add next action</span>
+            </div>
+            <div class="checklist-item" onclick="toggleChecklist(6)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_6">Add deadline</span>
+            </div>
+            <div class="checklist-item" onclick="toggleChecklist(7)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_7">Save important links</span>
+            </div>
+            <div class="checklist-item" onclick="toggleChecklist(8)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_8">Check Client Portal Preview</span>
+            </div>
+            <div class="checklist-item" onclick="toggleChecklist(9)">
+              <div class="checklist-checkbox-wrapper">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span class="checklist-item-text" data-i18n="setup_item_9">Prepare first client update</span>
+            </div>
+          </div>
+
+          <!-- Profile Setup Panel -->
+          <div class="profile-setup-container">
+            <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-secondary);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span id="profile_panel_title" data-i18n="profile_panel_title">Set Up Your Freelancer Profile</span>
+            </h4>
+            <p class="panel-subtitle" id="profile_panel_subtitle" data-i18n="profile_panel_subtitle">Fill in your professional details to personalize your workspace branding.</p>
+            
+            <form id="profile-edit-form" onsubmit="saveFreelancerProfile(event)" class="profile-form-grid">
+              <div class="form-group">
+                <label class="form-label" for="profile-name-input" id="lbl-profile-name" data-i18n="lbl_profile_name">Name</label>
+                <input type="text" id="profile-name-input" class="form-input" data-i18n-placeholder="placeholder_name" placeholder="e.g. Aris Aulia">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-role-input" id="lbl-profile-role" data-i18n="lbl_profile_role">Role / Specialty</label>
+                <input type="text" id="profile-role-input" class="form-input" data-i18n-placeholder="placeholder_role" placeholder="e.g. UI/UX Designer">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-email-input" id="lbl-profile-email" data-i18n="lbl_profile_email">Email</label>
+                <input type="email" id="profile-email-input" class="form-input" placeholder="e.g. contact@domain.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-location-input" id="lbl-profile-location" data-i18n="lbl_profile_location">Location</label>
+                <input type="text" id="profile-location-input" class="form-input" placeholder="e.g. Jakarta, Indonesia">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-portfolio-input" id="lbl-profile-portfolio" data-i18n="lbl_profile_portfolio">Portfolio Link</label>
+                <input type="url" id="profile-portfolio-input" class="form-input" placeholder="e.g. https://behance.net/username">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-avatar-input" id="lbl-profile-avatar" data-i18n="lbl_profile_avatar">Avatar URL</label>
+                <input type="url" id="profile-avatar-input" class="form-input" placeholder="e.g. https://images.unsplash.com/photo-...">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-initials-input" id="lbl-profile-initials" data-i18n="lbl_profile_initials">Initials (Optional)</label>
+                <input type="text" id="profile-initials-input" class="form-input" placeholder="e.g. AA" maxlength="3">
+              </div>
+              <div class="form-group form-group-full">
+                <label class="form-label" for="profile-bio-input" id="lbl-profile-bio" data-i18n="lbl_profile_bio">Bio</label>
+                <textarea id="profile-bio-input" class="form-textarea" data-i18n-placeholder="placeholder_bio" placeholder="Describe your freelance services..."></textarea>
+              </div>
+              <div class="form-group form-group-full" style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                <button type="submit" class="btn btn-primary" id="btn-save-profile" data-i18n="btn_save_profile">Save Profile</button>
+              </div>
+            </form>
+          </div>
+        </section>        <!-- Section 4: Alur Utama -->
+        <section id="flow-map" class="section-anchor dashboard-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span data-i18n="menu_flow">Main Workflow</span>
+            </h3>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="flow_headline">Alur utama AlurKarya</h4>
+            <p class="panel-subtitle" data-i18n="flow_subtitle">Setiap project sebaiknya punya status yang jelas agar Anda tahu apa yang harus dikerjakan, siapa yang harus ditindaklanjuti, dan apa yang belum selesai.</p>
+          </div>
+
+          <!-- Pipeline Flow Map Grid -->
+          <div class="flow-map-container">
+            <div class="flow-stages-row" id="flow-stages-container">
+              <!-- Dynamically populated by JS -->
+            </div>
+
+            <!-- Dynamic stage explanation box -->
+            <div class="flow-details-panel">
+              <div class="flow-details-title" id="flow-title">
+                <!-- info icon -->
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="9" x2="12.01" y2="9"></line></svg>
+                <span id="flow-detail-label">Detail Tahap: New Lead</span>
+              </div>
+              <p class="flow-details-desc" id="flow-desc">
+                Status awal saat prospek project baru masuk. Kumpulkan deskripsi brief singkat, anggaran perkiraan, dan estimasi waktu sebelum disetujui.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 5: Pilih Template -->
+        <section id="role-template" class="section-anchor dashboard-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span data-i18n="menu_template">Choose Template</span>
+            </h3>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="role_headline">Pilih template sesuai cara kerja Anda</h4>
+            <p class="panel-subtitle" data-i18n="role_subtitle">Gunakan rekomendasi konfigurasi checklist dan tautan penting berdasarkan peran spesifik Anda:</p>
+          </div>
+
+          <div class="role-guide-layout">
+            <!-- Role selection tabs -->
+            <div class="role-list" id="role-tabs">
+              <!-- Dynamically populated by JS -->
+            </div>
+
+            <!-- Role detail content card -->
+            <div class="role-detail-card">
+              <div class="role-detail-header">
+                <span class="role-detail-name" id="role-name">Designer Template</span>
+                <div class="role-detail-for" id="role-target">Cocok untuk: UI/UX Designer, Graphic Designer, Illustrator, Brand Designer</div>
+              </div>
+
+              <div class="role-grid-items">
+                <div class="role-info-block">
+                  <span class="role-info-title" data-i18n="role_links_title">Link Penting yang Disimpan</span>
+                  <ul class="role-info-list" id="role-links">
+                    <!-- Dynamically populated by JS -->
+                  </ul>
+                </div>
+
+                <div class="role-info-block">
+                  <span class="role-info-title" data-i18n="role_delivery_title">Parameter Delivery Utama</span>
+                  <ul class="role-info-list" id="role-delivery">
+                    <!-- Dynamically populated by JS -->
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 6: Portal Client -->
+        <section id="client-portal" class="section-anchor dashboard-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span data-i18n="menu_portal">Client Portal</span>
+            </h3>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="portal_headline">Siapkan update yang rapi untuk client</h4>
+            <p class="panel-subtitle" data-i18n="portal_subtitle">Client Portal membantu Anda berbagi transparansi progress kerja tanpa perlu mengirim file berulang kali. Halaman ringkas ini menampilkan:</p>
+          </div>
+
+          <div class="feature-list">
+            <div class="feature-card">
+              <span class="feature-card-name" style="color: var(--color-primary);" data-i18n="portal_f1_name">Status Project</span>
+              <span class="feature-card-desc" data-i18n="portal_f1_desc">Client dapat melihat status real-time project (misal: In Progress, Review, lunas).</span>
+            </div>
+            <div class="feature-card">
+              <span class="feature-card-name" style="color: var(--color-secondary);" data-i18n="portal_f2_name">Pekerjaan Terkirim</span>
+              <span class="feature-card-desc" data-i18n="portal_f2_desc">Menampilkan tautan draf terkini yang dapat diakses langsung untuk proses tinjauan cepat.</span>
+            </div>
+            <div class="feature-card">
+              <span class="feature-card-name" style="color: var(--color-accent);" data-i18n="portal_f3_name">Feedback & Revisi</span>
+              <span class="feature-card-desc" data-i18n="portal_f3_desc">Catatan perbaikan yang dikirimkan tersentralisasi sehingga tidak ada instruksi yang terlewat.</span>
+            </div>
+            <div class="feature-card">
+              <span class="feature-card-name" style="color: var(--color-info);" data-i18n="portal_f4_name">Persetujuan Akhir</span>
+              <span class="feature-card-desc" data-i18n="portal_f4_desc">Tombol konfirmasi bagi client untuk menyetujui hasil deliverable secara resmi.</span>
+            </div>
+            <div class="feature-card">
+              <span class="feature-card-name" style="color: var(--color-success);" data-i18n="portal_f5_name">Invoice & Pembayaran</span>
+              <span class="feature-card-desc" data-i18n="portal_f5_desc">Rangkuman nominal tagihan, invoice terlampir, status pembayaran, dan instruksi transfer.</span>
+            </div>
+            <div class="feature-card">
+              <span class="feature-card-name" style="color: var(--text-primary);" data-i18n="portal_f6_name">Delivery Berkas</span>
+              <span class="feature-card-desc" data-i18n="portal_f6_desc">Tautan permanen penyerahan file akhir setelah kewajiban administrasi terpenuhi.</span>
+            </div>
+          </div>
+
+          <div class="privacy-box">
+            <!-- alert icon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span data-i18n="portal_privacy"><strong>Catatan Privasi:</strong> Yang tampil ke client hanya informasi yang aman untuk dibagikan. Catatan internal Anda tetap rahasia.</span>
+          </div>
+        </section>
+
+        <!-- Section 7: Delivery -->
+        <section id="delivery-guide" class="section-anchor dashboard-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+              <span data-i18n="menu_delivery">Delivery</span>
+            </h3>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="delivery_headline">Pastikan project benar-benar siap dikirim</h4>
+            <p class="panel-subtitle" data-i18n="delivery_subtitle">Gunakan checklist di bawah ini untuk meminimalkan miskomunikasi dan memastikan serah terima berkas berjalan lancar:</p>
+          </div>
+
+          <ul class="guide-checklist">
+            <li class="guide-checklist-item" onclick="toggleGuideCheck(this)">
+              <div class="guide-checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <span data-i18n="delivery_item_0">Preview link sudah ada (berisi update draf visual atau fungsional terbaru)</span>
+            </li>
+            <li class="guide-checklist-item" onclick="toggleGuideCheck(this)">
+              <div class="guide-checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <span data-i18n="delivery_item_1">Feedback client sudah dicatat (seluruh masukan tertulis sebelumnya telah diakomodasi)</span>
+            </li>
+            <li class="guide-checklist-item" onclick="toggleGuideCheck(this)">
+              <div class="guide-checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <span data-i18n="delivery_item_2">Revisi sudah selesai (bebas bug mayor, typo, atau kesalahan rendering draf)</span>
+            </li>
+            <li class="guide-checklist-item" onclick="toggleGuideCheck(this)">
+              <div class="guide-checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <span data-i18n="delivery_item_3">Final file link tersedia (tautan download folder awan terkompresi/tidak rusak)</span>
+            </li>
+            <li class="guide-checklist-item" onclick="toggleGuideCheck(this)">
+              <div class="guide-checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <span data-i18n="delivery_item_4">Source/raw file jelas jika termasuk (file mentahan terorganisir dengan penamaan layer rapi)</span>
+            </li>
+            <li class="guide-checklist-item" onclick="toggleGuideCheck(this)">
+              <div class="guide-checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <span data-i18n="delivery_item_5">Handover notes siap (penjelasan singkat mengenai cara pakai, struktur aset, atau panduan hosting)</span>
+            </li>
+            <li class="guide-checklist-item" onclick="toggleGuideCheck(this)">
+              <div class="guide-checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <span data-i18n="delivery_item_6">Client confirmation tercatat (persetujuan tertulis bahwa deliverables sudah sesuai ekspektasi)</span>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Section 8: Invoice & Payment -->
+        <section id="invoice-payment" class="section-anchor dashboard-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <span data-i18n="menu_invoice">Invoice & Payment</span>
+            </h3>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="invoice_headline">Jangan berhenti di invoice sent</h4>
+            <p class="panel-subtitle" data-i18n="invoice_subtitle">Invoice sent belum berarti payment aman. Catat invoice status, due date, next follow-up, dan payment status secara berkala di ledger Anda.</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 8px;">
+            <div class="audit-card" style="border-left: 3px solid var(--color-accent);">
+              <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;" data-i18n="invoice_c1_title">1. Tanggal Jatuh Tempo (Due Date)</h5>
+              <p class="feature-card-desc" data-i18n="invoice_c1_desc">Berikan batas waktu pembayaran yang jelas (misalnya: Net 7, Net 14). Catat tanggal jatuh tempo ini di dashboard agar pengingat otomatis berjalan.</p>
+            </div>
+            <div class="audit-card" style="border-left: 3px solid var(--color-warning);">
+              <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;" data-i18n="invoice_c2_title">2. Rencana Follow-up Lanjutan</h5>
+              <p class="feature-card-desc" data-i18n="invoice_c2_desc">Jadwalkan pesan tindak lanjut ramah 1 hari sebelum jatuh tempo, hari-H, dan 3 hari setelah jatuh tempo jika belum ada konfirmasi pembayaran.</p>
+            </div>
+            <div class="audit-card" style="border-left: 3px solid var(--color-success);">
+              <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;" data-i18n="invoice_c3_title">3. Status Rekonsiliasi Kas</h5>
+              <p class="feature-card-desc" data-i18n="invoice_c3_desc">Setelah dana terverifikasi masuk ke rekening Anda, segera ubah status di AlurKarya menjadi Paid dan serahkan file final secara resmi.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 9: Script Client -->
+        <section id="client-scripts" class="section-anchor dashboard-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              <span data-i18n="menu_scripts">Client Scripts</span>
+            </h3>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="scripts_headline">Script update client</h4>
+            <p class="panel-subtitle" data-i18n="scripts_subtitle">Gunakan draft pesan siap pakai di bawah ini untuk berinteraksi secara profesional dengan client Anda:</p>
+          </div>
+
+          <div class="scripts-panel">
+            <div class="scripts-tabs" id="script-tabs">
+              <!-- Dynamically populated by JS -->
+            </div>
+
+            <div class="script-content-area">
+              <div class="script-text-box" id="script-content">
+                <!-- Dynamically populated by JS -->
+              </div>
+              
+              <div style="display: flex; justify-content: flex-end;">
+                <button class="btn btn-primary" onclick="copyScriptText()">
+                  <!-- copy icon -->
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span data-i18n="btn_copy_script">Copy Script</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 10: Bantuan -->
+        <section id="help-section" class="section-anchor dashboard-panel" style="margin-bottom: 24px;">
+          <div class="panel-header">
+            <h3 class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <span data-i18n="menu_help">Help</span>
+            </h3>
+          </div>
+          <div>
+            <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" data-i18n="help_headline">Kalau bingung, mulai dari sini</h4>
+            <p class="panel-subtitle" data-i18n="help_subtitle">Beberapa pertanyaan teknis yang sering ditanyakan seputar pengoperasian AlurKarya:</p>
+          </div>
+
+          <div class="faq-container">
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-header">
+                <span class="faq-question" data-i18n="faq_q0">Project tidak muncul di dashboard</span>
+                <!-- chevronDown icon -->
+                <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <div class="faq-body">
+                <div class="faq-content" data-i18n="faq_a0">
+                  Periksa apakah project sudah didaftarkan di workspace board. Project baru harus memiliki minimal satu task aktif agar muncul di tracker mingguan Anda.
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-header">
+                <span class="faq-question" data-i18n="faq_q1">Checklist tidak tersimpan saat refresh halaman</span>
+                <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <div class="faq-body">
+                <div class="faq-content" data-i18n="faq_a1">
+                  AlurPandu menyimpan progress di database browser lokal Anda (localStorage). Pastikan mode private browsing/incognito Anda tidak otomatis menghapus cache saat tab ditutup, atau coba bersihkan ruang penyimpanan browser Anda.
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-header">
+                <span class="faq-question" data-i18n="faq_q2">Template peran (role) belum sesuai dengan kebiasaan kerja</span>
+                <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <div class="faq-body">
+                <div class="faq-content" data-i18n="faq_a2">
+                  Template peran di atas adalah panduan umum. Di dalam AlurKarya, Anda bebas menambahkan sub-checklist kustom, menghapus tag bawaan, dan menyusun urutan kolom Kanban sesuai alur spesifik workflow mandiri Anda.
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-header">
+                <span class="faq-question" data-i18n="faq_q3">Link tautan penting tidak dapat diklik atau error</span>
+                <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <div class="faq-body">
+                <div class="faq-content" data-i18n="faq_a3">
+                  Pastikan Anda menginput format URL secara lengkap saat mendaftarkan tautan di database card (misalnya gunakan format lengkap <code>https://figma.com/...</code> atau <code>https://drive.google.com/...</code> bukan hanya teks biasa).
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-header">
+                <span class="faq-question" data-i18n="faq_q4">Client Portal tidak menunjukkan pembaruan terbaru</span>
+                <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <div class="faq-body">
+                <div class="faq-content" data-i18n="faq_a4">
+                  Semua pembaruan data di dashboard kerja Anda disinkronkan secara instan ke tautan portal luar. Client cukup me-refresh halaman web portal mereka untuk melihat pembaruan status dan berkas terbaru.
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-header">
+                <span class="faq-question" data-i18n="faq_q5">Bagaimana cara menghapus seluruh data checklist ini?</span>
+                <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+              <div class="faq-body">
+                <div class="faq-content" data-i18n="faq_a5">
+                  Anda dapat menggunakan tombol "Reset Progress" yang berada di bagian kanan atas modul "Setup Workspace" untuk membersihkan progress lokal Anda di browser ini.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Toast Containers (Script Copied Notification) -->
+  <div class="toast-container" id="toast-holder"></div>
+
+  <!-- JS Logic Block -->
+  <script>
+    // --- Mobile Sidebar Toggle ---
+    const sidebar = document.getElementById('app-sidebar');
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    
+    if (toggleBtn && sidebar) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('active');
+      });
+      
+      // Close sidebar if clicking outside of it on mobile
+      document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 1024 && !sidebar.contains(e.target) && e.target !== toggleBtn) {
+          sidebar.classList.remove('active');
+        }
+      });
+    }
+
+    // --- Active Sidebar Indicator via Scroll & IntersectionObserver ---
+    const sections = document.querySelectorAll('.section-anchor');
+    const menuItems = document.querySelectorAll('.menu-item');
+    const scrollContainer = document.getElementById('content-scrollable');
+
+    // Smooth Scroll Helper
+    function scrollToSection(selector) {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      // On mobile, close sidebar after clicking
+      if (window.innerWidth <= 1024 && sidebar) {
+        sidebar.classList.remove('active');
+      }
+    }
+
+    // Attach click events to sidebar buttons
+    menuItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const targetSelector = item.getAttribute('data-target');
+        scrollToSection(targetSelector);
+      });
+    });
+
+    // Observer setup for active menu state highlighting
+    const observerOptions = {
+      root: scrollContainer,
+      rootMargin: '-20px 0px -60% 0px',
+      threshold: 0
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          menuItems.forEach(item => {
+            if (item.getAttribute('data-target') === `#${id}`) {
+              item.classList.add('active');
+            } else {
+              item.classList.remove('active');
+            }
+          });
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(section => observer.observe(section));
+
+    // --- Interactive Audit Workflow ---
+    const auditStates = [null, null, null, null, null];
+    
+    function selectAudit(cardIdx, choice) {
+      const cards = document.querySelectorAll('.audit-grid .audit-card');
+      const targetCard = cards[cardIdx];
+      if (!targetCard) return;
+
+      const buttons = targetCard.querySelectorAll('.audit-btn');
+      
+      // Reset active states
+      buttons.forEach(btn => {
+        btn.classList.remove('active-ya', 'active-tidak');
+      });
+
+      if (choice === 'ya') {
+        buttons[0].classList.add('active-ya');
+        auditStates[cardIdx] = true;
+      } else {
+        buttons[1].classList.add('active-tidak');
+        auditStates[cardIdx] = false;
+      }
+
+      // Check if all questions are answered
+      const answeredCount = auditStates.filter(s => s !== null).length;
+      if (answeredCount === 5) {
+        const diagnosisPanel = document.getElementById('diagnosis-result');
+        if (diagnosisPanel) {
+          diagnosisPanel.classList.add('visible');
+        }
+        updateDiagnosisOutcomeUI();
+        
+        // Auto scroll to diagnosis outcome if visible
+        setTimeout(() => {
+          const diagnosisPanel = document.getElementById('diagnosis-result');
+          if (diagnosisPanel) {
+            diagnosisPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }, 100);
+      }
+    }
+
+    function updateDiagnosisOutcomeUI() {
+      const answeredCount = auditStates.filter(s => s !== null).length;
+      if (answeredCount === 5) {
+        const diagnosisText = document.getElementById('diagnosis-text');
+        if (!diagnosisText) return;
+
+        const notReadyCount = auditStates.filter(s => s === false).length;
+        if (notReadyCount > 0) {
+          const tpl = t('diagnosis_result_unprepared');
+          diagnosisText.textContent = tpl.replace('{count}', notReadyCount);
+        } else {
+          diagnosisText.textContent = t('diagnosis_result_prepared');
+        }
+      }
+    }
+
+    // --- Setup Checklist LocalStorage Persistence ---
+    const CHECKLIST_KEY = 'alurpandu_setup_checklist';
+    const checklistItems = document.querySelectorAll('.checklist-items-grid .checklist-item');
+    let checklistStates = Array(checklistItems.length).fill(false);
+
+    function loadChecklist() {
+      try {
+        const stored = localStorage.getItem(CHECKLIST_KEY);
+        if (stored) {
+          checklistStates = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error("Failed to read localStorage checklist:", e);
+      }
+      updateChecklistUI();
+    }
+
+    function toggleChecklist(index) {
+      checklistStates[index] = !checklistStates[index];
+      saveChecklist();
+      updateChecklistUI();
+    }
+
+    function saveChecklist() {
+      try {
+        localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checklistStates));
+      } catch (e) {
+        console.error("Failed to save localStorage checklist:", e);
+      }
+    }
+
+    function updateChecklistUI() {
+      let checkedCount = 0;
+      checklistItems.forEach((item, idx) => {
+        if (checklistStates[idx]) {
+          item.classList.add('checked');
+          checkedCount++;
+        } else {
+          item.classList.remove('checked');
+        }
+      });
+
+      // Update counter and progress bar
+      const counterText = document.getElementById('checklist-counter');
+      const progressBar = document.getElementById('checklist-progress-bar');
+      
+      const lang = getLanguage();
+      if (counterText) {
+        if (lang === 'id') {
+          counterText.textContent = `${checkedCount}/${checklistStates.length} langkah selesai`;
+        } else {
+          counterText.textContent = `${checkedCount}/${checklistStates.length} steps completed`;
+        }
+      }
+      if (progressBar) {
+        const pct = (checkedCount / checklistStates.length) * 100;
+        progressBar.style.width = `${pct}%`;
+      }
+    }
+
+    function resetChecklist() {
+      checklistStates = Array(checklistItems.length).fill(false);
+      saveChecklist();
+      updateChecklistUI();
+      
+      const lang = getLanguage();
+      const toastMsg = lang === 'id' ? "Progres checklist berhasil direset." : "Checklist progress has been reset.";
+      showToast(toastMsg);
+    }
+
+    // --- Global Bilingual System (i18n) ---
+    const translations = {
+      en: {
+        sidebar_tagline: "Guided Start",
+        menu_start: "Start Here",
+        menu_audit: "Workflow Audit",
+        menu_setup: "Workspace Setup",
+        menu_flow: "Main Workflow",
+        menu_template: "Choose Template",
+        menu_portal: "Client Portal",
+        menu_delivery: "Delivery",
+        menu_invoice: "Invoice & Payment",
+        menu_scripts: "Client Scripts",
+        menu_help: "Help",
+        lang_label: "Language",
+        crumb_workspace: "AlurKarya Workspace",
+        crumb_start: "Guided Start",
+        header_badge: "Guided Start Ready",
+        header_setup_btn: "Start Setup",
+        welcome_title: "Welcome to AlurPandu",
+        welcome_text: "Do not start from a blank dashboard. Use AlurPandu to set up AlurKarya step by step, from your active project to your first client update.",
+        welcome_setup_btn: "Start Setup",
+        welcome_audit_btn: "Check Workflow First",
+        start_title: "Start Here",
+        start_headline: "Start from an active project, not an empty system.",
+        start_desc: "Choose one active client project. Then fill in the client, stage, next action, deadline, review, invoice, and delivery details step by step. This helps you understand the AlurKarya workflow without feeling overwhelmed.",
+        audit_title: "Workflow Audit",
+        audit_headline: "Try answering without opening old chats",
+        audit_subtitle: "Answer the following questions honestly about your current workflow status:",
+        audit_num_1: "Question 1",
+        audit_q1: "Which project needs follow-up today?",
+        audit_btn_ya_1: "Know for Sure",
+        audit_btn_tidak_1: "Search Chat First",
+        audit_num_2: "Question 2",
+        audit_q2: "Which client is waiting for review?",
+        audit_btn_ya_2: "Know by Heart",
+        audit_btn_tidak_2: "Need to Check Notes",
+        audit_num_3: "Question 3",
+        audit_q3: "Which revision is still unfinished?",
+        audit_btn_ya_3: "Already Logged",
+        audit_btn_tidak_3: "Scroll WA Group",
+        audit_num_4: "Question 4",
+        audit_q4: "Which invoice has not been paid?",
+        audit_btn_ya_4: "Have a Recap",
+        audit_btn_tidak_4: "Check M-Banking",
+        audit_num_5: "Question 5",
+        audit_q5: "Which final file has not been delivered yet?",
+        audit_btn_ya_5: "Drive Link Ready",
+        audit_btn_tidak_5: "Forgot if Sent",
+        diagnosis_title_text: "Workflow Audit Result",
+        setup_title: "Workspace Setup",
+        setup_reset_btn: "Reset Progress",
+        setup_headline: "First setup in 15 minutes",
+        setup_subtitle: "Complete the following basic steps to activate your AlurKarya workspace:",
+        setup_progress_title: "Setup Progress",
+        setup_item_0: "Fill Freelancer Profile",
+        setup_item_1: "Choose role template",
+        setup_item_2: "Add first client",
+        setup_item_3: "Create first active project",
+        setup_item_4: "Set project stage",
+        setup_item_5: "Add next action",
+        setup_item_6: "Add deadline",
+        setup_item_7: "Save important links",
+        setup_item_8: "Check Client Portal Preview",
+        setup_item_9: "Prepare first client update",
+        profile_panel_title: "Set Up Your Freelancer Profile",
+        profile_panel_subtitle: "Fill in your professional details to personalize your workspace branding.",
+        lbl_profile_name: "Name",
+        placeholder_name: "e.g. Aris Aulia",
+        lbl_profile_role: "Role / Specialty",
+        placeholder_role: "e.g. UI/UX Designer",
+        lbl_profile_email: "Email",
+        lbl_profile_location: "Location",
+        lbl_profile_portfolio: "Portfolio Link",
+        lbl_profile_avatar: "Avatar URL",
+        lbl_profile_initials: "Initials (Optional)",
+        lbl_profile_bio: "Bio",
+        placeholder_bio: "Describe your freelance services...",
+        btn_save_profile: "Save Profile",
+        flow_headline: "AlurKarya Main Workflow",
+        flow_subtitle: "Each project should have a clear status so you know what needs to be done, who needs follow-up, and what is pending.",
+        role_headline: "Choose template matching your workflow",
+        role_subtitle: "Use recommended checklist configurations and important links based on your specific role:",
+        role_links_title: "Important Links to Save",
+        role_delivery_title: "Main Delivery Parameters",
+        portal_headline: "Prepare a professional update for your client.",
+        portal_subtitle: "Client Portal helps you share work progress transparently without sending files back and forth. This clean dashboard shows:",
+        portal_f1_name: "Project Status",
+        portal_f1_desc: "Clients can view real-time project status (e.g., In Progress, Review, Paid).",
+        portal_f2_name: "Delivered Work",
+        portal_f2_desc: "Displays the latest draft links accessible directly for quick review.",
+        portal_f3_name: "Feedback & Revisions",
+        portal_f3_desc: "Centralized feedback records to ensure no revision instruction is missed.",
+        portal_f4_name: "Final Approval",
+        portal_f4_desc: "A confirmation button for clients to formally approve deliverables.",
+        portal_f5_name: "Invoices & Payments",
+        portal_f5_desc: "Summary of billing amounts, attached invoices, payment status, and transfer info.",
+        portal_f6_name: "File Delivery",
+        portal_f6_desc: "Permanent link to download final files after administrative obligations are met.",
+        portal_privacy: "<strong>Privacy Note:</strong> Only information safe for clients to see is displayed. Your internal notes remain private.",
+        delivery_headline: "Make sure the project is truly ready to deliver.",
+        delivery_subtitle: "Use the checklist below to minimize miscommunication and ensure smooth file handover:",
+        delivery_item_0: "Preview link is ready (contains the latest visual or functional draft updates)",
+        delivery_item_1: "Client feedback is addressed (all previous written feedback has been accommodated)",
+        delivery_item_2: "Revisions are completed (free of major bugs, typos, or draft rendering issues)",
+        delivery_item_3: "Final file link is available (cloud download folder links are accessible and valid)",
+        delivery_item_4: "Source/raw files are organized if included (clean layer naming and organized project assets)",
+        delivery_item_5: "Handover notes are ready (brief explanation on usage, asset structures, or hosting guides)",
+        delivery_item_6: "Client confirmation is documented (written approval that deliverables match expectations)",
+        invoice_headline: "Do not stop at invoice sent.",
+        invoice_subtitle: "Invoice sent does not mean payment is secured. Log invoice status, due dates, next follow-up dates, and payment status regularly in your ledger.",
+        invoice_c1_title: "1. Due Date",
+        invoice_c1_desc: "Give a clear payment deadline (e.g. Net 7, Net 14). Log this due date in your dashboard to trigger automated reminders.",
+        invoice_c2_title: "2. Follow-up Plan",
+        invoice_c2_desc: "Schedule friendly follow-up messages 1 day before due date, on the due date, and 3 days after the due date if payment is unconfirmed.",
+        invoice_c3_title: "3. Cash Reconciliation",
+        invoice_c3_desc: "Once funds are verified in your account, change the status in AlurKarya to Paid and hand over final files officially.",
+        scripts_headline: "Client Scripts",
+        scripts_subtitle: "Use ready-to-copy message drafts to communicate professionally with your client:",
+        btn_copy_script: "Copy Script",
+        help_headline: "If confused, start here",
+        help_subtitle: "Frequently asked technical questions about operating AlurKarya:",
+        faq_q0: "Projects do not show up on the dashboard",
+        faq_a0: "Check if the project is registered in the workspace board. New projects must have at least one active task to appear on your weekly tracker.",
+        faq_q1: "Checklist progress does not persist after page refresh",
+        faq_a1: "AlurPandu saves your progress in your browser's local database (localStorage). Make sure your browser's private browsing/incognito mode does not automatically clear cache when the tab is closed, or clear your browser storage space.",
+        faq_q2: "Role templates do not fit my specific workflow",
+        faq_a2: "Role templates are general guidelines. Within AlurKarya, you are free to add custom sub-checklists, delete default tags, and arrange Kanban columns to fit your specific freelance workflow.",
+        faq_q3: "Important links are not clickable or throw an error",
+        faq_a3: "Make sure you input the full URL format when saving links in the database cards (e.g. use full format like `https://figma.com/...` or `https://drive.google.com/...` instead of plain text).",
+        faq_q4: "Client Portal does not display the latest updates",
+        faq_a4: "All data updates on your dashboard are instantly synced to the external portal link. Clients simply need to refresh their portal webpage to view the latest status and files.",
+        faq_q5: "How do I reset all of this checklist data?",
+        faq_a5: "You can use the \"Reset Progress\" button at the top-right of the \"Workspace Setup\" section to clear your local progress in this browser.",
+        diagnosis_result_unprepared: "You detected {count} out of 5 workflows that still need to be retrieved manually from WhatsApp chats, notes, Drive, or memory. This means AlurKarya will be extremely helpful in centralizing your freelance workflow.",
+        diagnosis_result_prepared: "Great! You have mastered your manual workflow beautifully. AlurKarya will help document it automatically to stabilize and streamline your productivity."
+      },
+      id: {
+        sidebar_tagline: "Guided Start",
+        menu_start: "Mulai di Sini",
+        menu_audit: "Audit Workflow",
+        menu_setup: "Setup Workspace",
+        menu_flow: "Alur Utama",
+        menu_template: "Pilih Template",
+        menu_portal: "Portal Client",
+        menu_delivery: "Delivery",
+        menu_invoice: "Invoice & Payment",
+        menu_scripts: "Script Client",
+        menu_help: "Bantuan",
+        lang_label: "Bahasa",
+        crumb_workspace: "AlurKarya Workspace",
+        crumb_start: "Guided Start",
+        header_badge: "Guided Start Ready",
+        header_setup_btn: "Mulai Setup",
+        welcome_title: "Selamat Datang di AlurPandu",
+        welcome_text: "Jangan mulai dari dashboard kosong. Gunakan AlurPandu untuk menyiapkan AlurKarya secara bertahap, mulai dari project aktif sampai update pertama untuk client.",
+        welcome_setup_btn: "Mulai Setup",
+        welcome_audit_btn: "Cek Workflow Dulu",
+        start_title: "Mulai di Sini",
+        start_headline: "Mulai dari project aktif, bukan dari sistem kosong.",
+        start_desc: "Pilih satu project client yang sedang aktif. Lalu isi detail client, stage, next action, deadline, review, invoice, dan delivery secara bertahap. Cara ini membantu Anda memahami alur kerja AlurKarya tanpa merasa kewalahan.",
+        audit_title: "Audit Workflow",
+        audit_headline: "Coba jawab tanpa membuka chat lama",
+        audit_subtitle: "Jawablah pertanyaan berikut dengan jujur mengenai status alur kerja Anda saat ini:",
+        audit_num_1: "Pertanyaan 1",
+        audit_q1: "Project mana yang harus difollow-up hari ini?",
+        audit_btn_ya_1: "Tahu Pasti",
+        audit_btn_tidak_1: "Cari Chat Dulu",
+        audit_num_2: "Pertanyaan 2",
+        audit_q2: "Client mana yang masih menunggu review?",
+        audit_btn_ya_2: "Hafal di Luar Kepala",
+        audit_btn_tidak_2: "Perlu Cek Catatan",
+        audit_num_3: "Pertanyaan 3",
+        audit_q3: "Revisi mana yang belum selesai?",
+        audit_btn_ya_3: "Sudah Tercatat",
+        audit_btn_tidak_3: "Scroll Grup WA",
+        audit_num_4: "Pertanyaan 4",
+        audit_q4: "Invoice mana yang belum dibayar?",
+        audit_btn_ya_4: "Punya Rekapan",
+        audit_btn_tidak_4: "Cek M-Banking",
+        audit_num_5: "Pertanyaan 5",
+        audit_q5: "File final mana yang belum benar-benar terkirim?",
+        audit_btn_ya_5: "Link Drive Siap",
+        audit_btn_tidak_5: "Lupa Apakah Sudah Dikirim",
+        diagnosis_title_text: "Hasil Audit Workflow",
+        setup_title: "Setup Workspace",
+        setup_reset_btn: "Reset Progres",
+        setup_headline: "Setup awal dalam 15 menit",
+        setup_subtitle: "Selesaikan langkah-langkah dasar berikut untuk mengaktifkan workspace AlurKarya Anda:",
+        setup_progress_title: "Progres Setup",
+        setup_item_0: "Isi Profil Freelancer",
+        setup_item_1: "Pilih role template",
+        setup_item_2: "Tambahkan client pertama",
+        setup_item_3: "Buat project aktif pertama",
+        setup_item_4: "Isi stage project",
+        setup_item_5: "Isi next action",
+        setup_item_6: "Isi deadline",
+        setup_item_7: "Simpan link penting",
+        setup_item_8: "Cek Client Portal Preview",
+        setup_item_9: "Siapkan update pertama untuk client",
+        profile_panel_title: "Atur Profil Freelancer Anda",
+        profile_panel_subtitle: "Isi detail profesional Anda untuk mempersonalisasi branding workspace Anda.",
+        lbl_profile_name: "Nama",
+        placeholder_name: "mis. Aris Aulia",
+        lbl_profile_role: "Peran / Spesialisasi",
+        placeholder_role: "mis. UI/UX Designer",
+        lbl_profile_email: "Email",
+        lbl_profile_location: "Lokasi",
+        lbl_profile_portfolio: "Tautan Portofolio",
+        lbl_profile_avatar: "URL Avatar",
+        lbl_profile_initials: "Inisial (Opsional)",
+        lbl_profile_bio: "Bio",
+        placeholder_bio: "Jelaskan layanan freelance Anda...",
+        btn_save_profile: "Simpan Profil",
+        flow_headline: "Alur Utama AlurKarya",
+        flow_subtitle: "Setiap project sebaiknya punya status yang jelas agar Anda tahu apa yang harus dikerjakan, siapa yang harus ditindaklanjuti, dan apa yang belum selesai.",
+        role_headline: "Pilih template sesuai cara kerja Anda",
+        role_subtitle: "Gunakan rekomendasi konfigurasi checklist dan tautan penting berdasarkan peran spesifik Anda:",
+        role_links_title: "Link Penting yang Disimpan",
+        role_delivery_title: "Parameter Delivery Utama",
+        portal_headline: "Siapkan update yang rapi untuk client.",
+        portal_subtitle: "Client Portal membantu Anda berbagi transparansi progress kerja tanpa perlu mengirim file berulang kali. Halaman ringkas ini menampilkan:",
+        portal_f1_name: "Status Project",
+        portal_f1_desc: "Client dapat melihat status real-time project (misal: In Progress, Review, lunas).",
+        portal_f2_name: "Pekerjaan Terkirim",
+        portal_f2_desc: "Menampilkan tautan draf terkini yang dapat diakses langsung untuk proses tinjauan cepat.",
+        portal_f3_name: "Feedback & Revisi",
+        portal_f3_desc: "Catatan perbaikan yang dikirimkan tersentralisasi sehingga tidak ada instruksi yang terlewat.",
+        portal_f4_name: "Persetujuan Akhir",
+        portal_f4_desc: "Tombol konfirmasi bagi client untuk menyetujui hasil deliverable secara resmi.",
+        portal_f5_name: "Invoice & Pembayaran",
+        portal_f5_desc: "Rangkuman nominal tagihan, invoice terlampir, status pembayaran, dan instruksi transfer.",
+        portal_f6_name: "Delivery Berkas",
+        portal_f6_desc: "Tautan permanen penyerahan file akhir setelah kewajiban administrasi terpenuhi.",
+        portal_privacy: "<strong>Catatan Privasi:</strong> Yang tampil ke client hanya informasi yang aman untuk dibagikan. Catatan internal Anda tetap rahasia.",
+        delivery_headline: "Pastikan project benar-benar siap dikirim.",
+        delivery_subtitle: "Gunakan checklist di bawah ini untuk meminimalkan miskomunikasi dan memastikan serah terima berkas berjalan lancar:",
+        delivery_item_0: "Preview link sudah ada (berisi update draf visual atau fungsional terbaru)",
+        delivery_item_1: "Feedback client sudah dicatat (seluruh masukan tertulis sebelumnya telah diakomodasi)",
+        delivery_item_2: "Revisi sudah selesai (bebas bug mayor, typo, atau kesalahan rendering draf)",
+        delivery_item_3: "Final file link tersedia (tautan download folder awan terkompresi/tidak rusak)",
+        delivery_item_4: "Source/raw file jelas jika termasuk (file mentahan terorganisir dengan penamaan layer rapi)",
+        delivery_item_5: "Handover notes siap (penjelasan singkat mengenai cara pakai, struktur aset, atau panduan hosting)",
+        delivery_item_6: "Client confirmation tercatat (persetujuan tertulis bahwa deliverables sudah sesuai ekspektasi)",
+        invoice_headline: "Jangan berhenti di invoice sent.",
+        invoice_subtitle: "Invoice sent belum berarti payment aman. Catat invoice status, due date, next follow-up, dan payment status secara berkala di ledger Anda.",
+        invoice_c1_title: "1. Tanggal Jatuh Tempo (Due Date)",
+        invoice_c1_desc: "Berikan batas waktu pembayaran yang jelas (misalnya: Net 7, Net 14). Catat tanggal jatuh tempo ini di dashboard agar pengingat otomatis berjalan.",
+        invoice_c2_title: "2. Rencana Follow-up Lanjutan",
+        invoice_c2_desc: "Jadwalkan pesan tindak lanjut ramah 1 hari sebelum jatuh tempo, hari-H, dan 3 hari setelah jatuh tempo jika belum ada konfirmasi pembayaran.",
+        invoice_c3_title: "3. Status Rekonsiliasi Kas",
+        invoice_c3_desc: "Setelah dana terverifikasi masuk ke rekening Anda, segera ubah status di AlurKarya menjadi Paid dan serahkan file final secara resmi.",
+        scripts_headline: "Script Client",
+        scripts_subtitle: "Gunakan draft pesan siap pakai di bawah ini untuk berinteraksi secara profesional dengan client Anda:",
+        btn_copy_script: "Salin Script",
+        help_headline: "Kalau bingung, mulai dari sini",
+        help_subtitle: "Beberapa pertanyaan teknis yang sering ditanyakan seputar pengoperasian AlurKarya:",
+        faq_q0: "Project tidak muncul di dashboard",
+        faq_a0: "Periksa apakah project sudah didaftarkan di workspace board. Project baru harus memiliki minimal satu task aktif agar muncul di tracker mingguan Anda.",
+        faq_q1: "Checklist tidak tersimpan saat refresh halaman",
+        faq_a1: "AlurPandu menyimpan progress di database browser lokal Anda (localStorage). Pastikan mode private browsing/incognito Anda tidak otomatis menghapus cache saat tab ditutup, atau coba bersihkan ruang penyimpanan browser Anda.",
+        faq_q2: "Template peran (role) belum sesuai dengan kebiasaan kerja",
+        faq_a2: "Template peran di atas adalah panduan umum. Di dalam AlurKarya, Anda bebas menambahkan sub-checklist kustom, menghapus tag bawaan, dan menyusun urutan kolom Kanban sesuai alur spesifik workflow mandiri Anda.",
+        faq_q3: "Link tautan penting tidak dapat diklik atau error",
+        faq_a3: "Pastikan Anda menginput format URL secara lengkap saat mendaftarkan tautan di database card (misalnya gunakan format lengkap <code>https://figma.com/...</code> atau <code>https://drive.google.com/...</code> bukan hanya teks biasa).",
+        faq_q4: "Client Portal tidak menunjukkan pembaruan terbaru",
+        faq_a4: "Semua pembaruan data di dashboard kerja Anda disinkronkan secara instan ke tautan portal luar. Client cukup me-refresh halaman web portal mereka untuk melihat pembaruan status dan berkas terbaru.",
+        faq_q5: "Bagaimana cara menghapus seluruh data checklist ini?",
+        faq_a5: "Anda dapat menggunakan tombol \"Reset Progress\" yang berada di bagian kanan atas modul \"Setup Workspace\" untuk membersihkan progress lokal Anda di browser ini.",
+        diagnosis_result_unprepared: "Anda mendeteksi {count} dari 5 proses kerja yang masih harus dicari manual dari chat WhatsApp, notes, Drive, atau ingatan. Berarti AlurKarya akan sangat membantu menyatukan alur kerja freelancer Anda menjadi tersentralisasi.",
+        diagnosis_result_prepared: "Hebat! Anda sudah menguasai alur kerja manual Anda dengan rapi. AlurKarya akan membantu mendokumentasikannya secara otomatis agar produktivitas Anda lebih stabil dan teratur."
+      }
+    };
+
+    function getLanguage() {
+      const lang = localStorage.getItem('alurkarya_language');
+      return lang === 'id' ? 'id' : 'en';
+    }
+
+    function setLanguage(lang) {
+      localStorage.setItem('alurkarya_language', lang);
+      updateDocumentLanguage();
+      renderLanguage();
+      
+      // Show toast
+      const toastMsg = lang === 'id' ? "Bahasa berhasil diperbarui." : "Language updated.";
+      showToast(toastMsg);
+    }
+
+    function updateDocumentLanguage() {
+      const lang = getLanguage();
+      document.documentElement.lang = lang;
+      
+      const langSelect = document.getElementById('lang-select');
+      if (langSelect) {
+        langSelect.value = lang;
+      }
+    }
+
+    function t(key, fallback = '') {
+      const lang = getLanguage();
+      if (translations[lang] && translations[lang][key] !== undefined) {
+        return translations[lang][key];
+      }
+      if (translations['en'] && translations['en'][key] !== undefined) {
+        return translations['en'][key];
+      }
+      return fallback || key;
+    }
+
+    function renderLanguage() {
+      const lang = getLanguage();
+
+      // 1. Translate static text elements
+      const i18nElements = document.querySelectorAll('[data-i18n]');
+      i18nElements.forEach(elem => {
+        const key = elem.getAttribute('data-i18n');
+        const translation = t(key);
+        if (translation) {
+          if (key === 'portal_privacy') {
+            elem.innerHTML = translation;
+          } else {
+            elem.textContent = translation;
+          }
+        }
+      });
+
+      // 2. Translate placeholders
+      const placeholderElements = document.querySelectorAll('[data-i18n-placeholder]');
+      placeholderElements.forEach(elem => {
+        const key = elem.getAttribute('data-i18n-placeholder');
+        const translation = t(key);
+        if (translation) {
+          elem.setAttribute('placeholder', translation);
+        }
+      });
+
+      // 3. Re-render dynamic blocks
+      renderFlowStages();
+      renderRoleTemplates();
+      renderScripts();
+      updateDiagnosisOutcomeUI();
+      
+      // 4. Update checklist UI
+      updateChecklistUI();
+      
+      // 5. Update user profile values
+      loadFreelancerProfile();
+    }
+
+    // --- Dynamic Freelancer Profile ---
+    function getProfileFallbacks(lang) {
+      if (lang === 'id') {
+        return {
+          name: "Nama Anda",
+          role: "Freelancer",
+          initials: "YK"
+        };
+      }
+      return {
+        name: "Your Name",
+        role: "Freelancer",
+        initials: "YK"
+      };
+    }
+
+    function generateInitials(name) {
+      if (!name || !name.trim()) return "YK";
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) {
+        return parts[0].slice(0, 2).toUpperCase();
+      }
+      const firstLetter = parts[0][0];
+      const lastLetter = parts[parts.length - 1][0];
+      return (firstLetter + lastLetter).toUpperCase();
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+    }
+
+    function updateProfileUI(profile) {
+      const sidebarProfileContainer = document.getElementById('sidebar-user-profile');
+      if (!sidebarProfileContainer) return;
+
+      const currentLang = getLanguage();
+      const fallbacks = getProfileFallbacks(currentLang);
+
+      const name = profile.freelancerName || fallbacks.name;
+      const role = profile.freelancerRole || fallbacks.role;
+      const initials = profile.freelancerInitials || generateInitials(profile.freelancerName);
+
+      let avatarHTML = '';
+      if (profile.freelancerAvatar && profile.freelancerAvatar.trim()) {
+        avatarHTML = `<img class="sidebar-avatar-img" src="${escapeHTML(profile.freelancerAvatar)}" alt="${escapeHTML(name)}'s Avatar">`;
+      } else {
+        avatarHTML = initials;
+      }
+
+      const hasAvatar = profile.freelancerAvatar && profile.freelancerAvatar.trim();
+      sidebarProfileContainer.innerHTML = `
+        <div class="user-avatar" style="${hasAvatar ? 'background: none;' : ''}">
+          ${avatarHTML}
+        </div>
+        <div class="user-info">
+          <div class="user-name" title="${escapeHTML(name)}">${escapeHTML(name)}</div>
+          <div class="user-role" title="${escapeHTML(role)}">${escapeHTML(role)}</div>
+        </div>
+      `;
+    }
+
+    function loadFreelancerProfile() {
+      let profile = {
+        freelancerName: "",
+        freelancerRole: "",
+        freelancerInitials: "",
+        freelancerAvatar: "",
+        freelancerEmail: "",
+        freelancerBio: "",
+        freelancerPortfolioLink: "",
+        freelancerLocation: ""
+      };
+
+      try {
+        const stored = localStorage.getItem('alurkarya_freelancer_profile');
+        if (stored) {
+          profile = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error("Failed to load profile:", e);
+      }
+
+      // Fill form inputs
+      const nameInput = document.getElementById('profile-name-input');
+      const roleInput = document.getElementById('profile-role-input');
+      const emailInput = document.getElementById('profile-email-input');
+      const locationInput = document.getElementById('profile-location-input');
+      const bioInput = document.getElementById('profile-bio-input');
+      const portfolioInput = document.getElementById('profile-portfolio-input');
+      const avatarInput = document.getElementById('profile-avatar-input');
+      const initialsInput = document.getElementById('profile-initials-input');
+
+      if (nameInput) nameInput.value = profile.freelancerName || '';
+      if (roleInput) roleInput.value = profile.freelancerRole || '';
+      if (emailInput) emailInput.value = profile.freelancerEmail || '';
+      if (locationInput) locationInput.value = profile.freelancerLocation || '';
+      if (bioInput) bioInput.value = profile.freelancerBio || '';
+      if (portfolioInput) portfolioInput.value = profile.freelancerPortfolioLink || '';
+      if (avatarInput) avatarInput.value = profile.freelancerAvatar || '';
+      if (initialsInput) initialsInput.value = profile.freelancerInitials || '';
+
+      updateProfileUI(profile);
+    }
+
+    function saveFreelancerProfile(e) {
+      if (e) e.preventDefault();
+
+      const nameInput = document.getElementById('profile-name-input');
+      const roleInput = document.getElementById('profile-role-input');
+      const emailInput = document.getElementById('profile-email-input');
+      const locationInput = document.getElementById('profile-location-input');
+      const bioInput = document.getElementById('profile-bio-input');
+      const portfolioInput = document.getElementById('profile-portfolio-input');
+      const avatarInput = document.getElementById('profile-avatar-input');
+      const initialsInput = document.getElementById('profile-initials-input');
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      const role = roleInput ? roleInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim() : '';
+      const location = locationInput ? locationInput.value.trim() : '';
+      const bio = bioInput ? bioInput.value.trim() : '';
+      const portfolio = portfolioInput ? portfolioInput.value.trim() : '';
+      const avatar = avatarInput ? avatarInput.value.trim() : '';
+      let initials = initialsInput ? initialsInput.value.trim() : '';
+
+      if (!initials && name) {
+        initials = generateInitials(name);
+        if (initialsInput) initialsInput.value = initials;
+      }
+
+      const profile = {
+        freelancerName: name,
+        freelancerRole: role,
+        freelancerInitials: initials,
+        freelancerAvatar: avatar,
+        freelancerEmail: email,
+        freelancerBio: bio,
+        freelancerPortfolioLink: portfolio,
+        freelancerLocation: location
+      };
+
+      localStorage.setItem('alurkarya_freelancer_profile', JSON.stringify(profile));
+
+      // Update Sidebar UI immediately
+      updateProfileUI(profile);
+
+      // Auto-check checklist step 0 ("Fill Freelancer Profile") if profile Name & Role are provided
+      if (name && role) {
+        if (!checklistStates[0]) {
+          toggleChecklist(0);
+        }
+      }
+
+      // Show Toast
+      const currentLang = getLanguage();
+      const toastMsg = currentLang === 'id' ? "Profil berhasil diperbarui." : "Profile updated.";
+      showToast(toastMsg);
+    }
+
+    // --- Dynamic Flow Stages ---
+    const flowStages = [
+      {
+        key: "new_lead",
+        label: { en: "New Lead", id: "Lead Baru" },
+        badge: { en: "Leads", id: "Leads" },
+        description: {
+          en: "Initial stage when a new project lead comes in. Collect brief details, estimated budget, and timeline expectations before deal approval.",
+          id: "Status awal saat prospek project baru masuk. Kumpulkan deskripsi brief singkat, anggaran perkiraan, dan estimasi waktu sebelum disetujui."
+        }
+      },
+      {
+        key: "queue",
+        label: { en: "Queue", id: "Antrean" },
+        badge: { en: "Wait", id: "Wait" },
+        description: {
+          en: "Projects agreed upon but queued for production. Helps manage work capacity to prevent overloading.",
+          id: "Project yang sudah deal tetapi masuk dalam antrean pengerjaan. Membantu mengelola kapasitas kerja agar tidak overload."
+        }
+      },
+      {
+        key: "in_progress",
+        label: { en: "In Progress", id: "Sedang Dikerjakan" },
+        badge: { en: "Active", id: "Active" },
+        description: {
+          en: "Projects you are actively working on today. Ensure preview or progress links are updated for transparency.",
+          id: "Project yang sedang aktif Anda kerjakan hari ini. Pastikan link progress/preview selalu terupdate untuk transparansi."
+        }
+      },
+      {
+        key: "client_review",
+        label: { en: "Client Review", id: "Review Client" },
+        badge: { en: "Review", id: "Review" },
+        description: {
+          en: "Deliverables sent and currently under client review. Critical window to monitor feedback duration.",
+          id: "Hasil kerja sudah dikirimkan dan saat ini sedang ditinjau oleh client. Waktu yang kritis untuk memantau durasi feedback."
+        }
+      },
+      {
+        key: "revision",
+        label: { en: "Revision", id: "Revisi" },
+        badge: { en: "Fixes", id: "Fixes" },
+        description: {
+          en: "Updates and adjustments based on written client feedback. Limit revision counts based on initial quotation agreements.",
+          id: "Proses perbaikan berdasarkan feedback tertulis client. Batasi jumlah revisi sesuai dengan kesepakatan awal di quotation."
+        }
+      },
+      {
+        key: "invoice_sent",
+        label: { en: "Invoice Sent", id: "Invoice Terkirim" },
+        badge: { en: "Billing", id: "Billing" },
+        description: {
+          en: "Work finished or payment milestone reached, and the official invoice has been issued and sent to the client.",
+          id: "Pekerjaan selesai atau mencapai milestone pembayaran, dan tagihan resmi telah diterbitkan serta dikirimkan ke client."
+        }
+      },
+      {
+        key: "waiting_payment",
+        label: { en: "Waiting Payment", id: "Menunggu Pembayaran" },
+        badge: { en: "Pending", id: "Pending" },
+        description: {
+          en: "Invoice sent, work completed/paused, waiting for funds to hit your account. Follow up if past due date.",
+          id: "Invoice sudah dikirim, pekerjaan ditahan/selesai, menunggu dana masuk ke rekening. Follow-up jika melewati jatuh tempo."
+        }
+      },
+      {
+        key: "completed",
+        label: { en: "Completed", id: "Selesai" },
+        badge: { en: "Paid", id: "Paid" },
+        description: {
+          en: "Project fully finalized, payments confirmed received, final files delivered, and ready to archive.",
+          id: "Project telah selesai sepenuhnya, pembayaran lunas, file final diserahkan, dan siap diarsipkan ke portfolio."
+        }
+      }
+    ];
+
+    let activeFlowStageIndex = 0;
+
+    function renderFlowStages() {
+      const container = document.getElementById('flow-stages-container');
+      if (!container) return;
+
+      const lang = getLanguage();
+      container.innerHTML = '';
+
+      flowStages.forEach((stage, idx) => {
+        const isActive = idx === activeFlowStageIndex;
+        const node = document.createElement('div');
+        node.className = `flow-stage-node ${isActive ? 'active-stage' : ''}`;
+        node.setAttribute('onclick', `selectFlowStage(${idx})`);
+        
+        const labelText = escapeHTML(stage.label[lang] || stage.label['en']);
+        const badgeText = escapeHTML(stage.badge[lang] || stage.badge['en']);
+        
+        node.innerHTML = `
+          <span class="flow-stage-num">${idx + 1}</span>
+          <span class="flow-stage-name">${labelText}</span>
+          <span class="flow-node-badge badge-${stage.key.replace('_', '-')}">${badgeText}</span>
+        `;
+        container.appendChild(node);
+      });
+
+      updateFlowStageDetailUI();
+    }
+
+    function selectFlowStage(idx) {
+      activeFlowStageIndex = idx;
+      
+      const nodes = document.querySelectorAll('.flow-stages-row .flow-stage-node');
+      nodes.forEach((n, i) => {
+        if (i === idx) {
+          n.classList.add('active-stage');
+        } else {
+          n.classList.remove('active-stage');
+        }
+      });
+
+      updateFlowStageDetailUI();
+    }
+
+    function updateFlowStageDetailUI() {
+      const lang = getLanguage();
+      const stage = flowStages[activeFlowStageIndex];
+      if (!stage) return;
+
+      const detailTitle = document.getElementById('flow-title');
+      const detailDesc = document.getElementById('flow-desc');
+
+      const labelText = stage.label[lang] || stage.label['en'];
+      const descText = stage.description[lang] || stage.description['en'];
+
+      if (detailTitle) {
+        const detailPrefix = lang === 'id' ? 'Detail Tahap:' : 'Stage Details:';
+        detailTitle.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="9" x2="12.01" y2="9"></line></svg>
+          <span>${detailPrefix} ${escapeHTML(labelText)}</span>
+        `;
+      }
+      if (detailDesc) {
+        detailDesc.textContent = descText;
+      }
+    }
+
+    // --- Dynamic Role Templates ---
+    const roleKeys = ['designer', 'video-editor', 'copywriter', 'web-developer', 'socmed-manager', 'ai-consultant', 'general'];
+    let activeRoleKey = 'designer';
+
+    const roleData = {
+      designer: {
+        en: {
+          name: "Designer Template",
+          target: "Fits: UI/UX Designer, Graphic Designer, Illustrator, Brand Designer",
+          links: ["Figma Design File & Prototype link", "Moodboard & Asset folder link", "Shared Google Drive / Dropbox folder"],
+          delivery: ["Asset export formats (.png, .svg, .pdf)", "Source file handover (.fig, .ai, .psd)", "Styleguide documentation"]
+        },
+        id: {
+          name: "Designer Template",
+          target: "Cocok untuk: UI/UX Designer, Graphic Designer, Illustrator, Brand Designer",
+          links: ["Link Figma Design File & Prototype", "Folder Moodboard & Asset Link", "Shared Google Drive / Dropbox Folder"],
+          delivery: ["Ekspor format aset (.png, .svg, .pdf)", "Penyerahan source file (.fig, .ai, .psd)", "Dokumentasi panduan gaya (Styleguide)"]
+        }
+      },
+      'video-editor': {
+        en: {
+          name: "Video Editor Template",
+          target: "Fits: Video Editor, Animator, Motion Designer, Content Creator",
+          links: ["Project File link (Premiere / After Effects)", "Frame.io / Review link", "Raw Assets Cloud folder & Audio licenses"],
+          delivery: ["Rendered final video (.mp4, .mov per specs)", "Organized project file handover", "Third-party asset lists / audio licenses"]
+        },
+        id: {
+          name: "Video Editor Template",
+          target: "Cocok untuk: Video Editor, Animator, Motion Designer, Content Creator",
+          links: ["Link Project File (Premiere / After Effects)", "Link Frame.io / Review Link", "Folder Cloud Aset Mentah & Audio License"],
+          delivery: ["Render video final (.mp4, .mov sesuai spek)", "Handover project file terorganisir", "Dokumen aset pihak ketiga / lisensi audio"]
+        }
+      },
+      copywriter: {
+        en: {
+          name: "Copywriter Template",
+          target: "Fits: Copywriter, Content Writer, SEO Writer, Scriptwriter",
+          links: ["Google Docs / Notion draft link", "Research references & Brief folder", "Pitch Deck / Campaign file links"],
+          delivery: ["Clean final text (Google Docs / PDF)", "SEO keyword research list (if applicable)", "Tone of Voice guidelines"]
+        },
+        id: {
+          name: "Copywriter Template",
+          target: "Cocok untuk: Copywriter, Content Writer, SEO Writer, Scriptwriter",
+          links: ["Link Google Docs / Notion Draft", "Folder Referensi Riset & Brief", "Shared Tautan File Pitch Deck / Campaign"],
+          delivery: ["Teks final bersih (Google Docs / PDF)", "Daftar riset kata kunci (jika SEO)", "Panduan intonasi suara (Tone of Voice)"]
+        }
+      },
+      'web-developer': {
+        en: {
+          name: "Web Developer Template",
+          target: "Fits: Front-end Dev, WordPress/No-Code Developer, Full-stack Dev",
+          links: ["GitHub / GitLab Repository link", "Staging Hosting link (Vercel/Netlify)", "CMS / WordPress Admin Dashboard access"],
+          delivery: ["Hosting & domain credentials transfer", "API documentation & Local setup guide", "Primary admin access to CMS / Service panel"]
+        },
+        id: {
+          name: "Web Developer Template",
+          target: "Cocok untuk: Front-end Dev, WordPress/No-Code Developer, Full-stack Dev",
+          links: ["Link Repositori GitHub / GitLab", "Shared Tautan Hosting Staging (Vercel/Netlify)", "Shared Akses Dashboard CMS/WP Admin"],
+          delivery: ["Serah terima berkas hosting & domain", "Dokumentasi API & Panduan Setup Lokal", "Akses admin utama ke CMS / Panel Layanan"]
+        }
+      },
+      'socmed-manager': {
+        en: {
+          name: "Social Media Manager Template",
+          target: "Fits: Social Media Specialist, Content Planner, Community Manager",
+          links: ["Content Calendar link", "Graphic Assets & Brand Kit folder", "Weekly Analysis / Performance Report links"],
+          delivery: ["One month scheduled Content Calendar", "Secure account credentials handover", "Performance report & strategic recommendations"]
+        },
+        id: {
+          name: "Social Media Manager Template",
+          target: "Cocok untuk: Social Media Specialist, Content Planner, Community Manager",
+          links: ["Link Kalender Konten (Content Calendar)", "Folder Aset Grafis & Brand Kit", "Shared Tautan Analisis/Laporan Mingguan"],
+          delivery: ["Kalender Konten terjadwal sebulan", "Handover akun & login credential aman", "Laporan performa & rekomendasi strategi"]
+        }
+      },
+      'ai-consultant': {
+        en: {
+          name: "AI Consultant Template",
+          target: "Fits: AI Prompt Engineer, AI Automation Builder, AI Coach",
+          links: ["Prompt Library & Template links", "Automation Workflow diagrams (Make/Zapier)", "Consultation & Training session recordings"],
+          delivery: ["Prompt guidelines & SOP document", "Make/Zapier workflow ownership transfer", "Recommended AI tools & Operational budget list"]
+        },
+        id: {
+          name: "AI Consultant Template",
+          target: "Cocok untuk: AI Prompt Engineer, AI Automation Builder, AI Coach",
+          links: ["Link Prompt Library & Template", "Shared Diagram Alur Otomatisasi (Make/Zapier)", "Tautan Rekaman Sesi Konsultasi & Training"],
+          delivery: ["Dokumen panduan Prompt & Instruksi Kerja", "Serah terima kepemilikan alur Zap/Make", "Daftar rekomendasi tools AI & Biaya Operasional"]
+        }
+      },
+      general: {
+        en: {
+          name: "General Freelancer Template",
+          target: "Fits: Virtual Assistant, Project Manager, Translator, etc.",
+          links: ["Shared Google Drive / Dropbox link", "Work plan & Milestone calendar", "Meeting notes sheets"],
+          delivery: ["Verified final work output files", "Timesheet summary report (if hourly)", "General handover documents & emergency contact info"]
+        },
+        id: {
+          name: "General Freelancer Template",
+          target: "Cocok untuk: Virtual Assistant, Project Manager, Penerjemah, dll.",
+          links: ["Tautan Google Drive / Dropbox Bersama", "Kalender Rencana Kerja & Milestone", "Lembar Catatan Komunikasi Meeting"],
+          delivery: ["Berkas hasil kerja akhir yang terverifikasi", "Laporan ringkasan jam kerja (jika billing hourly)", "Dokumen serah terima umum & kontak darurat"]
+        }
+      }
+    };
+
+    function renderRoleTemplates() {
+      const tabsContainer = document.getElementById('role-tabs');
+      if (!tabsContainer) return;
+
+      const lang = getLanguage();
+      tabsContainer.innerHTML = '';
+
+      roleKeys.forEach(key => {
+        const isActive = key === activeRoleKey;
+        const btn = document.createElement('button');
+        btn.className = `role-btn ${isActive ? 'active-role' : ''}`;
+        btn.setAttribute('onclick', `selectRole('${key}')`);
+        
+        const tabText = roleData[key][lang].name.replace(" Template", "");
+        btn.textContent = tabText;
+        tabsContainer.appendChild(btn);
+      });
+
+      updateRoleDetailUI();
+    }
+
+    function selectRole(roleKey) {
+      activeRoleKey = roleKey;
+      renderRoleTemplates();
+    }
+
+    function updateRoleDetailUI() {
+      const lang = getLanguage();
+      const data = roleData[activeRoleKey][lang];
+      if (!data) return;
+
+      const roleNameEl = document.getElementById('role-name');
+      const roleTargetEl = document.getElementById('role-target');
+      const roleLinksUl = document.getElementById('role-links');
+      const roleDeliveryUl = document.getElementById('role-delivery');
+
+      if (roleNameEl) roleNameEl.textContent = data.name;
+      if (roleTargetEl) roleTargetEl.textContent = data.target;
+
+      if (roleLinksUl) {
+        roleLinksUl.innerHTML = '';
+        data.links.forEach(link => {
+          const li = document.createElement('li');
+          li.textContent = link;
+          roleLinksUl.appendChild(li);
+        });
+      }
+
+      if (roleDeliveryUl) {
+        roleDeliveryUl.innerHTML = '';
+        data.delivery.forEach(delItem => {
+          const li = document.createElement('li');
+          li.textContent = delItem;
+          roleDeliveryUl.appendChild(li);
+        });
+      }
+    }
+
+    // --- Toggle Guide Checklists ---
+    function toggleGuideCheck(item) {
+      item.classList.toggle('checked');
+    }
+
+    // --- Dynamic Client Scripts ---
+    const scriptKeys = ['update', 'feedback', 'revision', 'invoice', 'delivery'];
+    let activeScriptKey = 'update';
+
+    const scriptTabLabels = {
+      update: { en: "Project Update", id: "Project Update" },
+      feedback: { en: "Waiting Feedback", id: "Waiting Feedback" },
+      revision: { en: "Revision Update", id: "Update Revisi" },
+      invoice: { en: "Invoice Follow-up", id: "Follow-up Invoice" },
+      delivery: { en: "Final Delivery", id: "Delivery Final" }
+    };
+
+    const scripts = {
+      en: {
+        update: `Hi [Client Name], I would like to share the latest update for [Project Name]. The project is currently in the [Work Stage] stage.
+
+You can review the latest draft, track progress, and leave feedback through your Client Portal here: [Client Portal Link].
+
+Please let me know if you have any questions. Thank you.`,
+        feedback: `Hi [Client Name], I have uploaded the draft for the [Stage Name] stage of [Project Name] to your Client Portal: [Client Portal Link].
+
+Please review the draft and leave your feedback or confirmation directly in the portal by [Due Date]. Thank you for your collaboration.`,
+        revision: `Hi [Client Name], the revisions based on the feedback you provided yesterday for [Project Name] have been completed.
+
+You can check the updated visuals or files directly in our Client Portal: [Client Portal Link]. Please let me know if everything looks good. Thank you.`,
+        invoice: `Hi [Client Name], please find attached invoice [Invoice Number] for [Project Name] as we have entered the [Stage/Milestone] stage.
+
+You can view invoice details, download the official PDF, and find payment/transfer instructions directly in your Client Portal: [Client Portal Link]. Please let me know once payment has been sent. Thank you very much.`,
+        delivery: `Hi [Client Name], all deliverables for [Project Name] have been finalized and your invoice payment has been confirmed as paid in full. Thank you for your collaboration!
+
+All final files, raw source files, and supporting documentation are now uploaded and available for download at any time through your Client Portal: [Client Portal Link]. Wishing you the best of success with your business.`
+      },
+      id: {
+        update: `Halo [Nama Client], saya ingin memberikan update terbaru mengenai [Nama Project]. Saat ini project berada di tahap [Tahap Kerja].
+
+Anda dapat meninjau draft terbaru, memantau progress, dan memberikan feedback melalui Client Portal di sini: [Tautan Client Portal].
+
+Silakan kabari saya jika ada hal yang ingin ditanyakan. Terima kasih.`,
+        feedback: `Halo [Nama Client], draf pengerjaan untuk tahap [Nama Tahap] pada project [Nama Project] telah saya unggah ke Client Portal: [Tautan Client Portal].
+
+Mohon bantuannya untuk meninjau hasil draf tersebut dan menuliskan catatan feedback atau konfirmasi persetujuan langsung di portal sebelum tanggal [Jatuh Tempo]. Terima kasih atas kerjasamanya!`,
+        revision: `Halo [Nama Client], revisi berdasarkan masukan yang Anda berikan kemarin untuk project [Nama Project] telah selesai saya kerjakan.
+
+Anda dapat langsung mengecek pembaruan visual atau revisi filenya di Client Portal kita: [Tautan Client Portal]. Mohon dicheck kembali ya, terima kasih!`,
+        invoice: `Halo [Nama Client], berikut terlampir invoice [Nomor Invoice] untuk pengerjaan project [Nama Project] yang telah memasuki termin/tahap [Tahap].
+
+Anda dapat melihat detail tagihan, mengunduh file invoice resmi, dan melihat instruksi transfer pembayaran langsung di Client Portal: [Tautan Client Portal]. Silakan berkabar apabila pembayaran telah dilakukan. Terima kasih banyak!`,
+        delivery: `Halo [Nama Client], seluruh pengerjaan project [Nama Project] telah diselesaikan dan pembayaran invoice terkonfirmasi lunas. Terima kasih atas kerjasamanya!
+
+Seluruh berkas serah terima final, source file mentah, dan dokumentasi pendukung kini telah diunggah dan dapat Anda download kapan saja melalui Client Portal pribadi Anda: [Tautan Client Portal]. Semoga sukses selalu untuk bisnis Anda!`
+      }
+    };
+
+    function renderScripts() {
+      const tabsContainer = document.getElementById('script-tabs');
+      if (!tabsContainer) return;
+
+      const lang = getLanguage();
+      tabsContainer.innerHTML = '';
+
+      scriptKeys.forEach(key => {
+        const isActive = key === activeScriptKey;
+        const btn = document.createElement('button');
+        btn.className = `script-tab-btn ${isActive ? 'active-tab' : ''}`;
+        btn.setAttribute('onclick', `selectScript('${key}')`);
+        
+        const labelText = scriptTabLabels[key][lang] || scriptTabLabels[key]['en'];
+        btn.textContent = labelText;
+        tabsContainer.appendChild(btn);
+      });
+
+      const contentBox = document.getElementById('script-content');
+      if (contentBox) {
+        contentBox.textContent = scripts[lang][activeScriptKey] || scripts['en'][activeScriptKey];
+      }
+    }
+
+    function selectScript(scriptKey) {
+      activeScriptKey = scriptKey;
+      renderScripts();
+    }
+
+    function copyScriptText() {
+      const lang = getLanguage();
+      const text = scripts[lang][activeScriptKey] || scripts['en'][activeScriptKey];
+      
+      navigator.clipboard.writeText(text).then(() => {
+        const successMsg = lang === 'id' ? "Script berhasil disalin." : "Script copied.";
+        showToast(successMsg);
+      }).catch(err => {
+        console.error("Failed to copy script:", err);
+      });
+    }
+
+    // --- Toast Notifications Manager ---
+    function showToast(message) {
+      const holder = document.getElementById('toast-holder');
+      if (!holder) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <!-- checkSquare icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        <span>${message}</span>
+      `;
+      holder.appendChild(toast);
+
+      // Trigger animation
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 50);
+
+      // Auto remove toast
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 3000);
+    }
+
+    // --- FAQ Accordion Logic ---
+    function toggleFaq(item) {
+      const isActive = item.classList.contains('active');
+      
+      const allItems = document.querySelectorAll('.faq-container .faq-item');
+      allItems.forEach(i => i.classList.remove('active'));
+
+      if (!isActive) {
+        item.classList.add('active');
+      }
+    }
+
+    // --- Initialize Page Settings & Dynamic UI Elements ---
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Language selector event listener setup
+      const langSelect = document.getElementById('lang-select');
+      if (langSelect) {
+        langSelect.addEventListener('change', (e) => {
+          setLanguage(e.target.value);
+        });
+      }
+
+      // 2. Set up document attributes
+      updateDocumentLanguage();
+
+      // 3. Load database variables
+      loadChecklist();
+      loadFreelancerProfile();
+
+      // 4. Render all UI elements with appropriate translations
+      renderLanguage();
+
+      // Bind profile edit form submit handler
+      const profileForm = document.getElementById('profile-edit-form');
+      if (profileForm) {
+        profileForm.addEventListener('submit', saveFreelancerProfile);
+      }
+    });
+  </script>
+</body>
+</html>

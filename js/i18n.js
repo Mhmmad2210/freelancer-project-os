@@ -107,6 +107,10 @@ export const translations = {
       expandAll: "Expand All",
       addProject: "Add Project",
       templates: "Templates",
+      emptyStateTitle: "Start with a freelancer template",
+      emptyStateDesc: "Choose your freelance type and AlurKarya will create a sample client-to-paid workflow for you.",
+      chooseTemplate: "Choose Template",
+      createProject: "Create Project",
       noProjects: "No projects in this stage",
       emptyBoard: "No projects found. Use Templates or Add Project to start.",
       stages: {
@@ -468,8 +472,10 @@ export const translations = {
       planning: "Planning",
       readyMessage: "Ready Message",
       aiPrompt: "AI Prompt",
+      internalSummary: "Internal Summary",
       copyPrompt: "Copy Prompt",
       copyMessage: "Copy Message",
+      copySummary: "Copy Summary",
       clientSafeMode: "Client-safe mode",
       subtitle: "Generate copy-ready prompts and client messages from your project, client, delivery, invoice, and meeting context."
     },
@@ -677,6 +683,25 @@ export const translations = {
         name: "Weekly Focus Summary",
         description: "Generate internal summary from due soon, overdue, and pending review projects."
       }
+    },
+    viewGuide: "View Guide",
+    viewGuideTitle: "View Guided Start",
+    onboarding: {
+      modalTitle: "Start from 1 active project",
+      modalSubtitle: "Do not setup everything at once. Choose one ongoing client project and fill its flow step-by-step.",
+      step1Title: "Choose your type of work",
+      step1Desc: "Designer, video editor, copywriter, web developer, social media manager, AI consultant, or general freelancer.",
+      step2Title: "Add 1 active project",
+      step2Desc: "Start with the project you are working on right now, not from an empty workspace.",
+      step3Title: "Enter next action and deadline",
+      step3Desc: "Just define the next step and when it needs to be completed.",
+      ctaPrimary: "Start Setup",
+      ctaSecondary: "Skip for now",
+      linkFullGuide: "View full guide",
+      cardTitle: "Start from 1 active project",
+      cardStep1: "Select role",
+      cardStep2: "Add project",
+      cardStep3: "Add next action"
     }
   },
   id: {
@@ -783,6 +808,10 @@ export const translations = {
       expandAll: "Bentangkan Semua",
       addProject: "Tambah Project",
       templates: "Template",
+      emptyStateTitle: "Mulai dengan template freelancer",
+      emptyStateDesc: "Pilih jenis pekerjaan freelance Anda dan AlurKarya akan membuat contoh alur kerja dari client hingga dibayar.",
+      chooseTemplate: "Pilih Template",
+      createProject: "Buat Project",
       noProjects: "Tidak ada project di tahap ini",
       emptyBoard: "Project tidak ditemukan. Gunakan Template atau Tambah Project untuk mulai.",
       stages: {
@@ -1144,8 +1173,10 @@ export const translations = {
       planning: "Perencanaan",
       readyMessage: "Pesan Siap Kirim",
       aiPrompt: "AI Prompt",
+      internalSummary: "Ringkasan Internal",
       copyPrompt: "Salin Prompt",
       copyMessage: "Salin Pesan",
+      copySummary: "Salin Ringkasan",
       clientSafeMode: "Mode aman client",
       subtitle: "Hasilkan prompt siap-pakai dan pesan untuk client dari konteks project, client, pengiriman, invoice, dan rapat Anda."
     },
@@ -1353,6 +1384,25 @@ export const translations = {
         name: "Ringkasan Fokus Mingguan",
         description: "Hasilkan ringkasan internal dari project yang segera jatuh tempo, terlambat, dan menunggu review."
       }
+    },
+    viewGuide: "Panduan Lengkap",
+    viewGuideTitle: "Lihat Panduan Lengkap",
+    onboarding: {
+      modalTitle: "Mulai dari 1 project aktif",
+      modalSubtitle: "Jangan setup semuanya sekaligus. Pilih satu project client yang sedang berjalan, lalu isi alurnya pelan-pelan.",
+      step1Title: "Pilih jenis kerja Anda",
+      step1Desc: "Designer, video editor, copywriter, web developer, social media manager, AI consultant, atau general freelancer.",
+      step2Title: "Tambahkan 1 project aktif",
+      step2Desc: "Mulai dari project yang sedang Anda kerjakan sekarang, bukan dari workspace kosong.",
+      step3Title: "Isi next action dan deadline",
+      step3Desc: "Cukup tentukan apa langkah berikutnya dan kapan harus selesai.",
+      ctaPrimary: "Mulai Setup",
+      ctaSecondary: "Lewati dulu",
+      linkFullGuide: "Lihat panduan lengkap",
+      cardTitle: "Mulai dari 1 project aktif",
+      cardStep1: "Pilih role",
+      cardStep2: "Tambah project",
+      cardStep3: "Isi next action"
     }
   }
 };

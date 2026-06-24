@@ -1146,6 +1146,13 @@ Goal for the week: Settle milestone tasks, check revision counts (currently: ${c
   }
 };
 
+// Map additional property keys for strict compliance with prompt type structure
+Object.entries(promptTemplates).forEach(([id, t]) => {
+  t.id = id;
+  t.label = t.name;
+  t.generator = t.generate;
+});
+
 /**
  * Copies prompt content to clipboard and triggers a toast notification,
  * while saving the item to alurkarya_prompt_history.

@@ -145,7 +145,16 @@ export class ClientProjectView {
         const flProfile = state.freelancerProfile;
         const toneVal = (clientMemory && clientMemory.tonePreference) || 'Professional';
         const targetLang = getLanguage();
-        const text = promptTemplates.clientUpdate.generate(activeProject, clientMemory, toneVal, flProfile, targetLang);
+        const safeMemory = clientMemory ? {
+          ...clientMemory,
+          clientRiskNotes: "",
+          importantNotes: "",
+          lastMeetingSummary: "",
+          paymentBehavior: "",
+          paymentReminderStyle: "",
+          relationshipStatus: ""
+        } : null;
+        const text = promptTemplates.clientUpdate.generate(activeProject, safeMemory, toneVal, flProfile, targetLang);
         
         copyPromptToClipboard(text, null, 'clientUpdate', activeProject.id);
         

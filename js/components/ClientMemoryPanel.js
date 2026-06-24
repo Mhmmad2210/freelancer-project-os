@@ -4,6 +4,7 @@
 
 import { getIcon } from '../icons.js';
 import { promptTemplates, copyPromptToClipboard } from './AIPromptHelpers.js';
+import { getLanguage } from '../i18n.js';
 
 export class ClientMemoryPanel {
   /**
@@ -612,8 +613,9 @@ Recommended Next Action: ${nextActionStr}`;
         const clientProjects = state.projects.filter(p => p.clientId === client.id);
         const project = clientProjects.length > 0 ? clientProjects[0] : { clientName: client.name };
         const flProfile = state.freelancerProfile;
+        const lang = getLanguage();
         
-        const text = promptTemplates.clientMemoryExtraction.generate(project, client.clientMemory, 'Professional', flProfile);
+        const text = promptTemplates.clientMemoryExtraction.generate(project, client.clientMemory, 'Professional', flProfile, lang);
         copyPromptToClipboard(text, onTriggerToast, 'clientMemoryExtraction', project.id || 'none');
       });
     }
@@ -626,8 +628,9 @@ Recommended Next Action: ${nextActionStr}`;
         const clientProjects = state.projects.filter(p => p.clientId === client.id);
         const project = clientProjects.length > 0 ? clientProjects[0] : { clientName: client.name };
         const flProfile = state.freelancerProfile;
+        const lang = getLanguage();
         
-        const text = promptTemplates.clientRelationshipSummary.generate(project, client.clientMemory, 'Professional', flProfile);
+        const text = promptTemplates.clientRelationshipSummary.generate(project, client.clientMemory, 'Professional', flProfile, lang);
         copyPromptToClipboard(text, onTriggerToast, 'clientRelationshipSummary', project.id || 'none');
       });
     }

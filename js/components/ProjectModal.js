@@ -2395,7 +2395,10 @@ Please extract and format as a clean bulleted list containing:
 
       // Update badge
       if (outputTypeBadge) {
-        outputTypeBadge.textContent = template.outputMode === 'client_message' ? 'Ready Message' : (template.outputMode === 'internal_summary' ? 'Internal Summary' : 'AI Prompt');
+        outputTypeBadge.textContent = template.outputMode === 'client_message' 
+          ? t('aiPrompts.readyMessage', 'Ready Message') 
+          : (template.outputMode === 'internal_summary' ? t('aiPrompts.internalSummary', 'Internal Summary') : t('aiPrompts.aiPrompt', 'AI Prompt'));
+        
         if (template.outputMode === 'client_message') {
           outputTypeBadge.style.background = "rgba(16, 185, 129, 0.15)";
           outputTypeBadge.style.color = "#34d399";
@@ -2406,6 +2409,17 @@ Please extract and format as a clean bulleted list containing:
           outputTypeBadge.style.background = "rgba(139, 92, 246, 0.15)";
           outputTypeBadge.style.color = "#a78bfa";
         }
+      }
+
+      // Update copy button label dynamically
+      if (copyPromptBtn) {
+        let copyLabel = t('aiPrompts.copyPrompt', 'Copy Prompt');
+        if (template.outputMode === 'client_message') {
+          copyLabel = t('aiPrompts.copyMessage', 'Copy Message');
+        } else if (template.outputMode === 'internal_summary') {
+          copyLabel = t('aiPrompts.copySummary', 'Copy Summary');
+        }
+        copyPromptBtn.innerHTML = `${getIcon('copy', '', 14)} ${copyLabel}`;
       }
 
       // Check context
@@ -2425,7 +2439,15 @@ Please extract and format as a clean bulleted list containing:
         relationshipStatus: ""
       } : null) : clientMemory;
 
-      const text = template.generate(project, safeMemory, selectedTone, flProfile, targetLang);
+      const safeProject = isClientSafe ? {
+        ...project,
+        internalNotes: "",
+        paymentNotes: "",
+        notes: "",
+        internalPaymentNotes: ""
+      } : project;
+
+      const text = template.generate(safeProject, safeMemory, selectedTone, flProfile, targetLang);
       promptPreview.textContent = text;
     };
 
@@ -2527,6 +2549,13 @@ Please extract and format as a clean bulleted list containing:
           const template = promptTemplates[templateKey];
           if (template) {
             const isClientSafe = template.outputMode === 'client_message';
+            const safeProject = isClientSafe ? {
+              ...project,
+              internalNotes: "",
+              paymentNotes: "",
+              notes: "",
+              internalPaymentNotes: ""
+            } : project;
             const safeMemory = isClientSafe ? (clientMemory ? {
               ...clientMemory,
               clientRiskNotes: "",
@@ -2538,7 +2567,7 @@ Please extract and format as a clean bulleted list containing:
             } : null) : clientMemory;
 
             const targetLang = (langSelector && langSelector.value !== 'app') ? langSelector.value : getLanguage();
-            const text = template.generate(project, safeMemory, selectedTone, flProfile, targetLang);
+            const text = template.generate(safeProject, safeMemory, selectedTone, flProfile, targetLang);
             
             let toastKey = 'promptCopied';
             if (template.outputMode === 'client_message') toastKey = 'messageCopied';

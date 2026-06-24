@@ -106,14 +106,22 @@ export class SidebarNav {
 
     const activeLang = getLanguage();
     const langSwitcherHtml = `
-      <div class="lang-switcher-sidebar" style="padding: 0 12px 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
-        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">
-          ${t('sidebar.settings', 'Language')}
-        </span>
-        <select id="sidebar-lang-select" style="font-size: 0.68rem; padding: 2px 4px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 4px; outline: none; cursor: pointer;">
-          <option value="en" ${activeLang === 'en' ? 'selected' : ''}>English</option>
-          <option value="id" ${activeLang === 'id' ? 'selected' : ''}>Bahasa Indonesia</option>
-        </select>
+      <div class="lang-switcher-sidebar" style="padding: 0 12px 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; width: 100%;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
+          <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">
+            ${t('sidebar.settings', 'Language')}
+          </span>
+          <select id="sidebar-lang-select" style="font-size: 0.68rem; padding: 2px 4px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 4px; outline: none; cursor: pointer;">
+            <option value="en" ${activeLang === 'en' ? 'selected' : ''}>English</option>
+            <option value="id" ${activeLang === 'id' ? 'selected' : ''}>Bahasa Indonesia</option>
+          </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px; width: 100%;">
+          ${getIcon('help', '', 12)}
+          <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.7rem; color: var(--text-muted); text-decoration: none; transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+            ${t('viewGuide', 'View Guide')}
+          </a>
+        </div>
       </div>
     `;
 
