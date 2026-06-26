@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatDate, getDueDateStatus, generateEmailReminder } from '../utils.js';
+import { formatCurrency, formatMoney, formatDate, getDueDateStatus, generateEmailReminder } from '../utils.js';
 import { t } from '../i18n.js';
 
 export class InvoicesView {
@@ -87,10 +87,25 @@ export class InvoicesView {
   createSummaryWidgets() {
     const invoices = this.store.getState().invoices;
 
-    const paidVal = invoices.filter(i => i.status === 'Paid').reduce((s, i) => s + i.amount, 0);
-    const sentVal = invoices.filter(i => i.status === 'Sent').reduce((s, i) => s + i.amount, 0);
-    const draftVal = invoices.filter(i => i.status === 'Draft').reduce((s, i) => s + i.amount, 0);
-    const overdueVal = invoices.filter(i => i.status === 'Overdue').reduce((s, i) => s + i.amount, 0);
+    const groupInvoiceVal = (invs) => {
+      const groups = {};
+      invs.forEach(i => {
+        const cur = i.currency || 'IDR';
+        if (!groups[cur]) groups[cur] = 0;
+        groups[cur] += Number(i.amount) || 0;
+      });
+      const currencies = Object.keys(groups);
+      if (currencies.length === 0) {
+        const def = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+        return formatMoney(0, def);
+      }
+      return currencies.map(cur => formatMoney(groups[cur], cur)).join(' + ');
+    };
+
+    const paidValFormatted = groupInvoiceVal(invoices.filter(i => i.status === 'Paid'));
+    const sentValFormatted = groupInvoiceVal(invoices.filter(i => i.status === 'Sent'));
+    const draftValFormatted = groupInvoiceVal(invoices.filter(i => i.status === 'Draft'));
+    const overdueValFormatted = groupInvoiceVal(invoices.filter(i => i.status === 'Overdue'));
 
     const summaryGrid = document.createElement('div');
     summaryGrid.className = 'invoices-summary-grid';
@@ -100,28 +115,28 @@ export class InvoicesView {
           <span class="stat-title" style="font-size: 0.72rem;">${t('invoiceLedger.paidEarnings', 'Paid Earnings')}</span>
           <div class="stat-icon">${getIcon('checkSquare', '', 14)}</div>
         </div>
-        <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(paidVal)}</span>
+        <span class="stat-value" style="font-size: 1.15rem; word-break: break-all;">${paidValFormatted}</span>
       </div>
       <div class="stat-card primary" style="padding: 14px 18px;">
         <div class="stat-header">
           <span class="stat-title" style="font-size: 0.72rem;">${t('invoiceLedger.sentPending', 'Sent (Pending)')}</span>
           <div class="stat-icon">${getIcon('clock', '', 14)}</div>
         </div>
-        <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(sentVal)}</span>
+        <span class="stat-value" style="font-size: 1.15rem; word-break: break-all;">${sentValFormatted}</span>
       </div>
       <div class="stat-card warning" style="padding: 14px 18px;">
         <div class="stat-header">
           <span class="stat-title" style="font-size: 0.72rem;">${t('invoiceLedger.draftInvoices', 'Draft Invoices')}</span>
           <div class="stat-icon">${getIcon('fileText', '', 14)}</div>
         </div>
-        <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(draftVal)}</span>
+        <span class="stat-value" style="font-size: 1.15rem; word-break: break-all;">${draftValFormatted}</span>
       </div>
       <div class="stat-card" style="padding: 14px 18px; border-color: rgba(239, 68, 68, 0.25);">
         <div class="stat-header">
           <span class="stat-title" style="font-size: 0.72rem; color: var(--color-danger);">${t('invoiceLedger.overdueInvoices', 'Overdue Invoices')}</span>
           <div class="stat-icon" style="background: var(--color-danger-bg);">${getIcon('alert', '', 14)}</div>
         </div>
-        <span class="stat-value" style="font-size: 1.35rem; color: var(--color-danger);">${formatCurrency(overdueVal)}</span>
+        <span class="stat-value" style="font-size: 1.15rem; color: var(--color-danger); word-break: break-all;">${overdueValFormatted}</span>
       </div>
     `;
     return summaryGrid;

@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatDate } from '../utils.js';
+import { formatCurrency, formatMoney, formatDate } from '../utils.js';
 import { ClientMemoryPanel } from './ClientMemoryPanel.js';
 import { t } from '../i18n.js';
 
@@ -177,8 +177,21 @@ export class ClientsView {
       const clientProjects = projects.filter(p => p.clientId === c.id);
       const projectCount = clientProjects.length;
 
-      // Calculate Total Project Value (budget sum across client's projects)
-      const totalProjectVal = clientProjects.reduce((sum, p) => sum + p.budget, 0);
+      // Group budgets by currency to prevent mixed currency sum bugs
+      const clientBudgetGroups = {};
+      clientProjects.forEach(p => {
+        const cur = p.projectCurrency || localStorage.getItem('alurkarya_default_currency') || 'IDR';
+        if (!clientBudgetGroups[cur]) clientBudgetGroups[cur] = 0;
+        clientBudgetGroups[cur] += Number(p.budget) || 0;
+      });
+      const clientCurrencies = Object.keys(clientBudgetGroups);
+      let totalProjectValFormatted = '';
+      if (clientCurrencies.length === 0) {
+        const def = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+        totalProjectValFormatted = formatMoney(0, def);
+      } else {
+        totalProjectValFormatted = clientCurrencies.map(cur => formatMoney(clientBudgetGroups[cur], cur)).join(' + ');
+      }
 
       // Status pill coloring logic
       let pillClass = 'status-lead';
@@ -289,7 +302,7 @@ export class ClientsView {
           <span style="font-weight: 600; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem;">${projectCount}</span>
         </td>
         <td>
-          <span style="font-weight: 700; color: var(--color-secondary); font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem;">${formatCurrency(totalProjectVal)}</span>
+          <span style="font-weight: 700; color: var(--color-secondary); font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem;">${totalProjectValFormatted}</span>
         </td>
         <td style="text-align: right;">
           <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">

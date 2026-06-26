@@ -59,8 +59,9 @@ export function formatMoney(amount, currency = 'IDR', locale = null) {
   return `${cur} ${formattedNumber}`;
 }
 
-export function formatCurrency(value, currency = 'IDR') {
-  return formatMoney(value, currency);
+export function formatCurrency(value, currency) {
+  const defaultCurrency = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+  return formatMoney(value, currency || defaultCurrency);
 }
 
 /**
