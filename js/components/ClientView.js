@@ -843,29 +843,19 @@ export class ClientProjectView {
     
     // Generate text message:
     const clientUpdateText = (() => {
-      const clientName = activeProject.clientName ? activeProject.clientName.split('(')[0].trim() : 'Client';
-      const projectName = activeProject.title;
-      const stageLabel = stageLabels[activeProject.stage] || activeProject.stage;
-      const nextAction = activeProject.nextAction || 'None';
-      const previewLink = activeProject.previewLink || activeProject.draftFileLink || activeProject.briefLink || '[Preview Link]';
-
-      if (getLanguage() === 'id') {
-        if (activeProject.stage === 'waiting_payment') {
-          return `Halo ${clientName}, proyek "${projectName}" telah dikirimkan dan invoice saat ini sedang menunggu pembayaran. Harap beri tahu saya setelah pembayaran diproses.`;
-        }
-        if (activeProject.stage === 'completed') {
-          return `Halo ${clientName}, proyek "${projectName}" telah selesai dan file akhir telah dikirimkan. Terima kasih telah bekerja sama dalam proyek ini.`;
-        }
-        return `Halo ${clientName}, berikut adalah perkembangan terbaru untuk "${projectName}". Proyek saat ini berada di tahap [${stageLabel}]. Langkah berikutnya saat ini: ${nextAction}. Anda dapat meninjau hasil pekerjaan yang dikirimkan di sini: ${previewLink}. Silakan beri tahu saya jika Anda memiliki masukan atau persetujuan.`;
-      } else {
-        if (activeProject.stage === 'waiting_payment') {
-          return `Hi ${clientName}, the project "${projectName}" has been delivered and the invoice is currently waiting for payment. Please let me know once payment has been processed.`;
-        }
-        if (activeProject.stage === 'completed') {
-          return `Hi ${clientName}, the project "${projectName}" has been completed and the final files have been delivered. Thank you for working together on this project.`;
-        }
-        return `Hi ${clientName}, here is the latest update for "${projectName}". The project is currently in stage [${stageLabel}]. Current next action: ${nextAction}. You can review the submitted work here: ${previewLink}. Please let me know if you have feedback or approval.`;
-      }
+      const flProfile = this.store.getState().freelancerProfile;
+      const toneVal = (clientMemory && clientMemory.tonePreference) || 'Professional';
+      const targetLang = getLanguage();
+      const safeMemory = clientMemory ? {
+        ...clientMemory,
+        clientRiskNotes: "",
+        importantNotes: "",
+        lastMeetingSummary: "",
+        paymentBehavior: "",
+        paymentReminderStyle: "",
+        relationshipStatus: ""
+      } : null;
+      return promptTemplates.clientUpdate.generate(activeProject, safeMemory, toneVal, flProfile, targetLang);
     })();
 
     messageGeneratorCard.innerHTML = `

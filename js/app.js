@@ -113,23 +113,23 @@ class FreelancerApp {
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn btn-primary" id="btn-workflow-diagnose" title="${t('diagnoseTitle', 'Start Workflow Diagnosis')}" style="background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
-          🧠 ${t('diagnose', 'Diagnose')}
+        <button class="btn btn-primary" id="btn-workflow-diagnose" title="${t('app.diagnoseTitle', 'Start Workflow Diagnosis')}" style="background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">
+          🧠 ${t('app.diagnose', 'Diagnose')}
         </button>
-        <button class="btn btn-secondary" id="btn-backup-export" title="${t('exportBackupTitle', 'Export workspace backup file')}">
-          ${getIcon('download', '', 14)} ${t('sidebar.exportBackup', 'Export Backup')}
+        <button class="btn btn-secondary" id="btn-backup-export" title="${t('app.exportBackupTitle', 'Export workspace backup file')}">
+          ${getIcon('download', '', 14)} ${t('app.exportBackup', 'Export Backup')}
         </button>
-        <button class="btn btn-secondary" id="btn-backup-import" title="${t('importBackupTitle', 'Import workspace backup file')}">
-          ${getIcon('upload', '', 14)} ${t('sidebar.importBackup', 'Import Backup')}
+        <button class="btn btn-secondary" id="btn-backup-import" title="${t('app.importBackupTitle', 'Import workspace backup file')}">
+          ${getIcon('upload', '', 14)} ${t('app.importBackup', 'Import Backup')}
         </button>
         <input type="file" id="backup-file-picker" style="display: none;" accept=".json">
         
-        <button class="btn btn-text" id="btn-access-reset" style="font-size: 0.8rem; color: var(--color-warning);" title="${t('resetAccessTitle', 'Reset access screen status')}">
-          ${t('resetAccess', 'Reset Access')}
+        <button class="btn btn-text" id="btn-access-reset" style="font-size: 0.8rem; color: var(--color-warning);" title="${t('app.resetAccessTitle', 'Reset access screen status')}">
+          ${t('app.resetAccess', 'Reset Access')}
         </button>
         
-        <button class="btn btn-text text-danger" id="btn-workspace-reset" style="font-size: 0.8rem;" title="${t('wipeResetTitle', 'Reset workspace back to seed defaults')}">
-          ${t('wipeReset', 'Wipe & Reset')}
+        <button class="btn btn-text text-danger" id="btn-workspace-reset" style="font-size: 0.8rem;" title="${t('app.wipeResetTitle', 'Reset workspace back to seed defaults')}">
+          ${t('app.wipeReset', 'Wipe & Reset')}
         </button>
       </div>
     `;

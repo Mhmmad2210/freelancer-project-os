@@ -5,6 +5,7 @@
 import { getIcon } from '../icons.js';
 import { formatCurrency, formatMoney, formatDate, getDueDateStatus, getLocalizedDueDateStatus, isOutsideWorkingHours } from '../utils.js';
 import { copyPromptToClipboard, promptTemplates } from './AIPromptHelpers.js';
+import { t, getLanguage } from '../i18n.js';
 
 export class WeeklyFocusView {
   /**
@@ -34,11 +35,11 @@ export class WeeklyFocusView {
     introBox.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 280px;">
-          <h2>Weekly Focus</h2>
-          <p>View project priorities, upcoming deadlines, pending revisions, and client follow-up reminders this week.</p>
+          <h2>${t('weeklyFocus.title', 'Weekly Focus')}</h2>
+          <p>${t('weeklyFocus.subtitle', 'View project priorities, upcoming deadlines, pending revisions, and client follow-up reminders this week.')}</p>
         </div>
         <button class="btn btn-secondary" id="btn-weekly-focus-ai-prompt" style="font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px;">
-          🤖 Copy Weekly Focus Summary
+          🤖 ${t('weeklyFocus.copySummary', 'Copy Weekly Focus Summary')}
         </button>
       </div>
     `;
@@ -239,10 +240,10 @@ export class WeeklyFocusView {
     prioritiesBox.className = 'focus-module-box';
     prioritiesBox.innerHTML = `
       <h3 style="font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif;">
-        ${getIcon('layers', 'text-danger', 18)} Weekly Focus
+        ${getIcon('layers', 'text-danger', 18)} ${t('weeklyFocus.title', 'Weekly Focus')}
       </h3>
       <span class="stat-subtext" style="margin-top: -8px; display: block; margin-bottom: 12px; font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
-        💡 <strong>Mentor Tips:</strong> Weekly Focus helps you prioritize which projects to work on first this week to keep your cashflow healthy.
+        💡 <strong>${t('weeklyFocus.mentorTips', 'Mentor Tips')}:</strong> ${t('weeklyFocus.mentorText', 'Weekly Focus helps you prioritize which projects to work on first this week to keep your cashflow healthy.')}
       </span>
       <div class="focus-row-list" id="focus-priorities-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
     `;
@@ -251,7 +252,7 @@ export class WeeklyFocusView {
     if (focusProjects.length === 0) {
       prioritiesList.innerHTML = `
         <span class="stat-subtext" style="display: block; padding: 16px 0; text-align: center;">
-          No active projects need attention this week. Great job!
+          ${t('weeklyFocus.noActiveProjects', 'No active projects need attention this week. Great job!')}
         </span>
       `;
     } else {
@@ -280,7 +281,7 @@ export class WeeklyFocusView {
         if (p.stage === 'on_hold') {
           const isFollowUpThisWeek = p.holdFollowUpDate && p.holdFollowUpDate >= selectedWeekStart && p.holdFollowUpDate <= weekEndStr;
           if (isFollowUpThisWeek) {
-            nextActionLabel = 'Follow up On Hold Project';
+            nextActionLabel = t('weeklyFocus.followUpOnHold', 'Follow up On Hold Project');
           }
         }
         
@@ -295,16 +296,16 @@ export class WeeklyFocusView {
           'waiting_payment': 'Waiting Payment',
           'on_hold': 'On Hold'
         };
-        const stageLabel = stageMap[p.stage] || p.stage;
+        const stageLabel = t('kanban.stages.' + p.stage, stageMap[p.stage] || p.stage);
 
         let focusDetailsMarkup = '';
         const availability = this.store.getState().availability;
         if (p.meetingDate && p.meetingDate >= selectedWeekStart && p.meetingDate <= weekEndStr) {
           const isOutside = isOutsideWorkingHours(p.meetingDate, p.meetingTime, availability, p.meetingTimezone);
-          const outsideWarning = isOutside ? ' <span style="color: var(--color-danger); font-size: 0.6rem; font-weight: 700; border: 1px solid var(--color-danger); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">Outside your working hours.</span>' : '';
+          const outsideWarning = isOutside ? ` <span style="color: var(--color-danger); font-size: 0.6rem; font-weight: 700; border: 1px solid var(--color-danger); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">${t('weeklyFocus.outsideWorkingHours', 'Outside your working hours.')}</span>` : '';
           focusDetailsMarkup += `
             <div style="margin-top: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; color: var(--color-secondary);">
-              <span class="manual-label" style="color: var(--color-secondary);">MEETING:</span>
+              <span class="manual-label" style="color: var(--color-secondary);">${t('weeklyFocus.meetingLabel', 'MEETING:')}</span>
               <span style="font-weight: 600;">${formatDate(p.meetingDate)} at ${p.meetingTime || 'TBD'} (${p.meetingType || 'Meet'})${outsideWarning}</span>
             </div>
           `;
@@ -312,7 +313,7 @@ export class WeeklyFocusView {
         if (p.invoiceDueDate && p.invoiceDueDate >= selectedWeekStart && p.invoiceDueDate <= weekEndStr) {
           focusDetailsMarkup += `
             <div style="margin-top: 2px; display: flex; align-items: center; gap: 4px; color: var(--color-success);">
-              <span class="manual-label" style="color: var(--color-success);">INVOICE DUE:</span>
+              <span class="manual-label" style="color: var(--color-success);">${t('weeklyFocus.invoiceDueLabel', 'INVOICE DUE:')}</span>
               <span style="font-weight: 600;">${formatDate(p.invoiceDueDate)}</span>
             </div>
           `;
@@ -320,7 +321,7 @@ export class WeeklyFocusView {
         if (p.stage === 'on_hold' && p.holdFollowUpDate && p.holdFollowUpDate >= selectedWeekStart && p.holdFollowUpDate <= weekEndStr) {
           focusDetailsMarkup += `
             <div style="margin-top: 2px; display: flex; align-items: center; gap: 4px; color: var(--text-muted);">
-              <span class="manual-label" style="color: var(--text-muted);">ON HOLD FOLLOW UP:</span>
+              <span class="manual-label" style="color: var(--text-muted);">${t('weeklyFocus.onHoldFollowUpLabel', 'ON HOLD FOLLOW UP:')}</span>
               <span style="font-weight: 600;">${formatDate(p.holdFollowUpDate)}</span>
             </div>
           `;
@@ -330,18 +331,18 @@ export class WeeklyFocusView {
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
             <div>
               <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">${p.title}</h4>
-              <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 2px;">Client: ${p.clientName || 'No client selected'} | Stage: ${stageLabel}</span>
+              <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 2px;">${t('projectModal.client', 'Client')}: ${p.clientName || t('projectModal.noClientSelected', '-- No client selected --')} | ${t('projectModal.stage', 'Stage')}: ${stageLabel}</span>
             </div>
-            <span class="priority-badge ${priorityClass}">${priorityVal}</span>
+            <span class="priority-badge ${priorityClass}">${t('priority.' + priorityVal.toLowerCase(), priorityVal)}</span>
           </div>
           
           <div style="font-size: 0.7rem; display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); padding: 8px; border-radius: 6px;">
             <div>
-              <span class="manual-label" style="color: var(--color-primary);">NEXT:</span>
+              <span class="manual-label" style="color: var(--color-primary);">${t('weeklyFocus.next', 'NEXT')}:</span>
               <span style="color: var(--text-secondary); font-weight: 500;">${nextActionLabel}</span>
             </div>
             <div style="margin-top: 2px; display: flex; align-items: center; gap: 4px;">
-              <span class="manual-label ${dateWarningClass}">DUE:</span>
+              <span class="manual-label ${dateWarningClass}">${t('weeklyFocus.due', 'DUE')}:</span>
               <span class="${dateWarningClass}" style="font-weight: 600;">${dueStatus.text}</span>
             </div>
             ${focusDetailsMarkup}
@@ -355,20 +356,36 @@ export class WeeklyFocusView {
     // B. Reflections Journal Box
     const reflectionsBox = document.createElement('div');
     reflectionsBox.className = 'focus-module-box';
+
+    // Solve for Indonesian default reflections translation if user hasn't edited it
+    let displayReflections = weeklyReflections;
+    const defaultEngReflections = `What went well this week?\n- Deployed production code for David on the custom E-commerce Website storefront.\n- Delivered catalog background photography retouches for Sarah, acing our milestone target.\n\nWhat can be improved?\n- Make sure Clara approves Storyboard wireframes before beginning development edits.\n- Track follow-up cycles closer for our Active proposal sent leads.\n\nWins & Achievements:\n- Received 5-star recommendations and lifetime earnings increases from Apex Software's checkouts launch!`;
+    const defaultIndReflections = `Apa yang berjalan baik minggu ini?\n- Menerapkan kode produksi untuk David di etalase Kustom Website E-commerce.\n- Mengirimkan retouch foto latar belakang katalog untuk Sarah, mencapai target milestone kami.\n\nApa yang bisa diperbaiki?\n- Pastikan Clara menyetujui wireframe Storyboard sebelum memulai pengerjaan pengembangan.\n- Pantau siklus follow-up lebih dekat untuk lead penawaran aktif kami yang terkirim.\n\nPencapaian & Kemenangan:\n- Menerima rekomendasi bintang 5 dan peningkatan pendapatan seumur hidup dari peluncuran checkout Apex Software!`;
+
+    if (getLanguage() === 'id') {
+      if (weeklyReflections === defaultEngReflections) {
+        displayReflections = defaultIndReflections;
+      }
+    } else {
+      if (weeklyReflections === defaultIndReflections) {
+        displayReflections = defaultEngReflections;
+      }
+    }
+
     reflectionsBox.innerHTML = `
       <h3 style="font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif;">
-        ${getIcon('edit', 'text-success', 18)} Weekly Reflections Journal
+        ${getIcon('edit', 'text-success', 18)} ${t('weeklyFocus.reflectionsJournal', 'Weekly Reflections Journal')}
       </h3>
       <span class="stat-subtext" style="margin-top: -8px; display: block;">
-        Write down achievements, challenges, and learnings from client interactions this week to grow your business. (Auto-save)
+        ${t('weeklyFocus.reflectionsSubtitle', 'Write down achievements, challenges, and learnings from client interactions this week to grow your business. (Auto-save)')}
       </span>
-      <textarea class="reflections-input" id="weekly-journal" placeholder="How did freelancing go this week? Jot down learnings, milestones...">${weeklyReflections}</textarea>
+      <textarea class="reflections-input" id="weekly-journal" placeholder="${t('weeklyFocus.reflectionsJournalPlaceholder', 'What went well this week?\n-------------------------\n\n## What can be improved?\n\n## Next focus:\n\n* ')}">${displayReflections}</textarea>
     `;
     const journalTextarea = reflectionsBox.querySelector('#weekly-journal');
     
     journalTextarea.addEventListener('blur', (e) => {
       this.store.updateWeeklyReflections(e.target.value);
-      this.onTriggerToast('Reflection journal saved', 'text-success');
+      this.onTriggerToast(t('weeklyFocus.toastJournalSaved', 'Reflection journal saved'), 'text-success');
     });
     
     colLeft.appendChild(reflectionsBox);
@@ -409,10 +426,10 @@ export class WeeklyFocusView {
 
     // 1. Deadlines widget
     const deadlinesMod = createFocusModule(
-      'Deadlines This Week',
+      t('weeklyFocus.deadlinesThisWeek', 'Deadlines This Week'),
       'clock',
       deadlinesThisWeek,
-      'No deadlines this week',
+      t('weeklyFocus.noDeadlines', 'No deadlines this week'),
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -427,7 +444,7 @@ export class WeeklyFocusView {
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${p.title}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Client: ${p.clientName}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">${t('projectModal.client', 'Client')}: ${p.clientName}</span>
           </div>
           <span class="stat-subtext ${warning}" style="font-weight: 700; font-size: 0.72rem;">${dueStatus.text}</span>
         `;
@@ -439,10 +456,10 @@ export class WeeklyFocusView {
 
     // 2. Client Review widget
     const reviewsMod = createFocusModule(
-      'Awaiting Client Review',
+      t('weeklyFocus.awaitingClientReview', 'Awaiting Client Review'),
       'user',
       clientReviews,
-      'No deliverables are currently under client review.',
+      t('weeklyFocus.noDeliverablesReview', 'No deliverables are currently under client review.'),
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -450,9 +467,9 @@ export class WeeklyFocusView {
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${p.title}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Next action: ${p.nextAction || 'Wait for review'}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">${t('projectModal.nextAction', 'Next action')}: ${p.nextAction || t('weeklyFocus.waitForReview', 'Wait for review')}</span>
           </div>
-          <span class="client-status-badge status-active" style="font-size: 0.65rem;">Reviewing</span>
+          <span class="client-status-badge status-active" style="font-size: 0.65rem;">${t('weeklyFocus.reviewing', 'Reviewing')}</span>
         `;
         return row;
       },
@@ -462,10 +479,10 @@ export class WeeklyFocusView {
 
     // 3. Revisions to Finish
     const revisionsMod = createFocusModule(
-      'Pending Revisions',
+      t('weeklyFocus.pendingRevisions', 'Pending Revisions'),
       'refresh',
       revisionsToComplete,
-      'Great! No pending project revisions at the moment.',
+      t('weeklyFocus.noPendingRevisions', 'Great! No pending project revisions at the moment.'),
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -473,9 +490,9 @@ export class WeeklyFocusView {
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${p.title}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Notes: ${p.revisionNotes || 'Design adjustments'}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">${t('projectModal.internalNotes', 'Notes')}: ${p.revisionNotes || 'Design adjustments'}</span>
           </div>
-          <span class="client-status-badge status-lead text-danger" style="font-size: 0.65rem;">Rev: ${p.revisionRound}/${p.maxRevisionRounds}</span>
+          <span class="client-status-badge status-lead text-danger" style="font-size: 0.65rem;">${t('weeklyFocus.rev', 'Rev:')} ${p.revisionRound}/${p.maxRevisionRounds}</span>
         `;
         return row;
       },
@@ -485,10 +502,10 @@ export class WeeklyFocusView {
 
     // 4. Invoices to Send
     const invoicesToSendMod = createFocusModule(
-      'Invoices to Send',
+      t('weeklyFocus.invoicesToSend', 'Invoices to Send'),
       'fileText',
       invoicesToSend,
-      'All active projects have been invoiced. Excellent tracking!',
+      t('weeklyFocus.allInvoiced', 'All active projects have been invoiced. Excellent tracking!'),
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -496,9 +513,9 @@ export class WeeklyFocusView {
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${p.title}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Client: ${p.clientName} | Value: ${formatMoney(p.budget, p.projectCurrency || p.currency || 'IDR')}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">${t('projectModal.client', 'Client')}: ${p.clientName} | ${t('projectModal.budget', 'Value')}: ${formatMoney(p.budget, p.projectCurrency || p.currency || 'IDR')}</span>
           </div>
-          <span class="client-status-badge status-completed" style="font-size: 0.65rem;">Bill Draft</span>
+          <span class="client-status-badge status-completed" style="font-size: 0.65rem;">${t('weeklyFocus.billDraft', 'Bill Draft')}</span>
         `;
         return row;
       },
@@ -508,10 +525,10 @@ export class WeeklyFocusView {
 
     // 5. Payments to Follow Up
     const followUpPaymentsMod = createFocusModule(
-      'Payment Follow-up',
+      t('weeklyFocus.paymentFollowUp', 'Payment Follow-up'),
       'fileText',
       paymentTasks,
-      'No overdue payments. Smooth cash flow!',
+      t('weeklyFocus.noOverduePayments', 'No overdue payments. Smooth cash flow!'),
       (task) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -525,12 +542,20 @@ export class WeeklyFocusView {
         else if (task.label === 'Invoice due soon') color = 'status-active text-warning';
         else if (task.label === 'Receipt needed') color = 'status-active text-info';
         
+        const labelKeyMap = {
+          'Payment overdue': 'paymentOverdue',
+          'Invoice due soon': 'invoiceDueSoon',
+          'Payment follow-up': 'paymentFollowUp',
+          'Receipt needed': 'receiptNeeded'
+        };
+        const localizedLabel = task.label ? t('weeklyFocus.' + (labelKeyMap[task.label] || task.label.toLowerCase()), task.label) : '';
+
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${task.projectName}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Client: ${task.clientName} | Amount: ${formatMoney(task.amount, task.currency)} | Date: ${task.dateText}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">${t('projectModal.client', 'Client')}: ${task.clientName} | ${t('projectModal.budget', 'Amount')}: ${formatMoney(task.amount, task.currency)} | ${t('projectModal.deadline', 'Date')}: ${task.dateText}</span>
           </div>
-          <span class="client-status-badge ${color}" style="font-size: 0.65rem;">${task.label}</span>
+          <span class="client-status-badge ${color}" style="font-size: 0.65rem;">${localizedLabel}</span>
         `;
         
         row.style.cursor = 'pointer';
@@ -547,10 +572,10 @@ export class WeeklyFocusView {
 
     // 6. Stuck Projects
     const stuckMod = createFocusModule(
-      'Stuck Projects',
+      t('weeklyFocus.stuckProjects', 'Stuck Projects'),
       'alert',
       stuckProjects,
-      'Awesome! No projects are currently stuck.',
+      t('weeklyFocus.noStuckProjects', 'Awesome! No projects are currently stuck.'),
       (p) => {
         const row = document.createElement('div');
         row.className = 'focus-item-row';
@@ -558,9 +583,9 @@ export class WeeklyFocusView {
         row.innerHTML = `
           <div>
             <span class="focus-item-title" style="font-size: 0.85rem;">${p.title}</span>
-            <span class="focus-item-meta" style="font-size: 0.72rem;">Next action: ${p.nextAction || 'Contact client'}</span>
+            <span class="focus-item-meta" style="font-size: 0.72rem;">${t('projectModal.nextAction', 'Next action')}: ${p.nextAction || t('weeklyFocus.contactClient', 'Contact client')}</span>
           </div>
-          <span class="priority-badge priority-high">Stuck</span>
+          <span class="priority-badge priority-high">${t('weeklyFocus.stuck', 'Stuck')}</span>
         `;
         return row;
       },
@@ -578,7 +603,7 @@ export class WeeklyFocusView {
         const projects = state.projects || [];
         const flProfile = state.freelancerProfile;
         
-        // Build customContent for weeklyFocusSummary
+        // Build customContent for weeklyFocusSummary using shared prompt generator
         const overdueDeadlineList = projects.filter(p => {
           if (p.stage === 'completed' || p.stage === 'on_hold') return false;
           const status = getLocalizedDueDateStatus(p.dueDate);
@@ -589,33 +614,18 @@ export class WeeklyFocusView {
           const status = getLocalizedDueDateStatus(p.dueDate);
           return status.status === 'soon' || status.status === 'today';
         });
-        const reviewList = projects.filter(p => p.stage === 'client_review');
-        const paymentList = paymentTasks.filter(t => t.label === 'Payment overdue' || t.label === 'Invoice due soon');
+        
+        const activeLang = getLanguage();
+        const workspaceCtx = {
+          isWorkspace: true,
+          projects,
+          deadlinesThisWeek: [...overdueDeadlineList, ...dueSoonList],
+          invoicesToSend,
+          paymentTasks,
+          stuckProjects
+        };
 
-        const overdueText = overdueDeadlineList.map(p => `- ${p.title} (Due: ${p.dueDate || 'N/A'})`).join('\n') || 'None';
-        const dueSoonText = dueSoonList.map(p => `- ${p.title} (Due: ${p.dueDate || 'N/A'})`).join('\n') || 'None';
-        const reviewText = reviewList.map(p => `- ${p.title} (Client feedback summary: ${p.clientFeedbackSummary || 'N/A'})`).join('\n') || 'None';
-        const paymentText = paymentList.map(t => `- ${t.projectName} (${t.label}: ${t.dateText})`).join('\n') || 'None';
-
-        const customContent = `Internal summary — not for client.
-Weekly Focus Overview:
-- Overdue Deadlines:
-${overdueText}
-
-- Due Soon This Week:
-${dueSoonText}
-
-- Awaiting Client Review:
-${reviewText}
-
-- Payment Follow-ups / Overdue:
-${paymentText}
-
-Recommended Actions:
-1. Prioritize overdue project deadlines immediately.
-2. Nudge clients with projects in 'client_review' stage using the update template.
-3. Follow up with overdue invoice clients.
-4. Prepare project deliveries and checklist audits.`;
+        const customContent = promptTemplates.weeklyFocusSummary.generate(workspaceCtx, null, 'Professional', flProfile, activeLang);
 
         copyPromptToClipboard(customContent, this.onTriggerToast, 'weeklyFocusSummary', 'workspace');
       });

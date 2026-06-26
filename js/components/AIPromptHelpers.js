@@ -282,7 +282,7 @@ export const promptTemplates = {
   testimonialRequest: {
     name: "Testimonial Request",
     description: "Politely request a testimonial or review from the client after completion.",
-    category: "portfolio_review",
+    category: ["portfolio_review", "client_communication"],
     outputMode: "client_message",
     requiredContext: ["clientName", "projectTitle"],
     generate: (project, clientMemory, tone = 'Professional', freelancerProfile = null, targetLang = 'en') => {
@@ -1115,6 +1115,63 @@ ${ctx.stage === 'completed' ? '1. Request a testimonial and archive raw source f
     outputMode: "internal_summary",
     requiredContext: ["projectTitle"],
     generate: (project, clientMemory, tone = 'Professional', freelancerProfile = null, targetLang = 'en') => {
+      if (project && project.isWorkspace) {
+        const dlList = project.deadlinesThisWeek || [];
+        const invList = project.invoicesToSend || [];
+        const payList = project.paymentTasks || [];
+        const stList = project.stuckProjects || [];
+
+        if (targetLang === 'id') {
+          const dlText = dlList.map(p => `- ${p.title} (Tenggat: ${p.dueDate || 'N/A'})`).join('\n') || 'Tidak ada';
+          const invText = invList.map(p => `- ${p.title}`).join('\n') || 'Tidak ada';
+          const payText = payList.map(t => `- ${t.projectName} (${t.label === 'Payment overdue' ? 'Terlambat' : 'Segera jatuh tempo'}: ${t.dateText})`).join('\n') || 'Tidak ada';
+          const stText = stList.map(p => `- ${p.title}`).join('\n') || 'Tidak ada';
+
+          return `Ringkasan internal — bukan untuk client.
+Ikhtisar Fokus Mingguan:
+- Deadline Minggu Ini:
+${dlText}
+
+- Invoice yang Perlu Dikirim:
+${invText}
+
+- Follow-up Pembayaran:
+${payText}
+
+- Project Tertahan:
+${stText}
+
+Rekomendasi Fokus Berikutnya:
+1. Prioritaskan tenggat waktu yang terlambat.
+2. Kirim invoice yang tertunda.
+3. Tindak lanjuti pembayaran yang belum diselesaikan.`;
+        } else {
+          const dlText = dlList.map(p => `- ${p.title} (Due: ${p.dueDate || 'N/A'})`).join('\n') || 'None';
+          const invText = invList.map(p => `- ${p.title}`).join('\n') || 'None';
+          const payText = payList.map(t => `- ${t.projectName} (${t.label}: ${t.dateText})`).join('\n') || 'None';
+          const stText = stList.map(p => `- ${p.title}`).join('\n') || 'None';
+
+          return `Internal summary — not for client.
+Weekly Focus Overview:
+- Deadlines This Week:
+${dlText}
+
+- Invoices to Send:
+${invText}
+
+- Payment Follow-ups:
+${payText}
+
+- Stuck Projects:
+${stText}
+
+Next Recommended Focus:
+1. Prioritize overdue deadlines.
+2. Send pending invoices.
+3. Follow up on outstanding payments.`;
+        }
+      }
+
       const ctx = buildPromptContext(project, { clientMemory }, freelancerProfile, { mode: 'internal' });
       const priorityName = targetLang === 'id' ? t('priority.' + ctx.priority.toLowerCase(), ctx.priority) : ctx.priority;
       const stageName = targetLang === 'id' ? t('kanban.stages.' + ctx.stage, ctx.stage) : ctx.stage;
@@ -1130,7 +1187,9 @@ Audit Fokus Mingguan untuk Proyek '${ctx.projectTitle}':
 - Status Pembayaran: ${payStatus}
 - Catatan terlihat oleh client: ${visibleNotes}
 
-Tujuan minggu ini: Selesaikan tugas milestone, periksa jumlah revisi (saat ini: ${ctx.revisionCount}/${ctx.maxRevision}), dan pastikan pembaruan pengiriman tepat waktu.`;
+Tujuan minggu ini: Selesaikan tugas milestone, periksa jumlah revisi (saat ini: ${ctx.revisionCount}/${ctx.maxRevision}), dan pastikan pembaruan pengiriman tepat waktu.
+
+Ringkasan level workspace belum tersedia di tampilan ini.`;
       } else {
         return `Internal summary — not for client.
 Weekly Focus Audit for Project '${ctx.projectTitle}':
@@ -1140,7 +1199,9 @@ Weekly Focus Audit for Project '${ctx.projectTitle}':
 - Payment Status: ${ctx.paymentStatus}
 - Client visible notes: ${ctx.clientVisibleNotes || 'None'}
 
-Goal for the week: Settle milestone tasks, check revision counts (currently: ${ctx.revisionCount}/${ctx.maxRevision}), and ensure prompt delivery updates.`;
+Goal for the week: Settle milestone tasks, check revision counts (currently: ${ctx.revisionCount}/${ctx.maxRevision}), and ensure prompt delivery updates.
+
+Workspace-level summary is not available in this view.`;
       }
     }
   }
@@ -1183,7 +1244,16 @@ export function copyPromptToClipboard(text, toastCallback, promptType = 'unknown
       }
 
       if (toastCallback) {
-        toastCallback(t('toast.promptCopied', "AI Prompt successfully copied to clipboard!"), "text-success");
+        const template = promptTemplates[promptType];
+        let toastKey = 'promptCopied';
+        if (template) {
+          if (template.outputMode === 'client_message') {
+            toastKey = 'messageCopied';
+          } else if (template.outputMode === 'internal_summary') {
+            toastKey = 'summaryCopied';
+          }
+        }
+        toastCallback(t(`toast.${toastKey}`), "text-success");
       }
     })
     .catch(err => {

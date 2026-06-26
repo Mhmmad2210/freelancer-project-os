@@ -99,6 +99,12 @@ export class AccessGate {
         margin: 0 auto;
         box-shadow: 0 8px 20px rgba(109, 93, 251, 0.25);
       }
+      .brand-mark-img {
+        width: 36px;
+        height: auto;
+        display: block;
+        object-fit: contain;
+      }
       .access-title {
         font-family: 'Space Grotesk', sans-serif;
         font-size: 1.8rem;
@@ -247,7 +253,9 @@ export class AccessGate {
     const cardEl = document.createElement('div');
     cardEl.className = 'access-card';
     cardEl.innerHTML = `
-      <div class="access-logo">A</div>
+      <div class="access-logo" style="background: none; box-shadow: none; width: auto; height: auto; display: flex; justify-content: center; align-items: center;">
+        <img src="./assets/brand/alurkarya-mark-white.svg?v=20260626" alt="AlurKarya" class="brand-mark-img" />
+      </div>
       <div class="access-meta" style="display: flex; flex-direction: column; gap: 8px;">
         <h2 class="access-title">${t('access.welcome', 'Welcome to AlurKarya')}</h2>
         <p class="access-subtitle">${t('access.tagline', 'Manage freelance projects from client to paid.')}</p>

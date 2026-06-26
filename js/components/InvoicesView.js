@@ -4,6 +4,7 @@
 
 import { getIcon } from '../icons.js';
 import { formatCurrency, formatDate, getDueDateStatus, generateEmailReminder } from '../utils.js';
+import { t } from '../i18n.js';
 
 export class InvoicesView {
   /**
@@ -32,8 +33,8 @@ export class InvoicesView {
     const introBox = document.createElement('div');
     introBox.className = 'portfolio-intro-box';
     introBox.innerHTML = `
-      <h2>Invoice Ledger</h2>
-      <p>Track your payments and unpaid invoices in one place. Generate client email follow-up reminders and draft bills easily.</p>
+      <h2>${t('invoiceLedger.title', 'Invoice Ledger')}</h2>
+      <p>${t('invoiceLedger.subtitle', 'Track your payments and unpaid invoices in one place. Generate client email follow-up reminders and draft bills easily.')}</p>
     `;
     viewEl.appendChild(introBox);
 
@@ -50,11 +51,11 @@ export class InvoicesView {
     filterWrapper.style.gap = '10px';
     filterWrapper.innerHTML = `
       <select class="form-control" id="invoice-status-filter" style="width: 180px;">
-        <option value="ALL">All Invoices</option>
-        <option value="Draft">Drafts</option>
-        <option value="Sent">Sent (Pending)</option>
-        <option value="Paid">Paid (Earnings)</option>
-        <option value="Overdue">Overdue</option>
+        <option value="ALL">${t('invoiceLedger.allInvoices', 'All Invoices')}</option>
+        <option value="Draft">${t('invoiceLedger.draftInvoices', 'Draft Invoices')}</option>
+        <option value="Sent">${t('invoiceLedger.sentPending', 'Sent (Pending)')}</option>
+        <option value="Paid">${t('invoiceLedger.paidEarnings', 'Paid Earnings')}</option>
+        <option value="Overdue">${t('invoiceLedger.overdueInvoices', 'Overdue Invoices')}</option>
       </select>
     `;
     const filterSelect = filterWrapper.querySelector('select');
@@ -66,7 +67,7 @@ export class InvoicesView {
 
     const addBtn = document.createElement('button');
     addBtn.className = 'btn btn-primary';
-    addBtn.innerHTML = `${getIcon('plus', '', 18)} Add Invoice`;
+    addBtn.innerHTML = `${getIcon('plus', '', 18)} ${t('invoiceLedger.addInvoice', 'Add Invoice')}`;
     addBtn.addEventListener('click', () => this.showInvoiceDrawer());
 
     controls.appendChild(filterWrapper);
@@ -96,28 +97,28 @@ export class InvoicesView {
     summaryGrid.innerHTML = `
       <div class="stat-card success" style="padding: 14px 18px;">
         <div class="stat-header">
-          <span class="stat-title" style="font-size: 0.72rem;">Paid Earnings</span>
+          <span class="stat-title" style="font-size: 0.72rem;">${t('invoiceLedger.paidEarnings', 'Paid Earnings')}</span>
           <div class="stat-icon">${getIcon('checkSquare', '', 14)}</div>
         </div>
         <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(paidVal)}</span>
       </div>
       <div class="stat-card primary" style="padding: 14px 18px;">
         <div class="stat-header">
-          <span class="stat-title" style="font-size: 0.72rem;">Sent (Pending)</span>
+          <span class="stat-title" style="font-size: 0.72rem;">${t('invoiceLedger.sentPending', 'Sent (Pending)')}</span>
           <div class="stat-icon">${getIcon('clock', '', 14)}</div>
         </div>
         <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(sentVal)}</span>
       </div>
       <div class="stat-card warning" style="padding: 14px 18px;">
         <div class="stat-header">
-          <span class="stat-title" style="font-size: 0.72rem;">Draft Invoices</span>
+          <span class="stat-title" style="font-size: 0.72rem;">${t('invoiceLedger.draftInvoices', 'Draft Invoices')}</span>
           <div class="stat-icon">${getIcon('fileText', '', 14)}</div>
         </div>
         <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(draftVal)}</span>
       </div>
       <div class="stat-card" style="padding: 14px 18px; border-color: rgba(239, 68, 68, 0.25);">
         <div class="stat-header">
-          <span class="stat-title" style="font-size: 0.72rem; color: var(--color-danger);">Overdue Invoices</span>
+          <span class="stat-title" style="font-size: 0.72rem; color: var(--color-danger);">${t('invoiceLedger.overdueInvoices', 'Overdue Invoices')}</span>
           <div class="stat-icon" style="background: var(--color-danger-bg);">${getIcon('alert', '', 14)}</div>
         </div>
         <span class="stat-value" style="font-size: 1.35rem; color: var(--color-danger);">${formatCurrency(overdueVal)}</span>
@@ -159,9 +160,9 @@ export class InvoicesView {
       canvas.innerHTML = `
         <div style="grid-column: 1 / -1;" class="empty-state-box">
           ${getIcon('fileText', '', 48)}
-          <h3>No invoices in ledger</h3>
-          <p>You haven't generated any invoices mapping this stage filter. Draft invoices to manage outstanding client payouts.</p>
-          <button class="btn btn-secondary" id="btn-empty-invoice-add">${getIcon('plus', '', 14)} Create Invoice</button>
+          <h3>${t('invoiceLedger.noInvoicesTitle', 'No invoices in ledger')}</h3>
+          <p>${t('invoiceLedger.noInvoicesDesc', "You haven't generated any invoices mapping this stage filter. Draft invoices to manage outstanding client payouts.")}</p>
+          <button class="btn btn-secondary" id="btn-empty-invoice-add">${getIcon('plus', '', 14)} ${t('invoiceLedger.createInvoice', 'Create Invoice')}</button>
         </div>
       `;
       canvas.querySelector('#btn-empty-invoice-add').addEventListener('click', () => this.showInvoiceDrawer());
@@ -196,9 +197,9 @@ export class InvoicesView {
           <div>
             <span class="invoice-number-label">${inv.invoiceNumber}</span>
             <h4 class="invoice-project-link" style="margin-top: 2px;">${inv.projectName}</h4>
-            <span class="stat-subtext" style="font-size: 0.72rem; display: block; margin-top: 2px;">Client: ${clientName}</span>
+            <span class="stat-subtext" style="font-size: 0.72rem; display: block; margin-top: 2px;">${t('projectModal.client', 'Client')}: ${clientName}</span>
           </div>
-          <span class="client-status-badge ${statusBadge}">${inv.status}</span>
+          <span class="client-status-badge ${statusBadge}">${t('status.invoice.' + inv.status.toLowerCase(), inv.status)}</span>
         </div>
 
         <div>
@@ -208,24 +209,24 @@ export class InvoicesView {
         <div style="margin-top: auto; display: flex; flex-direction: column; gap: 4px;">
           <div class="invoice-due-tracker ${dueWarningClass}">
             ${getIcon('clock', '', 12)}
-            <span>Due date: ${formatDate(inv.dueDate)}</span>
+            <span>${t('invoiceLedger.dueDate', 'Due date')}: ${formatDate(inv.dueDate)}</span>
           </div>
-          ${inv.sentDate ? `<span class="stat-subtext" style="font-size: 0.68rem;">Sent on: ${formatDate(inv.sentDate)}</span>` : ''}
-          ${inv.paidDate ? `<span class="stat-subtext" style="font-size: 0.68rem;">Paid on: ${formatDate(inv.paidDate)}</span>` : ''}
+          ${inv.sentDate ? `<span class="stat-subtext" style="font-size: 0.68rem;">${t('invoiceLedger.sentOn', 'Sent on: {date}').replace('{date}', formatDate(inv.sentDate))}</span>` : ''}
+          ${inv.paidDate ? `<span class="stat-subtext" style="font-size: 0.68rem;">${t('invoiceLedger.paidOn', 'Paid on: {date}').replace('{date}', formatDate(inv.paidDate))}</span>` : ''}
         </div>
 
         <div class="invoice-actions-footer">
           ${inv.status === 'Draft' ? `
             <button class="invoice-btn-small send-trigger" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-              ${getIcon('send', '', 12)} Mark Sent
+              ${getIcon('send', '', 12)} ${t('invoiceLedger.markSent', 'Mark Sent')}
             </button>
           ` : ''}
           ${['Sent', 'Overdue'].includes(inv.status) ? `
             <button class="invoice-btn-small pay-trigger" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-              ${getIcon('check', '', 12)} Mark Paid
+              ${getIcon('check', '', 12)} ${t('invoiceLedger.markPaid', 'Mark Paid')}
             </button>
             <button class="invoice-btn-small reminder-trigger" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-              ${getIcon('alert', '', 12)} Reminder
+              ${getIcon('alert', '', 12)} ${t('invoiceLedger.reminder', 'Reminder')}
             </button>
           ` : ''}
           <button class="invoice-btn-small delete-trigger text-danger" style="flex: 0 0 auto; padding: 6px;">
@@ -241,7 +242,7 @@ export class InvoicesView {
           if (proj) {
             this.store.updateProject(proj.id, { paymentStatus: 'Unpaid' });
           }
-          this.onTriggerToast(`Invoice ${inv.invoiceNumber} marked as sent`);
+          this.onTriggerToast(t('invoiceLedger.toastMarkedSent', 'Invoice marked as sent'));
           this.update();
         });
       }
@@ -252,7 +253,7 @@ export class InvoicesView {
           if (proj) {
             this.store.updateProject(proj.id, { paymentStatus: 'Paid' });
           }
-          this.onTriggerToast(`Invoice ${inv.invoiceNumber} marked as fully paid!`, 'text-success');
+          this.onTriggerToast(t('invoiceLedger.toastMarkedPaid', 'Invoice marked as fully paid!'), 'text-success');
           this.update();
         });
 
@@ -265,9 +266,9 @@ export class InvoicesView {
       }
 
       card.querySelector('.delete-trigger').addEventListener('click', () => {
-        if (confirm(`Delete invoice ${inv.invoiceNumber} permanently?`)) {
+        if (confirm(t('invoiceLedger.removeConfirm', 'Delete invoice {num} permanently?').replace('{num}', inv.invoiceNumber))) {
           this.store.deleteInvoice(inv.id);
-          this.onTriggerToast('Invoice successfully deleted');
+          this.onTriggerToast(t('invoiceLedger.toastDeleted', 'Invoice successfully deleted'));
           this.update();
         }
       });
@@ -290,31 +291,31 @@ export class InvoicesView {
     modalOverlay.innerHTML = `
       <div class="modal-container" style="max-width: 580px;">
         <div class="modal-header">
-          <h3>Generate Payment Reminder</h3>
+          <h3>${t('invoiceLedger.generateReminderTitle', 'Generate Payment Reminder')}</h3>
           <button class="modal-close-btn" id="close-rem-modal">&times;</button>
         </div>
         <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
           
           <div class="form-group">
-            <label>Recipient Client Email</label>
+            <label>${t('invoiceLedger.recipientEmailLabel', 'Recipient Client Email')}</label>
             <input type="text" class="form-control" value="${client.email || 'billing@brand.com'}" readonly>
           </div>
 
           <div class="form-group">
-            <label>Email Subject</label>
+            <label>${t('invoiceLedger.emailSubjectLabel', 'Email Subject')}</label>
             <input type="text" id="rem-subject" class="form-control" value="${data.subject}">
           </div>
 
           <div class="form-group">
-            <label>Email Body Message</label>
+            <label>${t('invoiceLedger.emailBodyLabel', 'Email Body Message')}</label>
             <textarea id="rem-body" class="form-control" style="min-height: 200px;">${data.body}</textarea>
           </div>
 
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" id="cancel-rem-modal">Cancel</button>
+          <button class="btn btn-secondary" id="cancel-rem-modal">${t('cancel', 'Cancel')}</button>
           <button class="btn btn-primary" id="copy-rem-modal" style="gap: 6px;">
-            ${getIcon('check', '', 14)} Copy to Clipboard
+            ${getIcon('check', '', 14)} ${t('invoiceLedger.copyToClipboardButton', 'Copy to Clipboard')}
           </button>
         </div>
       </div>
@@ -337,12 +338,12 @@ export class InvoicesView {
 
       navigator.clipboard.writeText(fullText)
         .then(() => {
-          this.onTriggerToast('Email reminder copied to clipboard', 'text-success');
+          this.onTriggerToast(t('invoiceLedger.toastReminderCopied', 'Email reminder copied to clipboard'), 'text-success');
           closeActions();
         })
         .catch(err => {
           console.error('Failed to copy', err);
-          this.onTriggerToast('Failed to copy', 'text-danger');
+          this.onTriggerToast(t('invoiceLedger.toastFailedCopy', 'Failed to copy'), 'text-danger');
         });
     });
   }
@@ -364,47 +365,47 @@ export class InvoicesView {
     drawerOverlay.innerHTML = `
       <div class="drawer-panel">
         <div class="drawer-header">
-          <h3>Create Custom Invoice</h3>
+          <h3>${t('invoiceLedger.createInvoiceTitle', 'Create Custom Invoice')}</h3>
           <button class="modal-close-btn" id="close-i-drawer">&times;</button>
         </div>
         <div class="drawer-body">
           <form id="invoice-drawer-form">
             
             <div class="form-group">
-              <label for="i-project-select">Reference Project</label>
+              <label for="i-project-select">${t('invoiceLedger.referenceProjectLabel', 'Reference Project')}</label>
               <select id="i-project-select" class="form-control" required>
-                <option value="">-- Choose Project --</option>
+                <option value="">${t('invoiceLedger.chooseProjectOption', '-- Choose Project --')}</option>
                 ${projectOptions}
               </select>
             </div>
 
             <div class="form-group">
-              <label for="i-number">Invoice Number</label>
-              <input type="text" id="i-number" class="form-control" placeholder="e.g. INV-2026-801" required>
+              <label for="i-number">${t('invoiceLedger.invoiceNumberLabel', 'Invoice Number')}</label>
+              <input type="text" id="i-number" class="form-control" placeholder="${t('invoiceLedger.invoiceNumberPlaceholder', 'e.g. INV-2026-801')}" required>
             </div>
 
             <div class="form-group">
-              <label for="i-amount">Invoice Amount (IDR)</label>
-              <input type="number" id="i-amount" class="form-control" placeholder="e.g. 5000000" min="0" required>
+              <label for="i-amount">${t('invoiceLedger.invoiceAmountLabel', 'Invoice Amount (IDR)')}</label>
+              <input type="number" id="i-amount" class="form-control" placeholder="${t('invoiceLedger.invoiceAmountPlaceholder', 'e.g. 5000000')}" min="0" required>
             </div>
 
             <div class="form-group">
-              <label for="i-due">Due Date</label>
+              <label for="i-due">${t('invoiceLedger.dueDateLabel', 'Due Date')}</label>
               <input type="date" id="i-due" class="form-control" required>
             </div>
 
             <div class="form-group">
-              <label for="i-status">Billing Status</label>
+              <label for="i-status">${t('invoiceLedger.billingStatusLabel', 'Billing Status')}</label>
               <select id="i-status" class="form-control">
-                <option value="Draft">Draft</option>
-                <option value="Sent">Sent (Pending)</option>
-                <option value="Paid">Paid</option>
+                <option value="Draft">${t('status.invoice.draft', 'Draft')}</option>
+                <option value="Sent">${t('status.invoice.sent', 'Sent')}</option>
+                <option value="Paid">${t('status.invoice.paid', 'Paid')}</option>
               </select>
             </div>
 
             <div class="modal-footer" style="padding: 16px 0 0 0; border: none;">
-              <button type="button" class="btn btn-secondary" id="cancel-i-drawer">Cancel</button>
-              <button type="submit" class="btn btn-primary">Generate Invoice</button>
+              <button type="button" class="btn btn-secondary" id="cancel-i-drawer">${t('cancel', 'Cancel')}</button>
+              <button type="submit" class="btn btn-primary">${t('invoiceLedger.generateInvoiceButton', 'Generate Invoice')}</button>
             </div>
           </form>
         </div>
@@ -449,7 +450,7 @@ export class InvoicesView {
         status
       });
 
-      this.onTriggerToast(`Invoice ${invoiceNumber} logged successfully`);
+      this.onTriggerToast(t('invoiceLedger.toastLogged', 'Invoice logged successfully'));
       closeActions();
       this.update();
     });

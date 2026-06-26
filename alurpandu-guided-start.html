@@ -159,14 +159,28 @@
     }
 
     .sidebar-logo {
-      font-size: 1.15rem;
+      font-size: 0.98rem;
       font-weight: 800;
-      letter-spacing: 0.25em;
+      letter-spacing: 0.20em;
       color: var(--text-primary);
       display: flex;
       align-items: center;
       gap: 10px;
       text-transform: uppercase;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      min-height: 34px;
+    }
+
+    .brand-logo-img {
+      width: 152px;
+      max-width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
     }
 
     .sidebar-logo svg {
@@ -175,10 +189,13 @@
     }
 
     .sidebar-tagline {
+      margin-top: 8px;
       font-size: 0.72rem;
       font-weight: 500;
       color: var(--text-muted);
       line-height: 1.4;
+      display: block;
+      letter-spacing: 0.01em;
     }
 
     .sidebar-menu {
@@ -1511,13 +1528,8 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="app-sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <!-- Logo SVG matching AlurKarya -->
-          <svg width="24" height="20" viewBox="0 0 48 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 0H32L16 40H0L16 0Z" fill="currentColor"/>
-            <path d="M26 20H35L48 40H20L26 20Z" fill="currentColor"/>
-          </svg>
-          <span>ALURKARYA</span>
+        <div class="brand-logo">
+          <img src="./assets/brand/alurkarya-logo-secondary-white.svg?v=20260626" alt="AlurKarya" class="brand-logo-img" />
         </div>
         <div class="sidebar-tagline" data-i18n="sidebar_tagline">Guided Start</div>
       </div>

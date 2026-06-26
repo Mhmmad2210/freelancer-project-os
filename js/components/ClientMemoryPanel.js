@@ -417,10 +417,10 @@ export class ClientMemoryPanel {
               ${getIcon('trash', '', 12)} Clear Unsaved
             </button>
             <button type="button" class="btn btn-secondary btn-sm" id="btn-memory-extract-prompt" style="display: inline-flex; align-items: center; gap: 4px;">
-              🤖 Extract Prompt
+              🤖 Copy Client Memory Extraction Prompt
             </button>
             <button type="button" class="btn btn-secondary btn-sm" id="btn-relationship-prompt" style="display: inline-flex; align-items: center; gap: 4px;">
-              🤖 Relationship Prompt
+              🤖 Copy Client Relationship Summary
             </button>
           </div>
           

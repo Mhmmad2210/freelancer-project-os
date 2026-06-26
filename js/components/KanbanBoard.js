@@ -653,7 +653,7 @@ export class KanbanBoard {
           const oldProject = state.projects.find(x => x.id === cardId);
           if (oldProject && oldProject.stage !== col.id) {
             if (col.id === 'invoice_sent' && oldProject.clientApprovalStatus !== 'Approved') {
-              this.onTriggerToast('Invoice should be sent after the work is approved by the client.', 'text-danger');
+              this.onTriggerToast(t('toast.invoiceApprovalWarning', 'Invoice should be sent after client approval.'), 'text-danger');
               return;
             }
             if (col.id === 'completed') {
@@ -665,10 +665,17 @@ export class KanbanBoard {
                 let warningParams = {};
                 if (lacksPaidStatus) {
                   warningParams = {
-                    title: "Complete this project?",
-                    message: "Payment confirmation may still be missing. You can complete this project anyway or review the invoice details first.",
-                    confirmText: "Move to Completed Anyway",
-                    cancelText: "Review Invoice"
+                    title: t('kanban.completionWarning.title', 'Complete this project?'),
+                    message: t('kanban.completionWarning.messagePayment', 'Payment confirmation may still be missing. You can complete this project anyway or review the invoice details first.'),
+                    confirmText: t('kanban.completionWarning.confirmText', 'Move to Completed Anyway'),
+                    cancelText: t('kanban.completionWarning.cancelTextInvoice', 'Review Invoice')
+                  };
+                } else {
+                  warningParams = {
+                    title: t('kanban.completionWarning.title', 'Complete this project?'),
+                    message: t('kanban.completionWarning.message', 'Some completion items may still be missing: client approval, final delivery, or payment confirmation.'),
+                    confirmText: t('kanban.completionWarning.confirmText', 'Move to Completed Anyway'),
+                    cancelText: t('kanban.completionWarning.cancelText', 'Review Project')
                   };
                 }
                 
@@ -677,7 +684,7 @@ export class KanbanBoard {
                   onConfirm: () => {
                     const updates = { stage: 'completed' };
                     this.store.updateProject(cardId, updates);
-                    this.onTriggerToast(`Moved to: ${col.label}`);
+                    this.onTriggerToast(t('toast.stageUpdated', 'Stage updated to: {stage}').replace('{stage}', col.label));
                     this.update();
                   },
                   onReview: () => {
@@ -689,7 +696,7 @@ export class KanbanBoard {
             }
             const updates = { stage: col.id };
             this.store.updateProject(cardId, updates);
-            this.onTriggerToast(`Moved to: ${col.label}`);
+            this.onTriggerToast(t('toast.stageUpdated', 'Stage updated to: {stage}').replace('{stage}', col.label));
             this.update();
           }
         }
@@ -1943,14 +1950,14 @@ export class KanbanBoard {
     resumeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.store.updateProject(project.id, { stage: 'in_progress' });
-      this.onTriggerToast('Project resumed (In Progress).', 'text-success');
+      this.onTriggerToast(t('toast.projectResumed', 'Project resumed (In Progress).'), 'text-success');
       this.update();
     });
 
     moveBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.store.updateProject(project.id, { stage: 'client_review' });
-      this.onTriggerToast('Project moved to Client Review.', 'text-success');
+      this.onTriggerToast(t('toast.projectMovedClientReview', 'Project moved to Client Review.'), 'text-success');
       this.update();
     });
 

@@ -67,6 +67,9 @@ if (fs.existsSync(path.join(__dirname, 'alurpandu-guided-start.html'))) {
 }
 copyDirSync(path.join(__dirname, 'css'), path.join(distPath, 'css'));
 copyDirSync(path.join(__dirname, 'js'), path.join(distPath, 'js'));
+if (fs.existsSync(path.join(__dirname, 'assets'))) {
+  copyDirSync(path.join(__dirname, 'assets'), path.join(distPath, 'assets'));
+}
 
 console.log('[AlurKarya Build] Copied static app assets (excluding landing.html)');
 

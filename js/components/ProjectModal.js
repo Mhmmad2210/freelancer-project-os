@@ -234,7 +234,7 @@ export class ProjectModal {
 
                   <div style="margin-top: 16px; border-top: 1px solid var(--border-subtle); padding-top: 12px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap;">
                     <span style="font-size: 0.7rem; color: var(--text-muted);">
-                      🎙️ Real AI Notetaker & Transcription (TODO_AFTER_LAUNCH)
+                      ${t('projectModal.aiNotetakerPlaceholder', '🎙️ Real AI Notetaker & Transcription (Coming Soon)')}
                     </span>
                     <button type="button" class="btn btn-secondary" id="btn-generate-ai-prompt" style="font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
                       ${getIcon('fileText', '', 14)} Copy AI Summary Prompt
@@ -2356,11 +2356,13 @@ Please extract and format as a clean bulleted list containing:
     const updatePromptPreview = () => {
       if (!promptPreview) return;
 
+      const targetLang = (langSelector && langSelector.value !== 'app') ? langSelector.value : getLanguage();
+
       if (currentCategory === 'history') {
         const historyStr = localStorage.getItem('alurkarya_prompt_history') || '[]';
         const history = JSON.parse(historyStr);
         if (history.length === 0) {
-          promptPreview.textContent = "No prompt history recorded yet.";
+          promptPreview.textContent = targetLang === 'id' ? "Belum ada riwayat prompt yang tercatat." : "No prompt history recorded yet.";
         } else {
           promptPreview.textContent = history.map((h, i) => {
             return `${i+1}. [${new Date(h.generatedAt).toLocaleTimeString()}] Type: ${h.promptType}\n   Preview: "${h.copiedTextPreview}"`;
@@ -2391,7 +2393,6 @@ Please extract and format as a clean bulleted list containing:
       const selectedTone = toneSelector ? toneSelector.value : 'Professional';
       const flProfile = this.store.getState().freelancerProfile;
       const isClientSafe = clientSafeToggle ? clientSafeToggle.checked : true;
-      const targetLang = (langSelector && langSelector.value !== 'app') ? langSelector.value : getLanguage();
 
       // Update badge
       if (outputTypeBadge) {
@@ -2453,8 +2454,10 @@ Please extract and format as a clean bulleted list containing:
 
     const populateTemplates = (category) => {
       if (!promptSelector) return;
+      const targetLang = (langSelector && langSelector.value !== 'app') ? langSelector.value : getLanguage();
       if (category === 'history') {
-        promptSelector.innerHTML = '<option value="">History View Only</option>';
+        const historyOptText = targetLang === 'id' ? "Hanya Tampilan Riwayat" : "History View Only";
+        promptSelector.innerHTML = `<option value="">${historyOptText}</option>`;
         if (toneSelector) toneSelector.disabled = true;
         if (clientSafeToggle) clientSafeToggle.disabled = true;
         updatePromptPreview();
@@ -2464,7 +2467,12 @@ Please extract and format as a clean bulleted list containing:
       if (toneSelector) toneSelector.disabled = false;
       if (clientSafeToggle) clientSafeToggle.disabled = false;
 
-      const filtered = Object.entries(promptTemplates).filter(([k, t]) => t.category === category);
+      const filtered = Object.entries(promptTemplates).filter(([k, t]) => {
+        if (Array.isArray(t.category)) {
+          return t.category.includes(category);
+        }
+        return t.category === category;
+      });
       promptSelector.innerHTML = filtered.map(([k, t]) => `<option value="${k}">${t.name}</option>`).join('');
       
       if (filtered.length > 0) {

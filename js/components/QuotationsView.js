@@ -4,6 +4,7 @@
 
 import { getIcon } from '../icons.js';
 import { formatCurrency, formatDate } from '../utils.js';
+import { t, getLanguage } from '../i18n.js';
 
 export class QuotationsView {
   /**
@@ -32,8 +33,8 @@ export class QuotationsView {
     const introBox = document.createElement('div');
     introBox.className = 'portfolio-intro-box';
     introBox.innerHTML = `
-      <h2>Quotation Manager</h2>
-      <p>Create project quotations, track client approval, define payment terms, and convert approved quotations into active projects.</p>
+      <h2>${t('quotations.title', 'Quotation Manager')}</h2>
+      <p>${t('quotations.subtitle', 'Create project quotations, track client approval, define payment terms, and convert approved quotations into active projects.')}</p>
     `;
     viewEl.appendChild(introBox);
 
@@ -50,11 +51,11 @@ export class QuotationsView {
     filterWrapper.style.gap = '10px';
     filterWrapper.innerHTML = `
       <select class="form-control" id="quotation-status-filter" style="width: 180px;">
-        <option value="ALL">All Quotations</option>
-        <option value="Draft">Drafts</option>
-        <option value="Sent">Sent (Pending)</option>
-        <option value="Accepted">Accepted</option>
-        <option value="Rejected">Rejected</option>
+        <option value="ALL">${t('quotations.all', 'All Quotations')}</option>
+        <option value="Draft">${t('status.draft', 'Drafts')}</option>
+        <option value="Sent">${t('invoiceLedger.sentPending', 'Sent (Pending)')}</option>
+        <option value="Accepted">${t('status.accepted', 'Accepted')}</option>
+        <option value="Rejected">${t('status.rejected', 'Rejected')}</option>
       </select>
     `;
     const filterSelect = filterWrapper.querySelector('select');
@@ -66,7 +67,7 @@ export class QuotationsView {
 
     const addBtn = document.createElement('button');
     addBtn.className = 'btn btn-primary';
-    addBtn.innerHTML = `${getIcon('plus', '', 18)} Add Quotation`;
+    addBtn.innerHTML = `${getIcon('plus', '', 18)} ${t('quotations.add', 'Add Quotation')}`;
     addBtn.addEventListener('click', () => this.showQuotationDrawer());
 
     controls.appendChild(filterWrapper);
@@ -96,28 +97,28 @@ export class QuotationsView {
     summaryGrid.innerHTML = `
       <div class="stat-card primary" style="padding: 14px 18px;">
         <div class="stat-header">
-          <span class="stat-title" style="font-size: 0.72rem;">Draft Quotations</span>
+          <span class="stat-title" style="font-size: 0.72rem;">${t('quotations.draft', 'Draft Quotations')}</span>
           <div class="stat-icon">${getIcon('fileText', '', 14)}</div>
         </div>
         <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(draftVal)}</span>
       </div>
       <div class="stat-card warning" style="padding: 14px 18px;">
         <div class="stat-header">
-          <span class="stat-title" style="font-size: 0.72rem;">Sent Quotations</span>
+          <span class="stat-title" style="font-size: 0.72rem;">${t('quotations.sent', 'Sent Quotations')}</span>
           <div class="stat-icon">${getIcon('clock', '', 14)}</div>
         </div>
         <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(sentVal)}</span>
       </div>
       <div class="stat-card success" style="padding: 14px 18px;">
         <div class="stat-header">
-          <span class="stat-title" style="font-size: 0.72rem;">Approved Value</span>
+          <span class="stat-title" style="font-size: 0.72rem;">${t('quotations.approvedValue', 'Approved Value')}</span>
           <div class="stat-icon">${getIcon('checkSquare', '', 14)}</div>
         </div>
         <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(acceptedVal)}</span>
       </div>
       <div class="stat-card" style="padding: 14px 18px; border-color: rgba(239, 68, 68, 0.25);">
         <div class="stat-header">
-          <span class="stat-title" style="font-size: 0.72rem; color: var(--color-danger);">Rejected Quotations</span>
+          <span class="stat-title" style="font-size: 0.72rem; color: var(--color-danger);">${t('quotations.rejected', 'Rejected Quotations')}</span>
           <div class="stat-icon" style="background: var(--color-danger-bg);">${getIcon('alert', '', 14)}</div>
         </div>
         <span class="stat-value" style="font-size: 1.35rem; color: var(--color-danger);">${formatCurrency(rejectedVal)}</span>
@@ -144,9 +145,9 @@ export class QuotationsView {
       canvas.innerHTML = `
         <div style="grid-column: 1 / -1;" class="empty-state-box">
           ${getIcon('briefcase', '', 48)}
-          <h3>No quotations in catalog</h3>
-          <p>Draft professional itemized service proposals. Add custom discount lines and convert approved quotations instantly.</p>
-          <button class="btn btn-secondary" id="btn-empty-q-add">${getIcon('plus', '', 14)} Create Quotation</button>
+          <h3>${t('quotations.noQuotationsTitle', 'No quotations in catalog')}</h3>
+          <p>${t('quotations.noQuotationsDesc', 'Draft professional itemized service proposals. Add custom discount lines and convert approved quotations instantly.')}</p>
+          <button class="btn btn-secondary" id="btn-empty-q-add">${getIcon('plus', '', 14)} ${t('quotations.add', 'Add Quotation')}</button>
         </div>
       `;
       canvas.querySelector('#btn-empty-q-add').addEventListener('click', () => this.showQuotationDrawer());
@@ -179,9 +180,9 @@ export class QuotationsView {
           <div>
             <span class="invoice-number-label">${q.quotationNumber}</span>
             <h4 style="margin-top: 2px; font-size: 0.95rem; font-family: 'Space Grotesk', sans-serif;">${q.projectTitle}</h4>
-            <span class="stat-subtext" style="font-size: 0.72rem; display: block; margin-top: 2px;">Client: ${q.clientName}</span>
+            <span class="stat-subtext" style="font-size: 0.72rem; display: block; margin-top: 2px;">${t('labels.client', 'Client')}: ${q.clientName}</span>
           </div>
-          <span class="client-status-badge ${statusBadge}">${q.status}</span>
+          <span class="client-status-badge ${statusBadge}">${t('status.' + q.status.toLowerCase(), q.status)}</span>
         </div>
 
         <div style="margin: 12px 0;">
@@ -189,33 +190,33 @@ export class QuotationsView {
             ${itemsListHtml}
           </div>
           <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; border-top: 1px solid var(--border-subtle); padding-top: 6px;">
-            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Total Estimate:</span>
+            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">${t('quotations.totalEstimate', 'Total Estimate')}:</span>
             <span class="invoice-amount-text" style="font-size: 1.15rem; color: var(--color-secondary);">${formatCurrency(q.totalValue)}</span>
           </div>
         </div>
 
         <div style="margin-top: auto; display: flex; flex-direction: column; gap: 4px;">
-          ${q.paymentTerms ? `<div class="invoice-due-tracker" style="font-size: 0.72rem; color: var(--text-muted);"><span style="font-weight: 600;">Terms:</span> ${q.paymentTerms}</div>` : ''}
-          <span class="stat-subtext" style="font-size: 0.68rem;">Created: ${formatDate(q.createdAt)}</span>
+          ${q.paymentTerms ? `<div class="invoice-due-tracker" style="font-size: 0.72rem; color: var(--text-muted);"><span style="font-weight: 600;">${t('quotations.terms', 'Terms')}:</span> ${q.paymentTerms}</div>` : ''}
+          <span class="stat-subtext" style="font-size: 0.68rem;">${t('labels.created', 'Created')}: ${formatDate(q.createdAt)}</span>
         </div>
 
         <div class="invoice-actions-footer" style="margin-top: 12px;">
           ${q.status === 'Draft' ? `
             <button class="invoice-btn-small send-trigger" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-              ${getIcon('send', '', 12)} Send
+              ${getIcon('send', '', 12)} ${t('labels.send', 'Send')}
             </button>
           ` : ''}
           ${q.status === 'Sent' ? `
             <button class="invoice-btn-small accept-trigger" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-              ${getIcon('check', '', 12)} Accept
+              ${getIcon('check', '', 12)} ${t('quotations.accept', 'Accept')}
             </button>
             <button class="invoice-btn-small reject-trigger text-danger" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-              ${getIcon('alert', '', 12)} Reject
+              ${getIcon('alert', '', 12)} ${t('quotations.reject', 'Reject')}
             </button>
           ` : ''}
           ${q.status === 'Accepted' ? `
             <button class="invoice-btn-small convert-trigger" style="display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(139, 92, 246, 0.15); color: #a78bfa; border-color: rgba(139, 92, 246, 0.3);">
-              ${getIcon('layers', '', 12)} Launch Project
+              ${getIcon('layers', '', 12)} ${t('quotations.launchProject', 'Launch Project')}
             </button>
           ` : ''}
           <button class="invoice-btn-small edit-trigger" style="padding: 6px;">
@@ -231,7 +232,7 @@ export class QuotationsView {
       if (q.status === 'Draft') {
         card.querySelector('.send-trigger').addEventListener('click', () => {
           this.store.updateQuotation(q.id, { status: 'Sent' });
-          this.onTriggerToast(`Quotation ${q.quotationNumber} marked as Sent`);
+          this.onTriggerToast(t('quotations.toastMarkedSent', 'Quotation marked as Sent').replace('{num}', q.quotationNumber));
           this.update();
         });
       }
@@ -239,13 +240,13 @@ export class QuotationsView {
       if (q.status === 'Sent') {
         card.querySelector('.accept-trigger').addEventListener('click', () => {
           this.store.updateQuotation(q.id, { status: 'Accepted' });
-          this.onTriggerToast(`Quotation approved! Mark as Accepted`, 'text-success');
+          this.onTriggerToast(t('quotations.toastMarkedAccepted', 'Quotation approved! Mark as Accepted'), 'text-success');
           this.update();
         });
 
         card.querySelector('.reject-trigger').addEventListener('click', () => {
           this.store.updateQuotation(q.id, { status: 'Rejected' });
-          this.onTriggerToast(`Quotation ${q.quotationNumber} Rejected`, 'text-danger');
+          this.onTriggerToast(t('quotations.toastMarkedRejected', 'Quotation Rejected').replace('{num}', q.quotationNumber), 'text-danger');
           this.update();
         });
       }
@@ -254,7 +255,7 @@ export class QuotationsView {
         card.querySelector('.convert-trigger').addEventListener('click', () => {
           const proj = this.store.convertQuotationToProject(q.id);
           if (proj) {
-            this.onTriggerToast(`Project "${proj.title}" created successfully on Kanban Board!`, 'text-success');
+            this.onTriggerToast(t('quotations.toastProjectLaunched', 'Project created successfully on Kanban Board!'), 'text-success');
             window.app.switchView('kanban');
           }
         });
@@ -265,9 +266,9 @@ export class QuotationsView {
       });
 
       card.querySelector('.delete-trigger').addEventListener('click', () => {
-        if (confirm(`Remove quotation ${q.quotationNumber} permanently?`)) {
+        if (confirm(t('quotations.removeConfirm', `Remove quotation ${q.quotationNumber} permanently?`).replace('{num}', q.quotationNumber))) {
           this.store.deleteQuotation(q.id);
-          this.onTriggerToast('Quotation successfully deleted');
+          this.onTriggerToast(t('quotations.toastDeleted', 'Quotation successfully deleted'));
           this.update();
         }
       });
@@ -286,7 +287,7 @@ export class QuotationsView {
       document.body.appendChild(drawerOverlay);
     }
 
-    const modeTitle = existingQuotation ? 'Edit Quotation Details' : 'Create Quotation Proposal';
+    const modeTitle = existingQuotation ? t('quotations.editDetailsTitle', 'Edit Quotation Details') : t('quotations.createProposalTitle', 'Create Quotation Proposal');
     const qNum = existingQuotation ? existingQuotation.quotationNumber : `QT-2026-${Math.floor(100 + Math.random() * 900)}`;
     const qTitle = existingQuotation ? existingQuotation.projectTitle : '';
     const qClientId = existingQuotation ? existingQuotation.clientId : '';
@@ -308,37 +309,37 @@ export class QuotationsView {
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
               <div class="form-group">
-                <label for="q-number">Quotation Number</label>
+                <label for="q-number">${t('quotations.numberLabel', 'Quotation Number')}</label>
                 <input type="text" id="q-number" class="form-control" value="${qNum}" required readonly>
               </div>
               <div class="form-group">
-                <label for="q-status">Status</label>
+                <label for="q-status">${t('quotations.statusLabel', 'Status')}</label>
                 <select id="q-status" class="form-control">
-                  <option value="Draft" ${qStatus === 'Draft' ? 'selected' : ''}>Draft</option>
-                  <option value="Sent" ${qStatus === 'Sent' ? 'selected' : ''}>Sent (Pending)</option>
-                  <option value="Accepted" ${qStatus === 'Accepted' ? 'selected' : ''}>Accepted</option>
-                  <option value="Rejected" ${qStatus === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                  <option value="Draft" ${qStatus === 'Draft' ? 'selected' : ''}>${t('status.draft', 'Draft')}</option>
+                  <option value="Sent" ${qStatus === 'Sent' ? 'selected' : ''}>${t('status.sent', 'Sent')}</option>
+                  <option value="Accepted" ${qStatus === 'Accepted' ? 'selected' : ''}>${t('status.accepted', 'Accepted')}</option>
+                  <option value="Rejected" ${qStatus === 'Rejected' ? 'selected' : ''}>${t('status.rejected', 'Rejected')}</option>
                 </select>
               </div>
             </div>
 
             <div class="form-group">
-              <label for="q-client-select">Reference Client</label>
+              <label for="q-client-select">${t('quotations.referenceClientLabel', 'Reference Client')}</label>
               <select id="q-client-select" class="form-control" required>
-                <option value="">-- Choose Client --</option>
+                <option value="">${t('quotations.chooseClientOption', '-- Choose Client --')}</option>
                 ${clientOptions}
               </select>
             </div>
 
             <div class="form-group">
-              <label for="q-title">Proposed Project Title</label>
-              <input type="text" id="q-title" class="form-control" value="${qTitle}" placeholder="e.g. Website Redesign retainer" required>
+              <label for="q-title">${t('quotations.proposedTitleLabel', 'Proposed Project Title')}</label>
+              <input type="text" id="q-title" class="form-control" value="${qTitle}" placeholder="${t('quotations.proposedTitlePlaceholder', 'e.g. Website Redesign retainer')}" required>
             </div>
 
             <!-- Itemized list header -->
             <div style="margin-top: 18px; display: flex; align-items: center; justify-content: space-between;">
-              <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Line Items (IDR)</h4>
-              <button type="button" class="btn btn-secondary" id="btn-q-add-row" style="padding: 4px 8px; font-size: 0.72rem;">+ Add Service Item</button>
+              <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">${t('quotations.lineItemsLabel', 'Line Items (IDR)')}</h4>
+              <button type="button" class="btn btn-secondary" id="btn-q-add-row" style="padding: 4px 8px; font-size: 0.72rem;">${t('quotations.addServiceItemButton', '+ Add Service Item')}</button>
             </div>
 
             <div id="quotation-rows-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px; max-height: 180px; overflow-y: auto;">
@@ -346,23 +347,23 @@ export class QuotationsView {
             </div>
 
             <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; background: rgba(255,255,255,0.01); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-subtle);">
-              <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Quotation Total:</span>
+              <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">${t('quotations.quotationTotalLabel', 'Quotation Total:')}</span>
               <span id="quotation-running-total" style="font-weight: 700; color: var(--color-secondary); font-size: 1.1rem;">Rp0</span>
             </div>
 
             <div class="form-group" style="margin-top: 16px;">
-              <label for="q-terms">Payment Terms Description</label>
-              <input type="text" id="q-terms" class="form-control" value="${qTerms}" placeholder="e.g. 50% Down Payment upfront, 50% Final Delivery" required>
+              <label for="q-terms">${t('quotations.paymentTermsLabel', 'Payment Terms Description')}</label>
+              <input type="text" id="q-terms" class="form-control" value="${qTerms}" placeholder="${t('quotations.paymentTermsPlaceholder', 'e.g. 50% Down Payment upfront, 50% Final Delivery')}" required>
             </div>
 
             <div class="form-group">
-              <label for="q-notes">Quotation Scope & Notes</label>
-              <textarea id="q-notes" class="form-control" placeholder="Define exclusions, revisions bounds, specific terms...">${qNotes}</textarea>
+              <label for="q-notes">${t('quotations.scopeNotesLabel', 'Quotation Scope & Notes')}</label>
+              <textarea id="q-notes" class="form-control" placeholder="${t('quotations.scopeNotesPlaceholder', 'Define exclusions, revisions bounds, specific terms...')}">${qNotes}</textarea>
             </div>
 
             <div class="modal-footer" style="padding: 16px 0 0 0; border: none;">
-              <button type="button" class="btn btn-secondary" id="cancel-q-drawer">Cancel</button>
-              <button type="submit" class="btn btn-primary">Save Proposal</button>
+              <button type="button" class="btn btn-secondary" id="cancel-q-drawer">${t('cancel', 'Cancel')}</button>
+              <button type="submit" class="btn btn-primary">${t('quotations.saveProposalButton', 'Save Proposal')}</button>
             </div>
           </form>
         </div>
@@ -393,10 +394,10 @@ export class QuotationsView {
       row.style.alignItems = 'center';
 
       row.innerHTML = `
-        <input type="text" class="form-control q-item-desc" placeholder="Service description..." value="${itemData.description}" required style="padding: 6px 8px; font-size: 0.78rem;">
-        <input type="number" class="form-control q-item-qty" placeholder="Qty" value="${itemData.qty}" min="1" required style="padding: 6px 4px; font-size: 0.78rem; text-align: center;">
-        <input type="number" class="form-control q-item-price" placeholder="Price" value="${itemData.price}" min="0" required style="padding: 6px 8px; font-size: 0.78rem;">
-        <input type="number" class="form-control q-item-disc" placeholder="Disc" value="${itemData.discount}" min="0" style="padding: 6px 8px; font-size: 0.78rem;">
+        <input type="text" class="form-control q-item-desc" placeholder="${t('quotations.serviceDescPlaceholder', 'Service description...')}" value="${itemData.description}" required style="padding: 6px 8px; font-size: 0.78rem;">
+        <input type="number" class="form-control q-item-qty" placeholder="${t('quotations.qtyPlaceholder', 'Qty')}" value="${itemData.qty}" min="1" required style="padding: 6px 4px; font-size: 0.78rem; text-align: center;">
+        <input type="number" class="form-control q-item-price" placeholder="${t('quotations.pricePlaceholder', 'Price')}" value="${itemData.price}" min="0" required style="padding: 6px 8px; font-size: 0.78rem;">
+        <input type="number" class="form-control q-item-disc" placeholder="${t('quotations.discPlaceholder', 'Disc')}" value="${itemData.discount}" min="0" style="padding: 6px 8px; font-size: 0.78rem;">
         <button type="button" class="checklist-delete-btn q-row-del" style="opacity:1; padding: 6px; flex:0 0 auto;">&times;</button>
       `;
 
@@ -455,7 +456,7 @@ export class QuotationsView {
       });
 
       if (serviceItems.length === 0) {
-        alert('Please add at least one line item to the quotation estimate.');
+        alert(t('quotations.alertEmptyItems', 'Please add at least one line item to the quotation estimate.'));
         return;
       }
 
@@ -472,10 +473,10 @@ export class QuotationsView {
 
       if (existingQuotation) {
         this.store.updateQuotation(existingQuotation.id, qFields);
-        this.onTriggerToast(`Quotation ${quotationNumber} updated successfully`);
+        this.onTriggerToast(t('quotations.toastUpdated', 'Quotation {num} updated successfully').replace('{num}', quotationNumber));
       } else {
         this.store.addQuotation(qFields);
-        this.onTriggerToast(`Quotation proposal ${quotationNumber} saved successfully`);
+        this.onTriggerToast(t('quotations.toastSaved', 'Quotation proposal {num} saved successfully').replace('{num}', quotationNumber));
       }
 
       closeActions();

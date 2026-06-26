@@ -38,15 +38,11 @@ export class SidebarNav {
     headerEl.style.padding = '20px 24px';
     headerEl.style.borderBottom = '1px solid var(--border-subtle)';
     headerEl.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-        <div class="sidebar-logo" style="display: flex; align-items: center; gap: 10px;">
-          <svg width="24" height="20" viewBox="0 0 48 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: var(--text-primary); flex-shrink: 0;">
-            <path d="M16 0H32L16 40H0L16 0Z" fill="currentColor"/>
-            <path d="M26 20H35L48 40H20L26 20Z" fill="currentColor"/>
-          </svg>
-          <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.88rem; font-weight: 800; letter-spacing: 0.25em; color: var(--text-primary); text-transform: uppercase; line-height: 1; margin-left: 2px;">ΛLURKΛRYΛ</span>
+      <div style="display: flex; flex-direction: column; width: 100%;">
+        <div class="brand-logo">
+          <img src="./assets/brand/alurkarya-logo-secondary-white.svg?v=20260626" alt="AlurKarya" class="brand-logo-img" />
         </div>
-        <span style="font-size: 0.62rem; font-weight: 500; color: var(--text-muted); line-height: 1.3; font-family: 'Plus Jakarta Sans', sans-serif; display: block; letter-spacing: 0.01em;">
+        <span class="sidebar-tagline">
           ${t('sidebar.tagline', 'Manage freelance projects from client to paid.')}
         </span>
       </div>
