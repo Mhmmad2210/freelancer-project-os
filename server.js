@@ -22,6 +22,7 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
+  console.log(`[DevServer] Request: ${req.method} ${req.url}`);
   // Decode URL, separate query parameters
   const urlPath = decodeURIComponent(req.url.split('?')[0]);
   let filePath = path.join(path.resolve(BASE_DIR), urlPath);
@@ -35,7 +36,10 @@ const server = http.createServer((req, res) => {
   if (!fs.existsSync(filePath)) {
     const ext = path.extname(urlPath);
     if (!ext || ext === '.html') {
+      console.log(`[DevServer] SPA Fallback: serving index.html for ${urlPath}`);
       filePath = path.join(path.resolve(BASE_DIR), 'index.html');
+    } else {
+      console.log(`[DevServer] File Not Found: ${filePath}`);
     }
   }
 

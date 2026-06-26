@@ -133,32 +133,7 @@ export class KanbanBoard {
     return onboardingEl;
   }
 
-    // Event listeners
-    onboardingEl.querySelector('#onboarding-btn-add').addEventListener('click', () => {
-      this.showNewProjectDrawer();
-    });
 
-    onboardingEl.querySelector('#onboarding-btn-diagnose').addEventListener('click', () => {
-      if (window.app && typeof window.app.openDiagnoseModal === 'function') {
-        window.app.openDiagnoseModal();
-      }
-    });
-
-    onboardingEl.querySelector('#onboarding-btn-demo').addEventListener('click', () => {
-      if (confirm("This will load non-destructive demo projects to your workspace. Existing projects will not be deleted. Proceed?")) {
-        this.store.addDemoProjectsNonDestructively();
-        this.onTriggerToast("Demo projects loaded successfully.", "text-success");
-        this.update();
-      }
-    });
-
-    onboardingEl.querySelector('.onboarding-close-btn').addEventListener('click', () => {
-      onboardingEl.style.display = 'none';
-      localStorage.setItem('alurkarya_onboarding_dismissed', 'true');
-    });
-
-    return onboardingEl;
-  }
 
   createDiagnoseResultCard(result) {
     const card = document.createElement('div');

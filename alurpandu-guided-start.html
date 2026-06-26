@@ -1825,51 +1825,25 @@
             </div>
           </div>
 
-          <!-- Profile Setup Panel -->
-          <div class="profile-setup-container">
-            <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+          <!-- Profile Setup Panel Replacement: Compact Guide Card -->
+          <div class="profile-setup-container" style="background: rgba(139, 92, 246, 0.04); border: 1px solid rgba(139, 92, 246, 0.2); padding: 20px; border-radius: var(--border-radius-lg); margin-top: 24px;">
+            <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0; display: flex; align-items: center; gap: 8px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-secondary);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              <span id="profile_panel_title" data-i18n="profile_panel_title">Set Up Your Freelancer Profile</span>
+              <span id="profile_card_title" data-i18n="profile_card_title">Lengkapi Freelancer Profile di AlurKarya</span>
             </h4>
-            <p class="panel-subtitle" id="profile_panel_subtitle" data-i18n="profile_panel_subtitle">Fill in your professional details to personalize your workspace branding.</p>
+            <p id="profile_card_copy" data-i18n="profile_card_copy" style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 16px 0;">
+              Profil ini akan tampil di sidebar dan Client Workspace Portal. Isi nama, role, portfolio, dan bio langsung dari menu Freelancer Profile di AlurKarya.
+            </p>
             
-            <form id="profile-edit-form" onsubmit="saveFreelancerProfile(event)" class="profile-form-grid">
-              <div class="form-group">
-                <label class="form-label" for="profile-name-input" id="lbl-profile-name" data-i18n="lbl_profile_name">Name</label>
-                <input type="text" id="profile-name-input" class="form-input" data-i18n-placeholder="placeholder_name" placeholder="e.g. Aris Aulia">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="profile-role-input" id="lbl-profile-role" data-i18n="lbl_profile_role">Role / Specialty</label>
-                <input type="text" id="profile-role-input" class="form-input" data-i18n-placeholder="placeholder_role" placeholder="e.g. UI/UX Designer">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="profile-email-input" id="lbl-profile-email" data-i18n="lbl_profile_email">Email</label>
-                <input type="email" id="profile-email-input" class="form-input" placeholder="e.g. contact@domain.com">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="profile-location-input" id="lbl-profile-location" data-i18n="lbl_profile_location">Location</label>
-                <input type="text" id="profile-location-input" class="form-input" placeholder="e.g. Jakarta, Indonesia">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="profile-portfolio-input" id="lbl-profile-portfolio" data-i18n="lbl_profile_portfolio">Portfolio Link</label>
-                <input type="url" id="profile-portfolio-input" class="form-input" placeholder="e.g. https://behance.net/username">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="profile-avatar-input" id="lbl-profile-avatar" data-i18n="lbl_profile_avatar">Avatar URL</label>
-                <input type="url" id="profile-avatar-input" class="form-input" placeholder="e.g. https://images.unsplash.com/photo-...">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="profile-initials-input" id="lbl-profile-initials" data-i18n="lbl_profile_initials">Initials (Optional)</label>
-                <input type="text" id="profile-initials-input" class="form-input" placeholder="e.g. AA" maxlength="3">
-              </div>
-              <div class="form-group form-group-full">
-                <label class="form-label" for="profile-bio-input" id="lbl-profile-bio" data-i18n="lbl_profile_bio">Bio</label>
-                <textarea id="profile-bio-input" class="form-textarea" data-i18n-placeholder="placeholder_bio" placeholder="Describe your freelance services..."></textarea>
-              </div>
-              <div class="form-group form-group-full" style="display: flex; justify-content: flex-end; margin-top: 8px;">
-                <button type="submit" class="btn btn-primary" id="btn-save-profile" data-i18n="btn_save_profile">Save Profile</button>
-              </div>
-            </form>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
+              <button onclick="openParentProfile()" class="btn btn-primary" id="btn-open-profile" data-i18n="btn_open_profile" style="font-size: 0.8rem; padding: 8px 16px; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">Buka Freelancer Profile</button>
+              <a href="#flow-map" class="btn btn-secondary" id="btn-continue-setup" data-i18n="btn_continue_setup" style="font-size: 0.8rem; padding: 8px 16px; text-decoration: none; display: inline-flex; align-items: center;">Lanjut Setup Project</a>
+            </div>
+            
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 10px 14px; border-radius: var(--border-radius-sm); font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+              <span>ℹ️</span>
+              <span id="profile_helper_copy" data-i18n="profile_helper_copy">Buka AlurKarya → pilih profile card di sidebar → lengkapi profil Anda.</span>
+            </div>
           </div>
         </section>        <!-- Section 4: Alur Utama -->
         <section id="flow-map" class="section-anchor dashboard-panel">
@@ -2453,7 +2427,7 @@
         setup_headline: "First setup in 15 minutes",
         setup_subtitle: "Complete the following basic steps to activate your AlurKarya workspace:",
         setup_progress_title: "Setup Progress",
-        setup_item_0: "Fill Freelancer Profile",
+        setup_item_0: "Complete Freelancer Profile (Optional)",
         setup_item_1: "Choose role template",
         setup_item_2: "Add first client",
         setup_item_3: "Create first active project",
@@ -2463,20 +2437,11 @@
         setup_item_7: "Save important links",
         setup_item_8: "Check Client Portal Preview",
         setup_item_9: "Prepare first client update",
-        profile_panel_title: "Set Up Your Freelancer Profile",
-        profile_panel_subtitle: "Fill in your professional details to personalize your workspace branding.",
-        lbl_profile_name: "Name",
-        placeholder_name: "e.g. Aris Aulia",
-        lbl_profile_role: "Role / Specialty",
-        placeholder_role: "e.g. UI/UX Designer",
-        lbl_profile_email: "Email",
-        lbl_profile_location: "Location",
-        lbl_profile_portfolio: "Portfolio Link",
-        lbl_profile_avatar: "Avatar URL",
-        lbl_profile_initials: "Initials (Optional)",
-        lbl_profile_bio: "Bio",
-        placeholder_bio: "Describe your freelance services...",
-        btn_save_profile: "Save Profile",
+        profile_card_title: "Complete Freelancer Profile in AlurKarya",
+        profile_card_copy: "This profile will be displayed in the sidebar and Client Workspace Portal. Fill in your name, role, portfolio, and bio directly from the Freelancer Profile menu in AlurKarya.",
+        btn_open_profile: "Open Freelancer Profile",
+        btn_continue_setup: "Continue Project Setup",
+        profile_helper_copy: "Open AlurKarya → select profile card in sidebar → complete your profile.",
         flow_headline: "AlurKarya Main Workflow",
         flow_subtitle: "Each project should have a clear status so you know what needs to be done, who needs follow-up, and what is pending.",
         role_headline: "Choose template matching your workflow",
@@ -2588,7 +2553,7 @@
         setup_headline: "Setup awal dalam 15 menit",
         setup_subtitle: "Selesaikan langkah-langkah dasar berikut untuk mengaktifkan workspace AlurKarya Anda:",
         setup_progress_title: "Progres Setup",
-        setup_item_0: "Isi Profil Freelancer",
+        setup_item_0: "Lengkapi Profil Freelancer (Opsional)",
         setup_item_1: "Pilih role template",
         setup_item_2: "Tambahkan client pertama",
         setup_item_3: "Buat project aktif pertama",
@@ -2598,20 +2563,11 @@
         setup_item_7: "Simpan link penting",
         setup_item_8: "Cek Client Portal Preview",
         setup_item_9: "Siapkan update pertama untuk client",
-        profile_panel_title: "Atur Profil Freelancer Anda",
-        profile_panel_subtitle: "Isi detail profesional Anda untuk mempersonalisasi branding workspace Anda.",
-        lbl_profile_name: "Nama",
-        placeholder_name: "mis. Aris Aulia",
-        lbl_profile_role: "Peran / Spesialisasi",
-        placeholder_role: "mis. UI/UX Designer",
-        lbl_profile_email: "Email",
-        lbl_profile_location: "Lokasi",
-        lbl_profile_portfolio: "Tautan Portofolio",
-        lbl_profile_avatar: "URL Avatar",
-        lbl_profile_initials: "Inisial (Opsional)",
-        lbl_profile_bio: "Bio",
-        placeholder_bio: "Jelaskan layanan freelance Anda...",
-        btn_save_profile: "Simpan Profil",
+        profile_card_title: "Lengkapi Freelancer Profile di AlurKarya",
+        profile_card_copy: "Profil ini akan tampil di sidebar dan Client Workspace Portal. Isi nama, role, portfolio, dan bio langsung dari menu Freelancer Profile di AlurKarya.",
+        btn_open_profile: "Buka Freelancer Profile",
+        btn_continue_setup: "Lanjut Setup Project",
+        profile_helper_copy: "Buka AlurKarya → pilih profile card di sidebar → lengkapi profil Anda.",
         flow_headline: "Alur Utama AlurKarya",
         flow_subtitle: "Setiap project sebaiknya punya status yang jelas agar Anda tahu apa yang harus dikerjakan, siapa yang harus ditindaklanjuti, dan apa yang belum selesai.",
         role_headline: "Pilih template sesuai cara kerja Anda",
@@ -2835,81 +2791,23 @@
         console.error("Failed to load profile:", e);
       }
 
-      // Fill form inputs
-      const nameInput = document.getElementById('profile-name-input');
-      const roleInput = document.getElementById('profile-role-input');
-      const emailInput = document.getElementById('profile-email-input');
-      const locationInput = document.getElementById('profile-location-input');
-      const bioInput = document.getElementById('profile-bio-input');
-      const portfolioInput = document.getElementById('profile-portfolio-input');
-      const avatarInput = document.getElementById('profile-avatar-input');
-      const initialsInput = document.getElementById('profile-initials-input');
-
-      if (nameInput) nameInput.value = profile.freelancerName || '';
-      if (roleInput) roleInput.value = profile.freelancerRole || '';
-      if (emailInput) emailInput.value = profile.freelancerEmail || '';
-      if (locationInput) locationInput.value = profile.freelancerLocation || '';
-      if (bioInput) bioInput.value = profile.freelancerBio || '';
-      if (portfolioInput) portfolioInput.value = profile.freelancerPortfolioLink || '';
-      if (avatarInput) avatarInput.value = profile.freelancerAvatar || '';
-      if (initialsInput) initialsInput.value = profile.freelancerInitials || '';
-
       updateProfileUI(profile);
     }
 
-    function saveFreelancerProfile(e) {
-      if (e) e.preventDefault();
-
-      const nameInput = document.getElementById('profile-name-input');
-      const roleInput = document.getElementById('profile-role-input');
-      const emailInput = document.getElementById('profile-email-input');
-      const locationInput = document.getElementById('profile-location-input');
-      const bioInput = document.getElementById('profile-bio-input');
-      const portfolioInput = document.getElementById('profile-portfolio-input');
-      const avatarInput = document.getElementById('profile-avatar-input');
-      const initialsInput = document.getElementById('profile-initials-input');
-
-      const name = nameInput ? nameInput.value.trim() : '';
-      const role = roleInput ? roleInput.value.trim() : '';
-      const email = emailInput ? emailInput.value.trim() : '';
-      const location = locationInput ? locationInput.value.trim() : '';
-      const bio = bioInput ? bioInput.value.trim() : '';
-      const portfolio = portfolioInput ? portfolioInput.value.trim() : '';
-      const avatar = avatarInput ? avatarInput.value.trim() : '';
-      let initials = initialsInput ? initialsInput.value.trim() : '';
-
-      if (!initials && name) {
-        initials = generateInitials(name);
-        if (initialsInput) initialsInput.value = initials;
-      }
-
-      const profile = {
-        freelancerName: name,
-        freelancerRole: role,
-        freelancerInitials: initials,
-        freelancerAvatar: avatar,
-        freelancerEmail: email,
-        freelancerBio: bio,
-        freelancerPortfolioLink: portfolio,
-        freelancerLocation: location
-      };
-
-      localStorage.setItem('alurkarya_freelancer_profile', JSON.stringify(profile));
-
-      // Update Sidebar UI immediately
-      updateProfileUI(profile);
-
-      // Auto-check checklist step 0 ("Fill Freelancer Profile") if profile Name & Role are provided
-      if (name && role) {
-        if (!checklistStates[0]) {
-          toggleChecklist(0);
+    function openParentProfile() {
+      if (window.opener && !window.opener.closed) {
+        try {
+          if (window.opener.app && typeof window.opener.app.switchView === 'function') {
+            window.opener.app.switchView('profile');
+            window.opener.focus();
+            showToast(getLanguage() === 'id' ? "Navigasi ke profil di AlurKarya berhasil." : "Navigated to profile in AlurKarya.");
+            return;
+          }
+        } catch (e) {
+          console.warn("Could not navigate opener directly:", e);
         }
       }
-
-      // Show Toast
-      const currentLang = getLanguage();
-      const toastMsg = currentLang === 'id' ? "Profil berhasil diperbarui." : "Profile updated.";
-      showToast(toastMsg);
+      showToast(getLanguage() === 'id' ? "Gunakan petunjuk bantuan manual di bawah tombol." : "Please use the manual helper instructions under the button.");
     }
 
     // --- Dynamic Flow Stages ---
@@ -3377,11 +3275,7 @@ Seluruh berkas serah terima final, source file mentah, dan dokumentasi pendukung
       // 4. Render all UI elements with appropriate translations
       renderLanguage();
 
-      // Bind profile edit form submit handler
-      const profileForm = document.getElementById('profile-edit-form');
-      if (profileForm) {
-        profileForm.addEventListener('submit', saveFreelancerProfile);
-      }
+
     });
   </script>
 </body>
