@@ -2553,8 +2553,8 @@ body.no-scroll {
   min-height: 100vh;
   min-height: 100svh;
   background:
-    radial-gradient(circle at 50% 20%, rgba(124, 92, 255, 0.12), transparent 28%),
-    radial-gradient(circle at 80% 80%, rgba(31, 214, 255, 0.06), transparent 26%),
+    radial-gradient(circle at 50% 18%, rgba(124, 92, 255, 0.12), transparent 28%),
+    radial-gradient(circle at 80% 80%, rgba(31, 214, 255, 0.055), transparent 28%),
     #070b13;
   color: #f8fafc;
   padding: 32px;
@@ -2634,41 +2634,53 @@ body.no-scroll {
   box-sizing: border-box;
 }
 
-.client-mode-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.05) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  display: flex;
+.client-empty-brand {
+  text-align: center;
+}
+
+.client-empty-logo {
+  width: 220px;
+  max-width: 70vw;
+  height: auto;
+  display: block;
+  margin: 0 auto 24px;
+  object-fit: contain;
+}
+
+.client-empty-badge {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 28px;
+  margin-bottom: 28px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(157, 110, 255, 0.35);
+  background: rgba(124, 92, 255, 0.14);
   color: #b995ff;
-  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .client-mode-empty-card h1 {
-  margin: 0 0 14px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 800;
-  font-size: clamp(1.7rem, 3vw, 2.6rem);
-  letter-spacing: -0.04em;
-  color: #ffffff;
+  margin: 0 0 18px;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.05em;
 }
 
 .client-mode-empty-card p {
-  max-width: 620px;
+  max-width: 640px;
   margin: 0 auto;
-  color: rgba(248,250,252,0.72);
+  color: rgba(248, 250, 252, 0.74);
   font-size: 1.05rem;
   line-height: 1.65;
 }
 
 .client-mode-note {
-  margin-top: 24px !important;
+  margin-top: 22px !important;
+  color: rgba(248, 250, 252, 0.54) !important;
   font-size: 0.92rem !important;
-  color: rgba(248,250,252,0.48) !important;
 }
 
 @media (max-width: 768px) {
@@ -2685,6 +2697,26 @@ body.no-scroll {
   }
   .client-mode-logo {
     width: 150px;
+  }
+}
+
+@media (max-width: 580px) {
+  .client-empty-logo {
+    width: 168px;
+    margin-bottom: 20px;
+  }
+
+  .client-mode-empty-card {
+    padding: 42px 22px;
+    border-radius: 26px;
+  }
+
+  .client-mode-empty-card h1 {
+    font-size: 2rem;
+  }
+
+  .client-mode-empty-card p {
+    font-size: 0.96rem;
   }
 }
 
