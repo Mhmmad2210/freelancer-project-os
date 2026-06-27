@@ -2466,5 +2466,87 @@ body.no-scroll {
   color: #fff;
 }
 
+/* --- Entry Role Selection Screen Visual Alignment --- */
+.role-selection-screen {
+  min-height: 100vh;
+  min-height: 100svh;
+  width: 100%;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(124, 92, 255, 0.10), transparent 28%),
+    #0b0f17;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  box-sizing: border-box;
+}
+
+.role-selection-inner {
+  width: min(100%, 520px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-24px);
+  box-sizing: border-box;
+}
+
+.role-selection-logo {
+  width: 360px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 96px;
+  display: block;
+}
+
+.role-selection-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.role-selection-btn {
+  width: 346px;
+  max-width: calc(100vw - 56px);
+  min-height: 58px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 22px;
+  background: rgba(42, 34, 58, 0.92);
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+.role-selection-btn:hover {
+  background: rgba(58, 46, 78, 0.96);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.role-selection-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 580px) {
+  .role-selection-logo {
+    width: 240px;
+    margin-bottom: 72px;
+  }
+  .role-selection-btn {
+    width: 280px;
+    font-size: 1.1rem;
+    min-height: 48px;
+  }
+}
+
 
 

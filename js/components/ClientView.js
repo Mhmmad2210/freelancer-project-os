@@ -336,23 +336,18 @@ export class ClientProjectView {
 
     // Empty States
     if (isClientMode) {
-      if (projects.length === 0) {
-        const emptyState = document.createElement('div');
-        emptyState.className = 'empty-state-box';
-        emptyState.style.marginTop = '40px';
-        emptyState.innerHTML = `
-          <div style="font-size: 3rem; margin-bottom: 16px;">💼</div>
-          <h3 style="margin-top: 16px; font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">
-            ${t('entryMode.noProjectTitle', 'No client project is available in this browser yet.')}
-          </h3>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 420px; margin: 8px auto 24px auto;">
-            ${t('entryMode.noProjectDesc', 'Please open the project link shared by your freelancer.')}
-          </p>
-        `;
-        viewEl.appendChild(emptyState);
-        this.container.appendChild(viewEl);
-        return;
-      }
+      const emptyState = document.createElement('div');
+      emptyState.className = 'empty-state-box';
+      emptyState.style.marginTop = '60px';
+      emptyState.innerHTML = `
+        <div style="font-size: 3rem; margin-bottom: 20px; filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.3));">💼</div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; line-height: 1.5; max-width: 480px; margin-left: auto; margin-right: auto;">
+          ${isIndo ? 'Buka link briefing yang dikirim oleh freelancer untuk melihat update project.' : 'Paste or open the briefing link sent by your freelancer.'}
+        </h3>
+      `;
+      viewEl.appendChild(emptyState);
+      this.container.appendChild(viewEl);
+      return;
     } else {
       if (clients.length === 0) {
         const emptyState = document.createElement('div');
