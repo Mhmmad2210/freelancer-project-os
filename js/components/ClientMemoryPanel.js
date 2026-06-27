@@ -265,22 +265,22 @@ export class ClientMemoryPanel {
               <div class="memory-section-card">
                 <div class="form-group">
                   <label for="mem-app-style">${t('clientMemory.approvalStyle', 'Approval Style')}</label>
-                  <input type="text" id="mem-app-style" class="form-control" value="${memory.approvalStyle || ''}" placeholder="${t('clientMemory.placeholders.approval', 'e.g. Explicit email OK, verbal signoff, needs PDF review form...')}">
+                  <input type="text" id="mem-app-style" class="form-control" value="${memory.approvalStyle || ''}" placeholder="${t('clientMemory.placeholders.approval', 'e.g. email approval, verbal signoff, PDF form required...')}">
                 </div>
                 
                 <div class="form-group" style="margin-top: 14px;">
                   <label for="mem-rev-pattern">${t('clientMemory.revisionPattern', 'Revision Pattern')}</label>
-                  <textarea id="mem-rev-pattern" class="form-control" style="min-height: 80px;" placeholder="${t('clientMemory.placeholders.revision', 'Expected feedback style (e.g., detail-oriented, requests layout changes late, minimal edits needed)...')}">${memory.revisionPattern || ''}</textarea>
+                  <textarea id="mem-rev-pattern" class="form-control" style="min-height: 80px;" placeholder="${t('clientMemory.placeholders.revision', 'Feedback pattern, e.g. very detailed, layout changes late, minor revisions...')}">${memory.revisionPattern || ''}</textarea>
                 </div>
 
                 <div class="form-group" style="margin-top: 14px;">
                   <label for="mem-feedback-notes">${t('clientMemory.commonFeedbackNotes', 'Common Feedback Notes')}</label>
-                  <textarea id="mem-feedback-notes" class="form-control" style="min-height: 70px;" placeholder="${t('clientMemory.placeholders.feedback', 'Recurring feedback patterns or preferences (e.g. Dislikes pastel colors, always wants larger text)...')}">${memory.commonFeedbackNotes || ''}</textarea>
+                  <textarea id="mem-feedback-notes" class="form-control" style="min-height: 70px;" placeholder="${t('clientMemory.placeholders.feedback', 'Recurring feedback, e.g. dislikes pastel colors, often asks for larger text...')}">${memory.commonFeedbackNotes || ''}</textarea>
                 </div>
 
                 <div class="form-group" style="margin-top: 14px;">
-                  <label for="mem-rev-boundary">${t('clientMemory.revisionBoundaryNotes', 'Revision Boundary Notes')}</label>
-                  <textarea id="mem-rev-boundary" class="form-control" style="min-height: 70px;" placeholder="${t('clientMemory.placeholders.boundary', 'Notes on scope limits and how client responds to extra revision pricing...')}">${memory.revisionBoundaryNotes || ''}</textarea>
+                  <label for="mem-rev-boundary">${t('clientMemory.revisionBoundary', 'Revision Boundary')}</label>
+                  <textarea id="mem-rev-boundary" class="form-control" style="min-height: 70px;" placeholder="${t('clientMemory.placeholders.boundary', 'Revision limits and client response to additional revision fees...')}">${memory.revisionBoundaryNotes || ''}</textarea>
                 </div>
               </div>
             </div>
@@ -301,18 +301,18 @@ export class ClientMemoryPanel {
                   </div>
                   
                   <div class="form-group">
-                    <label for="mem-pay-timing">${t('clientMemory.usualPaymentTiming', 'Usual Payment Timing')}</label>
-                    <input type="text" id="mem-pay-timing" class="form-control" value="${memory.usualPaymentTiming || ''}" placeholder="${t('clientMemory.placeholders.payTiming', 'e.g. Net 15, same day, 1 week late...')}">
+                    <label for="mem-pay-timing">${t('clientMemory.paymentTerms', 'Payment Terms')}</label>
+                    <input type="text" id="mem-pay-timing" class="form-control" value="${memory.usualPaymentTiming || ''}" placeholder="${t('clientMemory.placeholders.payTiming', 'e.g. 50% upfront, 50% after delivery, net 7...')}">
                   </div>
                 </div>
 
                 <div class="form-group" style="margin-top: 14px;">
-                  <label for="mem-pay-behavior">${t('clientMemory.paymentBehaviorSummary', 'Payment Behavior Summary')}</label>
-                  <textarea id="mem-pay-behavior" class="form-control" style="min-height: 80px;" placeholder="${t('clientMemory.placeholders.payBehavior', 'e.g. Requires follow-up, fast payer, ignores first invoice but pays on reminder...')}">${memory.paymentBehavior || ''}</textarea>
+                  <label for="mem-pay-behavior">${t('clientMemory.paymentBehaviorField', 'Payment Behavior')}</label>
+                  <textarea id="mem-pay-behavior" class="form-control" style="min-height: 80px;" placeholder="${t('clientMemory.placeholders.payBehavior', 'Payment pattern, e.g. fast payer, needs reminder, pays after approval...')}">${memory.paymentBehavior || ''}</textarea>
                 </div>
 
                 <div class="form-group" style="margin-top: 14px;">
-                  <label for="mem-pay-notes">${t('clientMemory.internalPaymentNotes', 'Internal Payment Notes')}</label>
+                  <label for="mem-pay-notes">${t('clientMemory.paymentNotes', 'Payment Notes')}</label>
                   <textarea id="mem-pay-notes" class="form-control" style="min-height: 80px;" placeholder="${t('clientMemory.placeholders.payNotes', 'Bank preferences, specific tax numbers, invoice processing delays context...')}">${memory.paymentNotes || ''}</textarea>
                 </div>
               </div>
@@ -323,18 +323,18 @@ export class ClientMemoryPanel {
               <div class="memory-section-card">
                 <div class="memory-grid-2">
                   <div class="form-group">
-                    <label for="mem-file-pref">${t('clientMemory.fileFormatPreference', 'File Format Preference')}</label>
-                    <input type="text" id="mem-file-pref" class="form-control" value="${memory.filePreference || ''}" placeholder="${t('clientMemory.placeholders.filePref', 'e.g. Figma source, SVG, MP4, PDF print-ready...')}">
+                    <label for="mem-file-pref">${t('clientMemory.deliveryFormat', 'Delivery Format')}</label>
+                    <input type="text" id="mem-file-pref" class="form-control" value="${memory.filePreference || ''}" placeholder="${t('clientMemory.placeholders.filePref', 'Preferred delivery format, e.g. Google Drive, Figma, PDF, ZIP...')}">
                   </div>
                   
                   <div class="form-group">
-                    <label for="mem-folder-pref">${t('clientMemory.preferredFolder', 'Preferred Folder / Sharing Method')}</label>
-                    <input type="text" id="mem-folder-pref" class="form-control" value="${memory.folderLinkMethod || ''}" placeholder="${t('clientMemory.placeholders.folderPref', 'e.g. Google Drive link, GitHub PR, WeTransfer...')}">
+                    <label for="mem-folder-pref">${t('clientMemory.filePreference', 'File Preference')}</label>
+                    <input type="text" id="mem-folder-pref" class="form-control" value="${memory.folderLinkMethod || ''}" placeholder="${t('clientMemory.placeholders.folderPref', 'Preferred file structure, naming, or folder format...')}">
                   </div>
                 </div>
 
                 <div class="form-group" style="margin-top: 14px;">
-                  <label for="mem-del-pref">${t('clientMemory.deliveryStyleNotes', 'Delivery Style Notes')}</label>
+                  <label for="mem-del-pref">${t('clientMemory.deliveryNotes', 'Delivery Notes')}</label>
                   <textarea id="mem-del-pref" class="form-control" style="min-height: 80px;" placeholder="${t('clientMemory.placeholders.deliveryNotes', 'Detailed handover delivery preferences...')}">${memory.deliveryPreference || ''}</textarea>
                 </div>
 
@@ -374,8 +374,8 @@ export class ClientMemoryPanel {
                 </div>
 
                 <div class="form-group" style="margin-top: 14px;">
-                  <label for="mem-notes">${t('clientMemory.importantRelationshipNotes', 'Important Relationship Notes')}</label>
-                  <textarea id="mem-notes" class="form-control" style="min-height: 80px;" placeholder="${t('clientMemory.placeholders.relationship', 'Personal context, how we met, references to check...')}">${memory.importantNotes || ''}</textarea>
+                  <label for="mem-notes">${t('clientMemory.importantNotes', 'Important Notes')}</label>
+                  <textarea id="mem-notes" class="form-control" style="min-height: 80px;" placeholder="${t('clientMemory.placeholders.relationship', 'General relationship context and collaboration notes...')}">${memory.importantNotes || ''}</textarea>
                 </div>
 
                 <div class="form-group" style="margin-top: 14px;">
