@@ -3,6 +3,7 @@
    ========================================================================== */
 
 import { buildPromptContext } from '../utils/promptContext.js';
+import { buildClientDashboardData } from '../utils/clientSafeData.js';
 import { t, getLanguage } from '../i18n.js';
 import { formatMoney } from '../utils.js';
 
@@ -123,67 +124,58 @@ export const promptTemplates = {
     outputMode: "client_message",
     requiredContext: ["projectTitle", "clientName", "stage"],
     generate: (project, clientMemory, tone = 'Professional', freelancerProfile = null, targetLang = 'en') => {
-      const ctx = buildPromptContext(project, { clientMemory }, freelancerProfile, { mode: 'client-facing' });
-      const stageName = targetLang === 'id' ? t('kanban.stages.' + ctx.stage, ctx.stage) : ctx.stage;
+      const safeData = buildClientDashboardData(project, {}, freelancerProfile, { language: targetLang });
+      const bigPicture = safeData.bigPicture;
+      
+      const isIndo = targetLang === 'id';
+      const clientName = safeData.client.name || (isIndo ? "[Nama Client]" : "[Client Name]");
+      const projectTitle = safeData.project.title || (isIndo ? "[Nama Project]" : "[Project Name]");
+      
+      const reviewLink = safeData.delivery.reviewLink || safeData.delivery.previewLink || safeData.delivery.draftLink || "";
+      const finalFileLink = safeData.delivery.finalFileLink || "";
+      
+      const isPaymentStage = ['invoice_sent', 'waiting_payment', 'completed'].includes(bigPicture.overallStatus);
+      let billingNote = "";
+      if (isPaymentStage) {
+        billingNote = isIndo
+          ? `Invoice & Pembayaran: ${safeData.invoice.paymentStatus} (Sisa Tagihan: ${safeData.invoice.amountDueLabel})`
+          : `Invoice & Payment: ${safeData.invoice.paymentStatus} (Amount Due: ${safeData.invoice.amountDueLabel})`;
+      }
 
-      if (targetLang === 'id') {
-        let updateText = `Halo ${ctx.clientName},\n\nBerikut adalah pembaruan singkat mengenai perkembangan proyek '${ctx.projectTitle}':\n\n`;
-        updateText += `• Tahap Saat Ini: ${stageName}\n`;
-        updateText += `• Langkah Berikutnya: ${ctx.nextAction}\n`;
-        if (ctx.previewLink && ctx.previewLink !== "[Preview Link]") {
-          updateText += `• Link Peninjauan: Anda dapat meninjau hasil pekerjaan terbaru di sini: ${ctx.previewLink}\n`;
+      if (isIndo) {
+        let msg = `Halo ${clientName},\n\n`;
+        msg += `Berikut adalah update perkembangan untuk project ${projectTitle}:\n\n`;
+        msg += `Status: ${bigPicture.overallStatusLabel}\n`;
+        msg += `Ringkasan: ${bigPicture.overviewSummary}\n\n`;
+        msg += `Action yang Dibutuhkan: ${bigPicture.decisionNeeded}\n`;
+        if (reviewLink) {
+          msg += `Link Review: ${reviewLink}\n`;
         }
-        if (ctx.deadline && ctx.deadline !== "[Due Date]") {
-          updateText += `• Target Tenggat Waktu: ${ctx.deadline}\n`;
+        if (finalFileLink) {
+          msg += `Link Delivery: ${finalFileLink}\n`;
         }
-        updateText += `\nBeri tahu saya jika Anda memiliki pertanyaan atau masukan. Terima kasih!\n\nSalam hangat,\n${ctx.freelancerName || 'Freelancer'}`;
-        
-        if (tone === 'Concise') {
-          return `Update untuk ${ctx.clientName} pada '${ctx.projectTitle}': Tahap adalah ${stageName}. Langkah berikutnya: ${ctx.nextAction}. Peninjauan: ${ctx.previewLink || 'Tidak ada'}. Tenggat: ${ctx.deadline || 'Tidak ada'}.`;
+        if (billingNote) {
+          msg += `${billingNote}\n`;
         }
-        if (tone === 'Warm') {
-          updateText = `Halo ${ctx.clientName}! Semoga Anda dalam keadaan baik. 🌟 Hanya ingin membagikan kabar perkembangan proyek '${ctx.projectTitle}':\n\n` +
-            `• Saat ini kami berada di tahap: ${stageName}\n` +
-            `• Langkah berikutnya adalah: ${ctx.nextAction}\n` +
-            (ctx.previewLink && ctx.previewLink !== "[Preview Link]" ? `• Link peninjauan: ${ctx.previewLink}\n` : "") +
-            `\nSemoga hari Anda menyenangkan! Salam hangat, ${ctx.freelancerName || 'Freelancer'}`;
-        }
-        if (tone === 'Firm') {
-          updateText = `Halo ${ctx.clientName},\n\nIni adalah laporan status untuk proyek '${ctx.projectTitle}'.\n- Tahap: ${stageName}\n- Langkah Berikutnya: ${ctx.nextAction}\n- Tenggat Waktu: ${ctx.deadline}\n\nSilakan tinjau dan beri tahu saya jika ada penyesuaian segera agar kita tetap sesuai jadwal.`;
-        }
-        if (tone === 'Friendly') {
-          updateText = `Hi ${ctx.clientName}!\n\nUpdate singkat untuk perkembangan proyek '${ctx.projectTitle}':\n- Tahap: ${stageName}\n- Berikutnya: ${ctx.nextAction}\n${ctx.previewLink && ctx.previewLink !== "[Preview Link]" ? `- Link peninjauan: ${ctx.previewLink}\n` : ""}Semoga harimu menyenangkan!\n- ${ctx.freelancerName || 'Freelancer'}`;
-        }
-        return updateText;
+        msg += `\nTerima kasih atas kerja samanya!`;
+        return msg;
       } else {
-        let updateText = `Hi ${ctx.clientName},\n\nHere is a quick update on where we stand with '${ctx.projectTitle}':\n\n`;
-        updateText += `• Current Stage: ${ctx.stage}\n`;
-        updateText += `• Next Action: ${ctx.nextAction}\n`;
-        if (ctx.previewLink && ctx.previewLink !== "[Preview Link]") {
-          updateText += `• Review Link: You can preview the latest work here: ${ctx.previewLink}\n`;
+        let msg = `Hi ${clientName},\n\n`;
+        msg += `Here is a quick update for ${projectTitle}:\n\n`;
+        msg += `Status: ${bigPicture.overallStatusLabel}\n`;
+        msg += `Summary: ${bigPicture.overviewSummary}\n\n`;
+        msg += `Action Needed: ${bigPicture.decisionNeeded}\n`;
+        if (reviewLink) {
+          msg += `Review Link: ${reviewLink}\n`;
         }
-        if (ctx.deadline && ctx.deadline !== "[Due Date]") {
-          updateText += `• Target Deadline: ${ctx.deadline}\n`;
+        if (finalFileLink) {
+          msg += `Delivery Link: ${finalFileLink}\n`;
         }
-        updateText += `\nLet me know if you have any questions or feedback. Thanks!\n\nBest,\n${ctx.freelancerName || 'Freelancer'}`;
-        
-        if (tone === 'Concise') {
-          return `Update for ${ctx.clientName} on '${ctx.projectTitle}': Stage is ${ctx.stage}. Next action: ${ctx.nextAction}. Preview: ${ctx.previewLink || 'N/A'}. Due: ${ctx.deadline || 'N/A'}.`;
+        if (billingNote) {
+          msg += `${billingNote}\n`;
         }
-        if (tone === 'Warm') {
-          updateText = `Hello ${ctx.clientName}! Hope you're doing great. 🌟 Just wanted to share a friendly update on '${ctx.projectTitle}':\n\n` +
-            `• We are currently in: ${ctx.stage}\n` +
-            `• Next step is: ${ctx.nextAction}\n` +
-            (ctx.previewLink && ctx.previewLink !== "[Preview Link]" ? `• Preview link: ${ctx.previewLink}\n` : "") +
-            `\nHave a wonderful day! Best, ${ctx.freelancerName || 'Freelancer'}`;
-        }
-        if (tone === 'Firm') {
-          updateText = `Hello ${ctx.clientName},\n\nThis is a status update for '${ctx.projectTitle}'.\n- Stage: ${ctx.stage}\n- Next Action: ${ctx.nextAction}\n- Deadline: ${ctx.deadline}\n\nPlease review and let me know of any adjustments immediately so we remain on schedule.`;
-        }
-        if (tone === 'Friendly') {
-          updateText = `Hi ${ctx.clientName}!\n\nQuick progress update for '${ctx.projectTitle}':\n- Stage: ${ctx.stage}\n- Next: ${ctx.nextAction}\n${ctx.previewLink && ctx.previewLink !== "[Preview Link]" ? `- Preview link: ${ctx.previewLink}\n` : ""}Have a great day!\n- ${ctx.freelancerName || 'Freelancer'}`;
-        }
-        return updateText;
+        msg += `\nThank you for your collaboration!`;
+        return msg;
       }
     }
   },

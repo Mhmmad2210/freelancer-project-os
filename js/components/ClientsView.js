@@ -281,6 +281,15 @@ export class ClientsView {
             <span style="font-weight: 600; color: var(--text-primary);">${c.name}</span>
             <span style="font-size: 0.78rem; color: var(--text-muted);">${c.businessName || t('clientHub.personalContract', 'Freelance Personal Contract')}</span>
             ${memoryIndicators}
+            ${clientProjects.length > 0 ? `
+              <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                ${clientProjects.map(p => `
+                  <button type="button" class="btn btn-secondary btn-xs open-dashboard-btn" data-project-id="${p.id}" style="font-size: 0.65rem; padding: 2px 6px; display: inline-flex; align-items: center; gap: 4px;">
+                    ${getIcon('externalLink', '', 10)} ${p.title}
+                  </button>
+                `).join('')}
+              </div>
+            ` : ''}
           </div>
         </td>
         <td>
@@ -317,6 +326,14 @@ export class ClientsView {
         ClientMemoryPanel.open(c.id, this.store, this.onTriggerToast, () => this.update());
       });
       row.querySelector('.edit-trigger').addEventListener('click', () => this.showClientDrawer(c));
+      
+      row.querySelectorAll('.open-dashboard-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const projId = btn.dataset.projectId;
+          window.app.switchView('client-view', projId);
+        });
+      });
       
       row.querySelector('.delete-trigger').addEventListener('click', () => {
         const confirmMsg = t('toast.removeClientConfirm', 'Remove "{name}" from directory?\nExisting project billing indexes will be preserved.').replace('{name}', c.name);

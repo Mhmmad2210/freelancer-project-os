@@ -582,7 +582,7 @@ export class ProjectModal {
                     <div class="form-group" style="grid-column: span 2;">
                       <label>${t('delivery.clientVisibleNotes', 'Client Visible Notes')}</label>
                       <textarea id="m-p-client-visible-notes" class="form-control" style="min-height: 50px;" placeholder="${t('projectModal.clientVisibleNotesPlaceholder', 'Public project notes visible to the client...')}">${project.clientVisibleNotes || ''}</textarea>
-                      <span style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px;">${t('projectModal.clientVisibleNotesDesc', 'These notes may appear in the Client Workspace Portal.')}</span>
+                      <span style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px;">${t('projectModal.clientVisibleNotesDesc', 'These notes may appear in the Client Dashboard.')}</span>
                     </div>
 
                     <div class="form-group" style="grid-column: span 2; display: flex; align-items: center; gap: 8px; margin-bottom: 0;">
@@ -866,6 +866,13 @@ export class ProjectModal {
                   <option value="completed" ${project.stage === 'completed' ? 'selected' : ''}>Completed</option>
                   <option value="on_hold" ${project.stage === 'on_hold' ? 'selected' : ''}>On Hold</option>
                 </select>
+              </div>
+
+              <!-- Preview Client Dashboard Button -->
+              <div style="margin-bottom: 16px;">
+                <button type="button" class="btn btn-secondary" id="btn-modal-preview-client" style="width: 100%; justify-content: center; gap: 6px; padding: 8px; font-size: 0.78rem;">
+                  ${getIcon('externalLink', '', 14)} ${t('clientView.previewClientDashboard', 'Preview Client Dashboard')}
+                </button>
               </div>
 
               <!-- On Hold Project detail card -->

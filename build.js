@@ -65,6 +65,9 @@ fs.copyFileSync(path.join(__dirname, 'index.html'), path.join(distPath, 'index.h
 if (fs.existsSync(path.join(__dirname, 'alurpandu-guided-start.html'))) {
   fs.copyFileSync(path.join(__dirname, 'alurpandu-guided-start.html'), path.join(distPath, 'alurpandu-guided-start.html'));
 }
+if (fs.existsSync(path.join(__dirname, 'client-briefing.html'))) {
+  fs.copyFileSync(path.join(__dirname, 'client-briefing.html'), path.join(distPath, 'client-briefing.html'));
+}
 copyDirSync(path.join(__dirname, 'css'), path.join(distPath, 'css'));
 copyDirSync(path.join(__dirname, 'js'), path.join(distPath, 'js'));
 if (fs.existsSync(path.join(__dirname, 'assets'))) {

@@ -918,9 +918,14 @@ export class KanbanBoard {
     cardBody += `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
         <h4 class="card-title" style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; font-family: 'Plus Jakarta Sans', sans-serif; flex: 1; margin-top: 0; line-height: 1.2;">${projectTitleStr}</h4>
-        <button type="button" class="card-minimize-btn" style="background: none; border: none; padding: 2px; color: var(--text-muted); cursor: pointer; display: ${isPreview ? 'none' : 'flex'}; align-items: center; justify-content: center; border-radius: 4px; transition: all var(--transition-fast);" title="Minimize / Expand">
-          ${getIcon(isMinimized ? 'chevronRight' : 'chevronDown', '', 14)}
-        </button>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <button type="button" class="card-client-view-btn" style="background: none; border: none; padding: 2px; color: var(--text-muted); cursor: pointer; display: ${isPreview ? 'none' : 'flex'}; align-items: center; justify-content: center; border-radius: 4px; transition: all var(--transition-fast);" title="Preview Client Dashboard">
+            ${getIcon('externalLink', '', 12)}
+          </button>
+          <button type="button" class="card-minimize-btn" style="background: none; border: none; padding: 2px; color: var(--text-muted); cursor: pointer; display: ${isPreview ? 'none' : 'flex'}; align-items: center; justify-content: center; border-radius: 4px; transition: all var(--transition-fast);" title="Minimize / Expand">
+            ${getIcon(isMinimized ? 'chevronRight' : 'chevronDown', '', 14)}
+          </button>
+        </div>
       </div>
       
       <div class="card-client" style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; margin-bottom: 6px;">
@@ -1195,6 +1200,15 @@ export class KanbanBoard {
             }
             document.body.removeChild(tempTextarea);
           });
+      });
+    }
+
+    // Handle Client View preview
+    const clientViewBtn = card.querySelector('.card-client-view-btn');
+    if (clientViewBtn) {
+      clientViewBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent opening the project modal
+        window.app.switchView('client-view', project.id);
       });
     }
 
