@@ -119,7 +119,10 @@ export class FreelancerProfile {
           </div>
         </div>
 
-        <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 16px; margin-top: 8px;">
+        <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 16px; margin-top: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary" id="btn-switch-entry-mode" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; color: var(--color-warning); border-color: rgba(245,158,11,0.15);">
+            🔄 ${t('entryMode.switchMode', 'Switch Entry Mode')}
+          </button>
           <button type="button" class="btn btn-secondary" id="btn-open-portal" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
             ${getIcon('externalLink', '', 12)} ${t('profile.openClientView', 'Open Client View')}
           </button>
@@ -187,6 +190,11 @@ export class FreelancerProfile {
       if (window.app) {
         window.app.switchView('client-view');
       }
+    });
+
+    viewEl.querySelector('#btn-switch-entry-mode').addEventListener('click', () => {
+      localStorage.removeItem('alurkarya_entry_mode');
+      window.location.reload();
     });
   }
 }

@@ -5,6 +5,7 @@
 import { getIcon } from '../icons.js';
 import { store } from '../store.js';
 import { getLanguage, setLanguage, t } from '../i18n.js';
+import { isValidImageUrl } from '../utils.js';
 
 export class SidebarNav {
   /**
@@ -96,8 +97,8 @@ export class SidebarNav {
     const role = profile.freelancerRole || 'Freelancer';
     const initials = profile.freelancerInitials || store.getInitials(name);
     
-    const avatarHtml = profile.freelancerAvatar ?
-      `<img src="${profile.freelancerAvatar}" alt="${name}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` :
+    const avatarHtml = (profile.freelancerAvatar && isValidImageUrl(profile.freelancerAvatar)) ?
+      `<img src="${profile.freelancerAvatar}" alt="${name}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.outerHTML='${initials}'">` :
       initials;
 
     const activeLang = getLanguage();
@@ -124,7 +125,7 @@ export class SidebarNav {
     footerEl.innerHTML = `
       ${langSwitcherHtml}
       <div class="user-profile ${this.activeTab === 'profile' ? 'active' : ''}" style="transition: all var(--transition-fast); display: flex; align-items: center; width: 100%; border: 1px solid transparent; border-radius: var(--border-radius-md); cursor: pointer;">
-        <div class="user-avatar" id="sidebar-avatar-box" style="${profile.freelancerAvatar ? 'background: none;' : ''}">
+        <div class="user-avatar" id="sidebar-avatar-box">
           ${avatarHtml}
         </div>
         <div class="user-info" style="flex: 1; margin-left: 12px;">

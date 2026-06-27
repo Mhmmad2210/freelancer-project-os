@@ -727,11 +727,23 @@
       const fl = payload.freelancer;
       const footerCard = document.createElement('div');
       footerCard.className = 'card';
+      
+      const flInitials = fl.name ? fl.name.split(' ').map(x => x[0]).slice(0, 2).join('').toUpperCase() : 'YK';
+      const hasAvatar = fl.avatar && (fl.avatar.startsWith('http') || fl.avatar.startsWith('data:image'));
+      const avatarHtml = hasAvatar 
+        ? `<img src="${safeUrl(fl.avatar)}" alt="${fl.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.outerHTML='${flInitials}'">`
+        : flInitials;
+
       footerCard.innerHTML = `
         <div class="freelancer-footer">
-          <div class="freelancer-info">
-            <span class="freelancer-name" id="fl-name"></span>
-            <span class="freelancer-role" id="fl-role"></span>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); color: #fff; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;">
+              ${avatarHtml}
+            </div>
+            <div class="freelancer-info">
+              <span class="freelancer-name" id="fl-name"></span>
+              <span class="freelancer-role" id="fl-role"></span>
+            </div>
           </div>
           <div id="fl-contact-box"></div>
         </div>

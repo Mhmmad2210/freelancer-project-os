@@ -335,7 +335,7 @@ export class KanbanBoard {
 
     // Board container canvas
     const boardWrapper = document.createElement('div');
-    boardWrapper.className = 'kanban-container';
+    boardWrapper.className = 'kanban-scroll-shell';
     boardWrapper.id = 'kanban-board-canvas';
     dashboardEl.appendChild(boardWrapper);
 
@@ -506,7 +506,17 @@ export class KanbanBoard {
       return;
     }
 
-    canvas.style.display = 'flex';
+    canvas.style.display = 'block';
+    let track = canvas.querySelector('.kanban-scroll-track');
+    if (!track) {
+      canvas.innerHTML = '';
+      track = document.createElement('div');
+      track.className = 'kanban-scroll-track';
+      track.id = 'kanban-board-track';
+      canvas.appendChild(track);
+    } else {
+      track.innerHTML = '';
+    }
 
     const filteredProjects = state.projects.filter(p => {
       if (!this.searchQuery) return true;
@@ -702,7 +712,7 @@ export class KanbanBoard {
         }
       });
 
-      canvas.appendChild(colEl);
+      track.appendChild(colEl);
     });
 
     // Check overflow after columns are rendered

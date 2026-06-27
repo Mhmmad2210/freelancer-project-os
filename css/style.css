@@ -485,12 +485,40 @@ button {
 }
 
 /* --- Kanban Canvas --- */
-.kanban-container {
+.kanban-scroll-shell {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 14px;
+  scrollbar-gutter: stable;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.kanban-scroll-shell::-webkit-scrollbar {
+  height: 10px;
+}
+
+.kanban-scroll-shell::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+.kanban-scroll-shell::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+
+.kanban-scroll-shell::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.kanban-scroll-track {
   display: flex;
   gap: 16px;
-  overflow-x: auto;
-  padding-bottom: 16px;
-  flex: 1;
+  min-width: max-content;
+  width: max-content;
   min-height: 480px;
   align-items: flex-start;
 }

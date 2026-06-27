@@ -674,3 +674,14 @@ export function getDeliveryMessageText(project) {
   }
   return `Hi ${clientName}, here is the latest delivery update for ${projectName}. You can review the submitted work here: ${previewLink}. Please let me know if you have any feedback or approval.`;
 }
+
+/**
+ * Validates whether a string is a valid image URL or base64 data image.
+ * @param {string} url
+ * @returns {boolean}
+ */
+export function isValidImageUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  return /^https?:\/\//i.test(trimmed) || /^data:image\//i.test(trimmed);
+}

@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatMoney, formatDate } from '../utils.js';
+import { formatCurrency, formatMoney, formatDate, isValidImageUrl } from '../utils.js';
 import { promptTemplates } from './AIPromptHelpers.js';
 import { t, getLanguage } from '../i18n.js';
 import { buildClientDashboardData } from '../utils/clientSafeData.js';
@@ -32,8 +32,16 @@ export class ClientProjectView {
     const state = this.store.getState();
     const clients = state.clients || [];
     const projects = state.projects || [];
+    const isClientMode = localStorage.getItem('alurkarya_entry_mode') === 'client';
+    const lang = getLanguage();
+    const isIndo = lang === 'id';
 
     // Align client selection with project selection if project is set
+    if (isClientMode && !this.selectedProjectId && projects.length > 0) {
+      this.selectedProjectId = projects[0].id;
+      this.selectedClientId = projects[0].clientId || '';
+    }
+
     if (this.selectedProjectId) {
       const proj = projects.find(p => p.id === this.selectedProjectId);
       if (proj && proj.clientId) {
@@ -54,16 +62,40 @@ export class ClientProjectView {
       this.selectedProjectId = filteredProjects[0].id;
     }
 
-    const activeProject = filteredProjects.find(p => p.id === this.selectedProjectId);
+    const activeProject = projects.find(p => p.id === this.selectedProjectId);
 
     // Whitelist-based client-safe data fetch
-    const lang = getLanguage();
-    const isIndo = lang === 'id';
     const safeData = activeProject ? buildClientDashboardData(activeProject, activeClient, state.freelancerProfile, { language: lang }) : null;
 
     const viewEl = document.createElement('div');
     viewEl.className = 'client-portal-viewport';
     viewEl.style.padding = '10px 0';
+
+    if (isClientMode) {
+      const clientHeader = document.createElement('div');
+      clientHeader.className = 'top-header';
+      clientHeader.style.cssText = 'padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 60px; border-bottom: 1px solid var(--border-subtle); background: rgba(0, 0, 0, 0.2); margin-bottom: 24px; border-radius: var(--border-radius-md); width: 100%; box-sizing: border-box;';
+      clientHeader.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <svg viewBox="0 0 100 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 20px;">
+            <path d="M12 2L2 22h20L12 2zm0 4l6.5 13H5.5L12 6z" fill="var(--color-primary)" />
+            <text x="28" y="18" fill="var(--text-light)" font-family="Space Grotesk" font-weight="800" font-size="16">AlurKarya</text>
+          </svg>
+          <span style="font-size: 0.72rem; background: rgba(139, 92, 246, 0.15); color: var(--color-primary); padding: 3px 10px; border-radius: 99px; font-weight: 600; border: 1px solid rgba(139, 92, 246, 0.3);">
+            ${isIndo ? 'Tampilan Client' : 'Client View'}
+          </span>
+        </div>
+        <button class="btn btn-secondary" id="btn-client-mode-back" style="font-size: 0.75rem; padding: 6px 12px; font-weight: 600; background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); border-radius: 6px;">
+          ${t('entryMode.backToSelection', 'Back to mode selection')}
+        </button>
+      `;
+      viewEl.appendChild(clientHeader);
+      
+      clientHeader.querySelector('#btn-client-mode-back').addEventListener('click', () => {
+        localStorage.removeItem('alurkarya_entry_mode');
+        window.location.reload();
+      });
+    }
 
     // Renders Client and Project Selectors at the top
     const selectorBox = document.createElement('div');
@@ -225,106 +257,128 @@ export class ClientProjectView {
     `;
 
     // Listeners for selectors
-    selectorBox.querySelector('#portal-client-select').addEventListener('change', (e) => {
-      this.selectedClientId = e.target.value;
-      this.selectedProjectId = '';
-      this.render();
-    });
-
-    selectorBox.querySelector('#portal-project-select').addEventListener('change', (e) => {
-      this.selectedProjectId = e.target.value;
-      this.render();
-    });
-
-    // Copy Client Update Button Handler
-    const copyUpdateBtn = selectorBox.querySelector('#btn-portal-copy-update');
-    if (copyUpdateBtn && safeData) {
-      copyUpdateBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(clientUpdateText).then(() => {
-          const statusSpan = selectorBox.querySelector('#portal-update-status');
-          if (statusSpan) {
-            statusSpan.style.display = 'inline';
-            setTimeout(() => {
-              statusSpan.style.display = 'none';
-            }, 2000);
-          }
-          this.onTriggerToast(isIndo ? 'Update project berhasil disalin.' : 'Project update copied to clipboard.', 'text-success');
-        }).catch(err => {
-          console.error('Failed to copy text: ', err);
-          this.onTriggerToast('Failed to copy', 'text-danger');
-        });
+    if (!isClientMode) {
+      selectorBox.querySelector('#portal-client-select').addEventListener('change', (e) => {
+        this.selectedClientId = e.target.value;
+        this.selectedProjectId = '';
+        this.render();
       });
-    }
 
-    // Copy Briefing Link Handler
-    const copyBriefingLinkBtn = selectorBox.querySelector('#btn-portal-copy-briefing-link');
-    if (copyBriefingLinkBtn && safeData && !briefingTooLong) {
-      copyBriefingLinkBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(briefingLink).then(() => {
-          const statusSpan = selectorBox.querySelector('#portal-briefing-status');
-          if (statusSpan) {
-            statusSpan.textContent = t('clientView.briefingCopied', 'Briefing link copied!');
-            statusSpan.style.display = 'inline';
-            setTimeout(() => {
-              statusSpan.style.display = 'none';
-            }, 2000);
-          }
-          this.onTriggerToast(isIndo ? 'Link briefing berhasil disalin.' : 'Briefing link copied to clipboard.', 'text-success');
-        }).catch(err => {
-          console.error('Failed to copy text: ', err);
-          this.onTriggerToast('Failed to copy', 'text-danger');
-        });
+      selectorBox.querySelector('#portal-project-select').addEventListener('change', (e) => {
+        this.selectedProjectId = e.target.value;
+        this.render();
       });
-    }
 
-    // Copy Briefing Message Handler
-    const copyBriefingMsgBtn = selectorBox.querySelector('#btn-portal-copy-briefing-msg');
-    if (copyBriefingMsgBtn && safeData) {
-      copyBriefingMsgBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(briefingMessageText).then(() => {
-          const statusSpan = selectorBox.querySelector('#portal-briefing-status');
-          if (statusSpan) {
-            statusSpan.textContent = t('clientView.briefingMessageCopied', 'Briefing message copied!');
-            statusSpan.style.display = 'inline';
-            setTimeout(() => {
-              statusSpan.style.display = 'none';
-            }, 2000);
-          }
-          this.onTriggerToast(isIndo ? 'Pesan briefing berhasil disalin.' : 'Briefing message copied to clipboard.', 'text-success');
-        }).catch(err => {
-          console.error('Failed to copy text: ', err);
-          this.onTriggerToast('Failed to copy', 'text-danger');
+      // Copy Client Update Button Handler
+      const copyUpdateBtn = selectorBox.querySelector('#btn-portal-copy-update');
+      if (copyUpdateBtn && safeData) {
+        copyUpdateBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(clientUpdateText).then(() => {
+            const statusSpan = selectorBox.querySelector('#portal-update-status');
+            if (statusSpan) {
+              statusSpan.style.display = 'inline';
+              setTimeout(() => {
+                statusSpan.style.display = 'none';
+              }, 2000);
+            }
+            this.onTriggerToast(isIndo ? 'Update project berhasil disalin.' : 'Project update copied to clipboard.', 'text-success');
+          }).catch(err => {
+            console.error('Failed to copy text: ', err);
+            this.onTriggerToast('Failed to copy', 'text-danger');
+          });
         });
-      });
-    }
+      }
 
-    viewEl.appendChild(selectorBox);
+      // Copy Briefing Link Handler
+      const copyBriefingLinkBtn = selectorBox.querySelector('#btn-portal-copy-briefing-link');
+      if (copyBriefingLinkBtn && safeData && !briefingTooLong) {
+        copyBriefingLinkBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(briefingLink).then(() => {
+            const statusSpan = selectorBox.querySelector('#portal-briefing-status');
+            if (statusSpan) {
+              statusSpan.textContent = t('clientView.briefingCopied', 'Briefing link copied!');
+              statusSpan.style.display = 'inline';
+              setTimeout(() => {
+                statusSpan.style.display = 'none';
+              }, 2000);
+            }
+            this.onTriggerToast(isIndo ? 'Link briefing berhasil disalin.' : 'Briefing link copied to clipboard.', 'text-success');
+          }).catch(err => {
+            console.error('Failed to copy text: ', err);
+            this.onTriggerToast('Failed to copy', 'text-danger');
+          });
+        });
+      }
+
+      // Copy Briefing Message Handler
+      const copyBriefingMsgBtn = selectorBox.querySelector('#btn-portal-copy-briefing-msg');
+      if (copyBriefingMsgBtn && safeData) {
+        copyBriefingMsgBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(briefingMessageText).then(() => {
+            const statusSpan = selectorBox.querySelector('#portal-briefing-status');
+            if (statusSpan) {
+              statusSpan.textContent = t('clientView.briefingMessageCopied', 'Briefing message copied!');
+              statusSpan.style.display = 'inline';
+              setTimeout(() => {
+                statusSpan.style.display = 'none';
+              }, 2000);
+            }
+            this.onTriggerToast(isIndo ? 'Pesan briefing berhasil disalin.' : 'Briefing message copied to clipboard.', 'text-success');
+          }).catch(err => {
+            console.error('Failed to copy text: ', err);
+            this.onTriggerToast('Failed to copy', 'text-danger');
+          });
+        });
+      }
+
+      viewEl.appendChild(selectorBox);
+    }
 
     // Empty States
-    if (clients.length === 0) {
-      const emptyState = document.createElement('div');
-      emptyState.className = 'empty-state-box';
-      emptyState.innerHTML = `
-        ${getIcon('briefcase', '', 48)}
-        <h3>${isIndo ? 'Tidak ada client' : 'No clients found'}</h3>
-        <p>${t('clientView.emptyStateDesc', 'Add a client or create a project first to preview the client dashboard.')}</p>
-      `;
-      viewEl.appendChild(emptyState);
-      this.container.appendChild(viewEl);
-      return;
-    }
+    if (isClientMode) {
+      if (projects.length === 0) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state-box';
+        emptyState.style.marginTop = '40px';
+        emptyState.innerHTML = `
+          <div style="font-size: 3rem; margin-bottom: 16px;">💼</div>
+          <h3 style="margin-top: 16px; font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">
+            ${t('entryMode.noProjectTitle', 'No client project is available in this browser yet.')}
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 420px; margin: 8px auto 24px auto;">
+            ${t('entryMode.noProjectDesc', 'Please open the project link shared by your freelancer.')}
+          </p>
+        `;
+        viewEl.appendChild(emptyState);
+        this.container.appendChild(viewEl);
+        return;
+      }
+    } else {
+      if (clients.length === 0) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state-box';
+        emptyState.innerHTML = `
+          ${getIcon('briefcase', '', 48)}
+          <h3>${isIndo ? 'Tidak ada client' : 'No clients found'}</h3>
+          <p>${t('clientView.emptyStateDesc', 'Add a client or create a project first to preview the client dashboard.')}</p>
+        `;
+        viewEl.appendChild(emptyState);
+        this.container.appendChild(viewEl);
+        return;
+      }
 
-    if (!this.selectedClientId || !this.selectedProjectId || !safeData) {
-      const emptyState = document.createElement('div');
-      emptyState.className = 'empty-state-box';
-      emptyState.innerHTML = `
-        ${getIcon('briefcase', '', 48)}
-        <h3>${isIndo ? 'Project belum dipilih' : 'No project selected yet.'}</h3>
-        <p>${isIndo ? 'Silakan hubungkan client ke project dan pilih project dari menu di atas.' : 'Please select a client and project from the toolbar above to preview the Client Dashboard.'}</p>
-      `;
-      viewEl.appendChild(emptyState);
-      this.container.appendChild(viewEl);
-      return;
+      if (!this.selectedClientId || !this.selectedProjectId || !safeData) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state-box';
+        emptyState.innerHTML = `
+          ${getIcon('briefcase', '', 48)}
+          <h3>${isIndo ? 'Project belum dipilih' : 'No project selected yet.'}</h3>
+          <p>${isIndo ? 'Silakan hubungkan client ke project dan pilih project dari menu di atas.' : 'Please select a client and project from the toolbar above to preview the Client Dashboard.'}</p>
+        `;
+        viewEl.appendChild(emptyState);
+        this.container.appendChild(viewEl);
+        return;
+      }
     }
 
     // Determine Status Badge Class
@@ -719,7 +773,12 @@ export class ClientProjectView {
       </h3>
       <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); padding: 16px; border-radius: var(--border-radius-md);">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 50%; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; font-weight: 700; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); color: #fff; border: 1.5px solid rgba(255,255,255,0.1);">${flInitials}</div>
+          <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 50%; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; font-weight: 700; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); color: #fff; border: 1.5px solid rgba(255,255,255,0.1); overflow: hidden;">
+            ${(fl.avatar && isValidImageUrl(fl.avatar)) ?
+              `<img src="${fl.avatar}" alt="${fl.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.outerHTML='${flInitials}'">` :
+              flInitials
+            }
+          </div>
           <div>
             <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0;">${fl.name}</h4>
             <span style="font-size: 0.75rem; color: var(--text-muted);">${fl.role}</span>

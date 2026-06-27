@@ -305,7 +305,8 @@ export function buildClientDashboardData(project, client, freelancerProfile, opt
       role: getVal(f.freelancerRole, "[Freelancer Role]"),
       email: getVal(f.freelancerEmail || f.email, "[Email]"),
       portfolioLink: getVal(f.freelancerPortfolioLink || f.portfolioLink, ""),
-      location: getVal(f.location || f.freelancerLocation, "")
+      location: getVal(f.location || f.freelancerLocation, ""),
+      avatar: getVal(f.freelancerAvatar || f.avatar, "")
     },
     client: {
       name: getVal(c.name || p.clientName, "[Client Name]")

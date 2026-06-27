@@ -18,6 +18,7 @@ import { PlannerHub } from './components/PlannerHub.js';
 import { WorkflowDiagnose } from './components/WorkflowDiagnose.js';
 import { FreelancerProfile } from './components/FreelancerProfile.js';
 import { TemplatesModal } from './components/TemplatesModal.js';
+import { EntryModeSelector } from './components/EntryModeSelector.js';
 import { getLanguage, setLanguage, t } from './i18n.js';
 
 class FreelancerApp {
@@ -622,16 +623,65 @@ class FreelancerApp {
 
 // Instantiate and launch app on DOM complete load
 document.addEventListener('DOMContentLoaded', () => {
-  const isGranted = localStorage.getItem('alurkarya_access_granted') === 'true';
   const root = document.getElementById('app-root');
+  if (!root) return;
 
-  if (isGranted) {
-    window.app = new FreelancerApp();
-    window.app.init();
-  } else {
-    const gate = new AccessGate(root, () => {
+  const mode = localStorage.getItem('alurkarya_entry_mode');
+
+  if (!mode) {
+    // 1. Show Entry Mode Selector
+    const selector = new EntryModeSelector(root, (selectedMode) => {
       window.location.reload();
     });
-    gate.render();
+    selector.render();
+  } else if (mode === 'freelancer') {
+    // 2. Freelancer Mode - Check Access Gate
+    const isGranted = localStorage.getItem('alurkarya_access_granted') === 'true';
+    if (isGranted) {
+      window.app = new FreelancerApp();
+      window.app.init();
+    } else {
+      const gate = new AccessGate(root, () => {
+        window.location.reload();
+      });
+      gate.render();
+    }
+  } else if (mode === 'client') {
+    // 3. Client Mode - Render Client view directly without sidebar/header
+    root.innerHTML = '';
+    root.className = 'client-portal-page';
+    root.style.cssText = 'min-height: 100vh; background: radial-gradient(circle at 50% 50%, hsl(224, 45%, 6%) 0%, hsl(224, 60%, 2%) 100%); color: #f8fafc; font-family: \'Plus Jakarta Sans\', sans-serif; display: flex; justify-content: center; padding: 20px; box-sizing: border-box; width: 100%;';
+    
+    // Add client-side toast support
+    const toastBox = document.createElement('div');
+    toastBox.className = 'toast-box';
+    toastBox.id = 'client-toast-box';
+    toastBox.innerHTML = '<span class="toast-message" id="client-toast-message"></span>';
+    document.body.appendChild(toastBox);
+
+    let toastTimer = null;
+    const triggerToast = (message, className = '') => {
+      const toast = document.getElementById('client-toast-box');
+      const toastMsg = document.getElementById('client-toast-message');
+      if (!toast || !toastMsg) return;
+      if (toastTimer) {
+        clearTimeout(toastTimer);
+        toast.classList.remove('active');
+      }
+      toastMsg.textContent = message;
+      toast.className = 'toast-box';
+      if (className) toast.classList.add(className);
+      toast.classList.add('active');
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('active');
+      }, 3000);
+    };
+
+    const contentWrapper = document.createElement('div');
+    contentWrapper.style.cssText = 'width: min(94vw, 1000px); display: flex; flex-direction: column; gap: 20px;';
+    root.appendChild(contentWrapper);
+
+    const clientView = new ClientProjectView(contentWrapper, store, triggerToast);
+    clientView.render();
   }
 });
