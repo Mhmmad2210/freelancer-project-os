@@ -325,6 +325,148 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* --- Client Mode Visual Alignment Styles --- */
+    .client-mode-shell {
+      min-height: 100vh;
+      min-height: 100svh;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(124, 92, 255, 0.12), transparent 28%),
+        radial-gradient(circle at 80% 80%, rgba(31, 214, 255, 0.06), transparent 26%),
+        #070b13;
+      color: #f8fafc;
+      padding: 32px;
+      box-sizing: border-box;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .client-mode-header {
+      width: min(100%, 1180px);
+      margin: 0 auto;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-sizing: border-box;
+    }
+
+    .client-mode-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .client-mode-logo {
+      width: 180px;
+      max-width: 70vw;
+      height: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .client-mode-badge {
+      border: 1px solid rgba(157, 110, 255, 0.35);
+      background: rgba(124, 92, 255, 0.14);
+      color: #b995ff;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .client-mode-back-btn {
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      color: rgba(248,250,252,0.86);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 160ms ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .client-mode-back-btn:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.16);
+      color: #ffffff;
+    }
+
+    .client-mode-empty-card {
+      width: min(100%, 860px);
+      margin: 88px auto 0;
+      padding: 72px 48px;
+      border-radius: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .client-mode-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.05) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      color: #b995ff;
+      box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+    }
+
+    .client-mode-empty-card h1 {
+      margin: 0 0 14px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.7rem, 3vw, 2.6rem);
+      letter-spacing: -0.04em;
+      color: #ffffff;
+    }
+
+    .client-mode-empty-card p {
+      max-width: 620px;
+      margin: 0 auto;
+      color: rgba(248,250,252,0.72);
+      font-size: 1.05rem;
+      line-height: 1.65;
+    }
+
+    .client-mode-note {
+      margin-top: 24px !important;
+      font-size: 0.92rem !important;
+      color: rgba(248,250,252,0.48) !important;
+    }
+
+    @media (max-width: 768px) {
+      .client-mode-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        text-align: center;
+      }
+      .client-mode-empty-card {
+        margin-top: 48px;
+        padding: 40px 24px;
+        border-radius: 24px;
+      }
+      .client-mode-logo {
+        width: 150px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -410,13 +552,45 @@
       return '';
     }
 
-    function renderError(message, isInfo = false) {
-      const root = document.getElementById('briefing-root');
-      root.innerHTML = `
-        <div class="card error-container">
-          <div class="error-desc" style="font-size: 1.15rem; color: var(--text-light); font-weight: 500;">
-            ${isInfo ? '' : '⚠️ '}${message}
-          </div>
+    function renderError(message) {
+      const isIndoBrowser = navigator.language && navigator.language.toLowerCase().startsWith('id');
+      document.body.innerHTML = `
+        <div class="client-mode-shell">
+          <header class="client-mode-header">
+            <div class="client-mode-brand">
+              <img src="./assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" class="client-mode-logo" />
+              <span class="client-mode-badge">${isIndoBrowser ? 'Dashboard Client' : 'Client Dashboard'}</span>
+            </div>
+            <a class="client-mode-back-btn" href="/">
+              ${isIndoBrowser ? 'Kembali ke pilihan mode' : 'Back to mode selection'}
+            </a>
+          </header>
+
+          <main class="client-mode-empty-card">
+            <div class="client-mode-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <h1>${isIndoBrowser ? 'Buka briefing project Anda' : 'Open your project briefing'}</h1>
+            <p>
+              ${isIndoBrowser 
+                ? 'Gunakan link briefing yang dikirim oleh freelancer untuk melihat status project, next step, link review, dan update invoice/payment yang aman untuk client.' 
+                : 'Use the briefing link sent by your freelancer to view the latest project status, next step, review links, and safe invoice/payment update.'}
+            </p>
+            ${message && message !== 'Snapshot string is missing or empty.' && !message.includes('not found') && !message.includes('tidak ditemukan')
+              ? `<div style="font-size: 0.85rem; color: #f87171; background: rgba(239, 68, 68, 0.08); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.15); display: inline-block; margin-top: 16px;">⚠️ ${message}</div>` 
+              : ''}
+            <p class="client-mode-note">
+              ${isIndoBrowser 
+                ? 'Tampilan ini hanya menampilkan informasi project yang aman untuk client.' 
+                : 'This view only shows client-safe project information.'}
+            </p>
+          </main>
         </div>
       `;
     }
@@ -531,11 +705,8 @@
       headerCard.innerHTML = `
         <div class="header-box">
           <div>
-            <div class="brand-logo">
-              <svg viewBox="0 0 100 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 20px;">
-                <path d="M12 2L2 22h20L12 2zm0 4l6.5 13H5.5L12 6z" fill="var(--color-primary)" />
-                <text x="28" y="18" fill="var(--text-light)" font-family="Space Grotesk" font-weight="800" font-size="16">AlurKarya</text>
-              </svg>
+            <div class="brand-logo" style="margin-bottom: 16px;">
+              <img src="./assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="height: 24px; width: auto; display: block; object-fit: contain;" />
             </div>
             <h1 id="proj-title"></h1>
             <span style="font-size: 0.8rem; color: var(--text-secondary);">Client: <strong id="cli-name" style="color: var(--text-light);"></strong></span>
