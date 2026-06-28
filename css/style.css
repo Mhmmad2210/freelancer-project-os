@@ -2634,39 +2634,23 @@ body.no-scroll {
   box-sizing: border-box;
 }
 
-.client-empty-brand {
-  text-align: center;
-}
-
-.client-empty-logo {
-  width: 220px;
-  max-width: 70vw;
-  height: auto;
-  display: block;
-  margin: 0 auto 24px;
-  object-fit: contain;
-}
-
-.client-empty-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 28px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(157, 110, 255, 0.35);
-  background: rgba(124, 92, 255, 0.14);
+.client-mode-empty-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 28px;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(157, 110, 255, 0.28);
+  background: linear-gradient(180deg, rgba(124, 92, 255, 0.18), rgba(124, 92, 255, 0.06));
   color: #b995ff;
-  font-size: 0.86rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
 }
 
 .client-mode-empty-card h1 {
   margin: 0 0 18px;
-  font-size: clamp(2rem, 4vw, 3.25rem);
-  line-height: 1.05;
-  letter-spacing: -0.05em;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.045em;
 }
 
 .client-mode-empty-card p {
