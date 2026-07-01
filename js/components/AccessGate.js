@@ -266,11 +266,15 @@ export class AccessGate {
         <span style="display: flex; align-items: center;">${getIcon('alert', '', 16)}</span>
         <span class="error-text"></span>
       </div>
+      <div class="access-error" id="access-lock-box" style="border-color: rgba(245,158,11,0.25); background: rgba(245,158,11,0.08); color: #f59e0b;">
+        <span style="display: flex; align-items: center;">${getIcon('alert', '', 16)}</span>
+        <span class="lock-text"></span>
+      </div>
       <div class="access-success" id="access-success-box">
         <span style="display: flex; align-items: center;">${getIcon('check', '', 16)}</span>
         <span class="success-text">${t('access.successMsg', 'Access granted. Preparing your workspace…')}</span>
       </div>
-
+ 
       <!-- Password Access Form -->
       <form class="gate-form" id="password-form" style="display: flex; flex-direction: column; gap: 20px;">
         <div class="access-field">
@@ -284,7 +288,7 @@ export class AccessGate {
           ${t('access.hasNoAccess', 'Don’t have access yet? Enter activation code')}
         </button>
       </form>
-
+ 
       <!-- Activation Code Form -->
       <form class="gate-form" id="activation-form" style="display: none; flex-direction: column; gap: 20px;">
         <div class="access-field">
@@ -298,15 +302,18 @@ export class AccessGate {
           ${t('access.backToLogin', 'Back to login')}
         </button>
       </form>
-
-      <div class="access-footer-note">
-        ${t('access.footerNote', 'Private access for AlurKarya early users.')}
+ 
+      <div class="access-footer-note" style="display: flex; flex-direction: column; gap: 8px; text-align: center;">
+        <span>${t('access.footerNote', 'Private access for AlurKarya early users.')}</span>
+        <span style="font-size: 0.7rem; color: #64748b; line-height: 1.4;">
+          ${t('privacy.sharedDeviceNotice', 'Using a shared device? Lock your workspace when finished to protect client and project data. This helps protect privacy on shared devices.')}
+        </span>
       </div>
     `;
-
+ 
     gateWrapper.appendChild(cardEl);
     this.container.appendChild(gateWrapper);
-
+ 
     // DOM References
     const passwordForm = cardEl.querySelector('#password-form');
     const activationForm = cardEl.querySelector('#activation-form');
@@ -314,26 +321,57 @@ export class AccessGate {
     const activationInput = cardEl.querySelector('#activation-input');
     const errorBox = cardEl.querySelector('#access-error-box');
     const errorText = errorBox.querySelector('.error-text');
+    const lockBox = cardEl.querySelector('#access-lock-box');
+    const lockText = lockBox.querySelector('.lock-text');
     const successBox = cardEl.querySelector('#access-success-box');
     
     const passwordSubmit = cardEl.querySelector('#password-submit-btn');
     const activationSubmit = cardEl.querySelector('#activation-submit-btn');
-
+ 
     const showActivationBtn = cardEl.querySelector('#btn-show-activation');
     const showPasswordBtn = cardEl.querySelector('#btn-show-password');
-
+ 
+    // Handle Lock Reason Notice
+    const lockReason = sessionStorage.getItem('alurkarya_lock_reason');
+    let lockNoticeText = '';
+    if (lockReason === 'idle') {
+      lockNoticeText = t('privacy.autoLockNotice', 'For privacy, your workspace was locked after inactivity.');
+    } else if (lockReason === 'hidden_timeout') {
+      lockNoticeText = t('privacy.autoLockNoticeHidden', 'For privacy, your workspace was locked after being inactive in the background.');
+    } else if (lockReason === 'cleared_data') {
+      lockNoticeText = t('privacy.clearedNotice', 'Workspace data has been cleared from this browser.');
+    } else if (lockReason === 'manual') {
+      lockNoticeText = t('privacy.workspaceLocked', 'Workspace locked.');
+    }
+    
+    if (lockNoticeText) {
+      lockText.textContent = lockNoticeText;
+      lockBox.classList.add('active');
+    } else {
+      lockBox.style.display = 'none';
+    }
+ 
+    // Clear lock reason after displaying so it doesn't show again on subsequent reloads
+    if (lockReason) {
+      sessionStorage.removeItem('alurkarya_lock_reason');
+    }
+ 
     // Helper functions for displaying inline feedback messages
     const showError = (message) => {
       successBox.classList.remove('active');
+      lockBox.classList.remove('active');
+      lockBox.style.display = 'none';
       errorText.textContent = message;
       errorBox.classList.add('active');
     };
-
+ 
     const clearMessages = () => {
       errorBox.classList.remove('active');
       successBox.classList.remove('active');
+      lockBox.classList.remove('active');
+      lockBox.style.display = 'none';
     };
-
+ 
     // Toggle Forms
     showActivationBtn.addEventListener('click', () => {
       clearMessages();
@@ -391,7 +429,7 @@ export class AccessGate {
       if ((activeTargetHash !== '' && inputHash.toLowerCase() === activeTargetHash.toLowerCase()) || isDevFallback) {
         // Correct password
         successBox.classList.add('active');
-        localStorage.setItem('alurkarya_access_granted', 'true');
+        sessionStorage.setItem('alurkarya_session_unlocked', 'true');
         setTimeout(() => {
           this.onAccessGranted();
         }, 600);
@@ -447,7 +485,7 @@ export class AccessGate {
       if ((activeTargetActivationHash !== '' && inputHash.toLowerCase() === activeTargetActivationHash.toLowerCase()) || isDevFallback) {
         // Correct activation code
         successBox.classList.add('active');
-        localStorage.setItem('alurkarya_access_granted', 'true');
+        sessionStorage.setItem('alurkarya_session_unlocked', 'true');
         localStorage.setItem('alurkarya_access_method', 'activation_code');
         setTimeout(() => {
           this.onAccessGranted();

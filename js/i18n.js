@@ -1019,6 +1019,17 @@ export const translations = {
       onHoldFollowUpLabel: "ON HOLD FOLLOW UP:",
       outsideWorkingHours: "Outside your working hours."
     },
+    privacy: {
+      lockWorkspace: "Lock Workspace",
+      workspaceLocked: "Workspace locked.",
+      sharedDeviceNotice: "Using a shared device? Lock your workspace when finished to protect client and project data. This helps protect privacy on shared devices.",
+      clearLocalData: "Clear Local Workspace Data",
+      clearLocalDataWarning: "This will delete AlurKarya workspace data stored in this browser. Export a backup first if needed.",
+      autoLockNotice: "For privacy, your workspace was locked after inactivity.",
+      autoLockNoticeHidden: "For privacy, your workspace was locked after being inactive in the background.",
+      clearedNotice: "Workspace data has been cleared from this browser.",
+      dangerZone: "Danger Zone"
+    },
     app: {
       diagnose: "Diagnose",
       diagnoseTitle: "Start Workflow Diagnosis",
@@ -2058,6 +2069,17 @@ export const translations = {
       invoiceDueLabel: "INVOICE JATUH TEMPO:",
       onHoldFollowUpLabel: "FOLLOW UP DITANGGUHKAN:",
       outsideWorkingHours: "Di luar jam kerja Anda."
+    },
+    privacy: {
+      lockWorkspace: "Kunci Workspace",
+      workspaceLocked: "Workspace terkunci.",
+      sharedDeviceNotice: "Pakai laptop bersama? Kunci workspace setelah selesai agar data project dan client tetap aman. Ini membantu melindungi privasi pada perangkat bersama.",
+      clearLocalData: "Hapus Data Workspace Lokal",
+      clearLocalDataWarning: "Ini akan menghapus data workspace AlurKarya yang tersimpan di browser ini. Eksport backup terlebih dahulu jika diperlukan.",
+      autoLockNotice: "Demi privasi, workspace dikunci setelah tidak ada aktivitas.",
+      autoLockNoticeHidden: "Demi privasi, workspace dikunci setelah sekian lama tidak aktif di latar belakang.",
+      clearedNotice: "Data workspace telah dihapus dari browser ini.",
+      dangerZone: "Zona Bahaya"
     },
     app: {
       diagnose: "Diagnosa",

@@ -70,6 +70,13 @@ class FreelancerApp {
     
     this.checkGuidedStartModal();
 
+    // Start inactivity and tab visibility listeners
+    this.WORKSPACE_IDLE_LOCK_MINUTES = 15;
+    this.idleTimer = null;
+    this.lastActivityTime = Date.now();
+    this.setupInactivityListeners();
+    this.setupVisibilityListeners();
+
     // Subscribe to central state changes to refresh views dynamically
     store.subscribe(() => {
       this.refreshActiveView();
@@ -381,8 +388,7 @@ class FreelancerApp {
     if (resetAccessBtn) {
       resetAccessBtn.addEventListener('click', () => {
         if (confirm(t('toast.accessResetConfirm', 'Are you sure you want to reset access? You will need to enter the access password again.'))) {
-          localStorage.removeItem('alurkarya_access_granted');
-          window.location.reload();
+          this.lockWorkspace('manual');
         }
       });
     }
@@ -619,12 +625,88 @@ class FreelancerApp {
       closeModal();
     });
   }
+
+  lockWorkspace(reason = 'manual') {
+    // 1. Set the lock reason in sessionStorage
+    sessionStorage.setItem('alurkarya_lock_reason', reason);
+    // 2. Remove the session unlock flag
+    sessionStorage.removeItem('alurkarya_session_unlocked');
+    
+    // 3. Close open project modals and cleanup any dialogs
+    if (this.projectModal && typeof this.projectModal.close === 'function') {
+      this.projectModal.close();
+    }
+    
+    const openModals = document.querySelectorAll('.modal-overlay, .modal, .custom-modal');
+    openModals.forEach(m => m.remove());
+    
+    // 4. Force reload page to re-render in locked state (AccessGate)
+    window.location.reload();
+  }
+
+  setupInactivityListeners() {
+    const lockAction = () => {
+      this.lockWorkspace('idle');
+    };
+
+    const resetTimer = () => {
+      const now = Date.now();
+      // Throttle: only reset timer if last activity was more than 1 second ago
+      if (now - this.lastActivityTime > 1000) {
+        this.lastActivityTime = now;
+        if (this.idleTimer) clearTimeout(this.idleTimer);
+        const ms = this.WORKSPACE_IDLE_LOCK_MINUTES * 60 * 1000;
+        this.idleTimer = setTimeout(lockAction, ms);
+      }
+    };
+
+    // Register active user events
+    const events = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'];
+    events.forEach(e => {
+      window.addEventListener(e, resetTimer, { passive: true });
+    });
+
+    // Initial timer start
+    const ms = this.WORKSPACE_IDLE_LOCK_MINUTES * 60 * 1000;
+    this.idleTimer = setTimeout(lockAction, ms);
+  }
+
+  setupVisibilityListeners() {
+    let hiddenAt = 0;
+    
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        hiddenAt = Date.now();
+      } else {
+        if (hiddenAt > 0) {
+          const elapsedMs = Date.now() - hiddenAt;
+          const elapsedMin = elapsedMs / 1000 / 60;
+          if (elapsedMin >= 10) {
+            this.lockWorkspace('hidden_timeout');
+          }
+        }
+        hiddenAt = 0;
+      }
+    });
+
+    // Custom event listener for custom locking triggers
+    window.addEventListener('alurkarya:lock-workspace', (e) => {
+      const reason = e.detail && e.detail.reason ? e.detail.reason : 'manual';
+      this.lockWorkspace(reason);
+    });
+  }
 }
 
 // Instantiate and launch app on DOM complete load
 document.addEventListener('DOMContentLoaded', () => {
   const root = document.getElementById('app-root');
   if (!root) return;
+
+  // Migration from localStorage to sessionStorage
+  if (localStorage.getItem('alurkarya_access_granted') === 'true') {
+    sessionStorage.setItem('alurkarya_session_unlocked', 'true');
+    localStorage.removeItem('alurkarya_access_granted');
+  }
 
   const mode = localStorage.getItem('alurkarya_entry_mode');
 
@@ -636,7 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selector.render();
   } else if (mode === 'freelancer') {
     // 2. Freelancer Mode - Check Access Gate
-    const isGranted = localStorage.getItem('alurkarya_access_granted') === 'true';
+    const isGranted = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
     if (isGranted) {
       window.app = new FreelancerApp();
       window.app.init();

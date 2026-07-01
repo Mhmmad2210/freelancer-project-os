@@ -133,7 +133,25 @@ export class FreelancerProfile {
       </form>
     `;
 
-    viewEl.appendChild(formBox);
+    // Danger Zone / Zona Bahaya
+    const dangerZoneBox = document.createElement('div');
+    dangerZoneBox.className = 'focus-module-box';
+    dangerZoneBox.style.cssText = 'max-width: 640px; padding: 24px; display: flex; flex-direction: column; gap: 16px; margin: 20px auto 0; width: 100%; border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.03);';
+    dangerZoneBox.innerHTML = `
+      <h3 style="font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--color-danger); margin: 0;">
+        ${getIcon('alert', '', 16)} ${t('privacy.dangerZone', 'Danger Zone / Zona Bahaya')}
+      </h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.45;">
+        ${t('privacy.sharedDeviceNotice', 'Using a shared device? Lock your workspace when finished to protect client and project data. This helps protect privacy on shared devices.')}
+      </p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary text-danger" id="btn-clear-local-data" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
+          ${t('privacy.clearLocalData', 'Clear Local Workspace Data')}
+        </button>
+      </div>
+    `;
+    viewEl.appendChild(dangerZoneBox);
+
     this.container.appendChild(viewEl);
 
     // Event Listeners
@@ -195,6 +213,28 @@ export class FreelancerProfile {
     viewEl.querySelector('#btn-switch-entry-mode').addEventListener('click', () => {
       localStorage.removeItem('alurkarya_entry_mode');
       window.location.reload();
+    });
+
+    viewEl.querySelector('#btn-clear-local-data').addEventListener('click', () => {
+      const promptWarning = t('privacy.clearLocalDataWarning', 'This will delete AlurKarya workspace data stored in this browser. Export a backup first if needed.');
+      const confirmVal = prompt(promptWarning + '\n\n' + (getLanguage() === 'id' ? 'Ketik HAPUS untuk mengonfirmasi:' : 'Type DELETE to confirm:'));
+      if (confirmVal === 'DELETE' || confirmVal === 'HAPUS') {
+        // Clear only AlurKarya local storage keys
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('alurkarya_') || key === 'freelancer_os_workspace')) {
+            localStorage.removeItem(key);
+          }
+        }
+        // Clear session storage keys
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const key = sessionStorage.key(i);
+          if (key && key.startsWith('alurkarya_')) {
+            sessionStorage.removeItem(key);
+          }
+        }
+        window.location.reload();
+      }
     });
   }
 }

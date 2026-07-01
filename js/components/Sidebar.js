@@ -101,7 +101,6 @@ export class SidebarNav {
       `<img src="${profile.freelancerAvatar}" alt="${name}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.outerHTML='${initials}'">` :
       initials;
 
-    const activeLang = getLanguage();
     const langSwitcherHtml = `
       <div class="lang-switcher-sidebar" style="padding: 0 12px 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; width: 100%;">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
@@ -113,11 +112,17 @@ export class SidebarNav {
             <option value="id" ${activeLang === 'id' ? 'selected' : ''}>Bahasa Indonesia</option>
           </select>
         </div>
-        <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px; width: 100%;">
-          ${getIcon('help', '', 12)}
-          <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.7rem; color: var(--text-muted); text-decoration: none; transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--text-muted)'">
-            ${t('viewGuide', 'View Guide')}
-          </a>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 2px; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            ${getIcon('help', '', 12)}
+            <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.7rem; color: var(--text-muted); text-decoration: none; transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+              ${t('viewGuide', 'View Guide')}
+            </a>
+          </div>
+          <button id="btn-sidebar-lock" style="background: none; border: none; padding: 0; color: var(--text-muted); font-size: 0.7rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-danger)'" onmouseout="this.style.color='var(--text-muted)'" title="${t('privacy.lockWorkspace', 'Lock Workspace')}">
+            ${getIcon('lock', '', 12)}
+            <span>${t('privacy.lockWorkspace', 'Lock Workspace')}</span>
+          </button>
         </div>
       </div>
     `;
@@ -142,6 +147,17 @@ export class SidebarNav {
     if (langSelect) {
       langSelect.addEventListener('change', (e) => {
         setLanguage(e.target.value);
+      });
+    }
+
+    const lockBtn = footerEl.querySelector('#btn-sidebar-lock');
+    if (lockBtn) {
+      lockBtn.addEventListener('click', () => {
+        if (window.app && typeof window.app.lockWorkspace === 'function') {
+          window.app.lockWorkspace('manual');
+        } else {
+          window.dispatchEvent(new CustomEvent('alurkarya:lock-workspace', { detail: { reason: 'manual' } }));
+        }
       });
     }
 
