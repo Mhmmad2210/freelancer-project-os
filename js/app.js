@@ -435,9 +435,65 @@ class FreelancerApp {
     const diagnoseBtn = document.getElementById('btn-workflow-diagnose');
     if (diagnoseBtn) {
       diagnoseBtn.addEventListener('click', () => {
+        const report = this.runWorkflowDiagnosis();
+        const alertMsg = getLanguage() === 'id'
+          ? `Diagnosa AlurKarya:\n- Jumlah Project: ${report.projectCount}\n- Jumlah Client: ${report.clientCount}\n- Bahasa: ${report.selectedLanguage}\n- Mata Uang Default: ${report.defaultCurrency}\n- Halaman Aktif: ${report.activeView}\n- Kolom Ter-render: ${report.kanbanColumnsRendered}\n- Status Parse Storage: ${report.localStorageParseStatus}\n- Status Sesi: ${report.migrationStatus}\n\nMembuka kuesioner alur kerja...`
+          : `AlurKarya Diagnostics:\n- Project Count: ${report.projectCount}\n- Client Count: ${report.clientCount}\n- Selected Language: ${report.selectedLanguage}\n- Default Currency: ${report.defaultCurrency}\n- Active View: ${report.activeView}\n- Kanban Columns Rendered: ${report.kanbanColumnsRendered}\n- Storage Parse Status: ${report.localStorageParseStatus}\n- Session Status: ${report.migrationStatus}\n\nOpening workflow questionnaire...`;
+        alert(alertMsg);
         this.openDiagnoseModal();
       });
     }
+  }
+
+  runWorkflowDiagnosis() {
+    let lsParseStatus = 'OK';
+    let localData = null;
+    try {
+      const stored = localStorage.getItem('freelancer_os_workspace');
+      if (stored) {
+        localData = JSON.parse(stored);
+      }
+    } catch (e) {
+      lsParseStatus = 'Error: ' + e.message;
+    }
+
+    const state = store.getState() || {};
+    const projects = Array.isArray(state.projects) ? state.projects : [];
+    const clients = Array.isArray(state.clients) ? state.clients : [];
+    const lang = localStorage.getItem('alurkarya_language') || 'en';
+    const currency = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+    const activeView = this.activeTab || 'kanban';
+    
+    // Active filters
+    const searchVal = this.currentView && this.currentView.searchQuery ? this.currentView.searchQuery : '';
+    const activeFilters = {
+      search: searchVal,
+      viewMode: localStorage.getItem('alurkarya_board_view_mode') || 'simple',
+      sortMode: localStorage.getItem('alurkarya_board_sort_mode') || 'default'
+    };
+
+    // Stage keys found
+    const stagesFound = [...new Set(projects.map(p => p.stage || 'undefined'))];
+
+    // Whether Kanban columns rendered
+    const kanbanCanvas = document.getElementById('kanban-board-canvas');
+    const colsRendered = kanbanCanvas ? kanbanCanvas.querySelectorAll('.kanban-column').length : 0;
+
+    const report = {
+      projectCount: projects.length,
+      clientCount: clients.length,
+      selectedLanguage: lang,
+      defaultCurrency: currency,
+      activeView: activeView,
+      activeFilters: activeFilters,
+      stageKeysFound: stagesFound,
+      localStorageParseStatus: lsParseStatus,
+      migrationStatus: sessionStorage.getItem('alurkarya_session_unlocked') ? 'Unlocked' : 'Locked',
+      kanbanColumnsRendered: colsRendered
+    };
+
+    console.info('=== ALURKARYA WORKFLOW DIAGNOSTIC REPORT ===', report);
+    return report;
   }
 
   reRenderApp() {

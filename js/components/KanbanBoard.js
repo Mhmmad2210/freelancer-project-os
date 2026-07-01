@@ -4,7 +4,7 @@
 
 import { getIcon } from '../icons.js';
 import { formatCurrency, formatMoney, getDueDateStatus, getLocalizedDueDateStatus, formatDate, showCompletionWarningModal } from '../utils.js';
-import { t } from '../i18n.js';
+import { t, getLanguage } from '../i18n.js';
 import { TemplatesModal } from './TemplatesModal.js';
 
 export class KanbanBoard {
@@ -364,16 +364,17 @@ export class KanbanBoard {
   }
 
   createStatsSection() {
-    const state = this.store.getState();
-    const { projects, invoices } = state;
+    const state = this.store.getState() || {};
+    const projects = Array.isArray(state.projects) ? state.projects : [];
+    const invoices = Array.isArray(state.invoices) ? state.invoices : [];
 
     // Active Projects Count (everything except Completed/New Lead)
-    const activeCount = projects.filter(p => !['new_lead', 'completed'].includes(p.stage)).length;
+    const activeCount = projects.filter(p => !['new_lead', 'completed'].includes(p.stage || 'new_lead')).length;
 
     // Total Project Value (Sum across all projects except Completed, grouped by projectCurrency)
     const pipelineGroups = {};
     projects
-      .filter(p => p.stage !== 'completed')
+      .filter(p => (p.stage || 'new_lead') !== 'completed')
       .forEach(p => {
         const cur = p.projectCurrency || localStorage.getItem('alurkarya_default_currency') || 'IDR';
         if (!pipelineGroups[cur]) pipelineGroups[cur] = 0;
@@ -418,9 +419,9 @@ export class KanbanBoard {
     const formattedReceivables = formatGrouped(receivablesGroups);
 
     // Average Revision Rounds
-    const measuredProjects = projects.filter(p => !['new_lead'].includes(p.stage));
+    const measuredProjects = projects.filter(p => !['new_lead'].includes(p.stage || 'new_lead'));
     const avgRevisions = measuredProjects.length > 0
-      ? (measuredProjects.reduce((sum, p) => sum + p.revisionRound, 0) / measuredProjects.length).toFixed(1)
+      ? (measuredProjects.reduce((sum, p) => sum + (p.revisionRound || 0), 0) / measuredProjects.length).toFixed(1)
       : '0.0';
 
     const metricsGrid = document.createElement('div');
@@ -480,36 +481,41 @@ export class KanbanBoard {
       { id: 'completed', label: t('kanban.stages.completed', 'Completed') }
     ];
 
-    const state = this.store.getState();
-    
+    const state = this.store.getState() || {};
+    const projects = Array.isArray(state.projects) ? state.projects : [];
+
     // Check if there are no projects in database
-    if (state.projects.length === 0) {
-      canvas.style.display = 'block';
-      canvas.innerHTML = `
-        <div class="empty-state-box" style="margin-top: 24px; padding: 40px 20px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); backdrop-filter: var(--glass-backdrop);">
-          <div style="font-size: 2.8rem; margin-bottom: 16px; color: var(--color-primary-glow); filter: drop-shadow(0 2px 8px rgba(139,92,246,0.3));">💼</div>
-          <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">${t('kanban.emptyStateTitle', 'Start with a freelancer template')}</h3>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.55;">
-            ${t('kanban.emptyStateDesc', 'Choose your freelance type and AlurKarya will create a sample client-to-paid workflow for you.')}
-          </p>
-          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; align-items: center;">
-            <button class="btn btn-primary" id="btn-empty-choose-template" style="padding: 10px 22px; font-weight: 600; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">${getIcon('layers', '', 16)} ${t('kanban.chooseTemplate', 'Choose Template')}</button>
-            <button class="btn btn-secondary" id="btn-empty-add-project" style="padding: 10px 22px; font-weight: 600;">${getIcon('plus', '', 16)} ${t('kanban.createProject', 'Create Project')}</button>
-            <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="padding: 10px 22px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-              ${getIcon('help', '', 16)} ${t('viewGuide', 'View Guide')}
-            </a>
-          </div>
+    if (projects.length === 0) {
+      const emptyStateBox = document.createElement('div');
+      emptyStateBox.className = 'empty-state-box';
+      emptyStateBox.style.cssText = 'margin: 0 0 24px 0; padding: 32px 20px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); backdrop-filter: var(--glass-backdrop); width: 100%;';
+      
+      const lang = getLanguage();
+      const emptyTitle = lang === 'id' 
+        ? 'Belum ada project.' 
+        : 'No projects yet.';
+      const emptyDesc = lang === 'id' 
+        ? 'Tambahkan project pertama atau impor backup jika kamu sudah punya data sebelumnya untuk mulai mengelola workflow client-to-paid.'
+        : 'Add your first project or import a backup if you already have saved data to start managing your client-to-paid workflow.';
+      const addText = lang === 'id' ? 'Tambah Project' : 'Add Project';
+      
+      emptyStateBox.innerHTML = `
+        <div style="font-size: 2.2rem; margin-bottom: 12px; color: var(--color-primary-glow); filter: drop-shadow(0 2px 8px rgba(139,92,246,0.3));">💼</div>
+        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 6px;">${emptyTitle}</h3>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 16px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+          ${emptyDesc}
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center;">
+          <button class="btn btn-primary btn-sm" id="btn-empty-add-project" style="padding: 8px 18px; font-weight: 600;">${getIcon('plus', '', 14)} ${addText}</button>
         </div>
       `;
-      canvas.querySelector('#btn-empty-add-project').addEventListener('click', () => this.showNewProjectDrawer());
-      canvas.querySelector('#btn-empty-choose-template').addEventListener('click', () => this.showTemplatesModal());
-      return;
+      canvas.appendChild(emptyStateBox);
+      emptyStateBox.querySelector('#btn-empty-add-project').addEventListener('click', () => this.showNewProjectDrawer());
     }
 
     canvas.style.display = 'block';
     let track = canvas.querySelector('.kanban-scroll-track');
     if (!track) {
-      canvas.innerHTML = '';
       track = document.createElement('div');
       track.className = 'kanban-scroll-track';
       track.id = 'kanban-board-track';
@@ -518,19 +524,43 @@ export class KanbanBoard {
       track.innerHTML = '';
     }
 
-    const filteredProjects = state.projects.filter(p => {
+    const filteredProjects = projects.filter(p => {
       if (!this.searchQuery) return true;
+      const title = p.title || '';
+      const clientName = p.clientName || '';
+      const tags = Array.isArray(p.tags) ? p.tags : [];
       return (
-        p.title.toLowerCase().includes(this.searchQuery) ||
-        p.clientName.toLowerCase().includes(this.searchQuery) ||
-        p.tags.some(tag => tag.toLowerCase().includes(this.searchQuery))
+        title.toLowerCase().includes(this.searchQuery) ||
+        clientName.toLowerCase().includes(this.searchQuery) ||
+        tags.some(tag => tag.toLowerCase().includes(this.searchQuery))
       );
     });
+
+    // If all projects are hidden by filters/search
+    if (projects.length > 0 && filteredProjects.length === 0) {
+      const filterEmptyBox = document.createElement('div');
+      filterEmptyBox.className = 'empty-state-box';
+      filterEmptyBox.style.cssText = 'margin: 0 0 24px 0; padding: 24px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); width: 100%;';
+      
+      const lang = getLanguage();
+      const filterText = lang === 'id' 
+        ? 'Tidak ada project yang cocok dengan filter saat ini.' 
+        : 'No projects match the current filter.';
+      
+      filterEmptyBox.innerHTML = `
+        <span style="font-size: 0.82rem; color: var(--text-muted);">${filterText}</span>
+      `;
+      canvas.appendChild(filterEmptyBox);
+    }
 
     const activeSortMode = localStorage.getItem('alurkarya_board_sort_mode') || 'default';
 
     columns.forEach(col => {
-      let colProjects = filteredProjects.filter(p => p.stage === col.id);
+      let colProjects = filteredProjects.filter(p => {
+        let stage = p.stage || 'new_lead';
+        if (stage === 'Queue') stage = 'proposal_sent';
+        return stage === col.id;
+      });
 
       // Apply sorting based on activeSortMode
       if (activeSortMode === 'dueDate') {
@@ -540,7 +570,7 @@ export class KanbanBoard {
           return new Date(a.dueDate) - new Date(b.dueDate);
         });
       } else if (activeSortMode === 'value') {
-        colProjects.sort((a, b) => b.budget - a.budget);
+        colProjects.sort((a, b) => (b.budget || 0) - (a.budget || 0));
       } else if (activeSortMode === 'submitDate') {
         colProjects.sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
