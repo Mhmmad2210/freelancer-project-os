@@ -59,8 +59,49 @@ export function formatMoney(amount, currency = 'IDR', locale = null) {
   return `${cur} ${formattedNumber}`;
 }
 
+window.getDefaultCurrency = function() {
+  const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+  if (activeWorkspaceId) {
+    const settingsStr = localStorage.getItem(`alurkarya_workspace_${activeWorkspaceId}_settings`);
+    if (settingsStr) {
+      try {
+        const settings = JSON.parse(settingsStr);
+        if (settings.defaultCurrency) return settings.defaultCurrency;
+      } catch(e) {}
+    }
+  }
+  return localStorage.getItem('alurkarya_default_currency') || 'IDR';
+};
+
+window.setDefaultCurrency = function(val) {
+  const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+  if (activeWorkspaceId) {
+    const settingsStr = localStorage.getItem(`alurkarya_workspace_${activeWorkspaceId}_settings`);
+    let settings = {};
+    if (settingsStr) {
+      try { settings = JSON.parse(settingsStr); } catch(e) {}
+    }
+    settings.defaultCurrency = val;
+    localStorage.setItem(`alurkarya_workspace_${activeWorkspaceId}_settings`, JSON.stringify(settings));
+  } else {
+    localStorage.setItem('alurkarya_default_currency', val);
+  }
+};
+
+window.getPromptHistory = function() {
+  const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+  const key = activeWorkspaceId ? `alurkarya_workspace_${activeWorkspaceId}_prompt_history` : 'alurkarya_prompt_history';
+  return JSON.parse(localStorage.getItem(key) || '[]');
+};
+
+window.savePromptHistory = function(history) {
+  const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+  const key = activeWorkspaceId ? `alurkarya_workspace_${activeWorkspaceId}_prompt_history` : 'alurkarya_prompt_history';
+  localStorage.setItem(key, JSON.stringify(history));
+};
+
 export function formatCurrency(value, currency) {
-  const defaultCurrency = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+  const defaultCurrency = window.getDefaultCurrency();
   return formatMoney(value, currency || defaultCurrency);
 }
 

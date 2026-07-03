@@ -1219,8 +1219,7 @@ export function copyPromptToClipboard(text, toastCallback, promptType = 'unknown
     .then(() => {
       // Save to alurkarya_prompt_history
       try {
-        const historyStr = localStorage.getItem('alurkarya_prompt_history') || '[]';
-        const history = JSON.parse(historyStr);
+        const history = window.getPromptHistory ? window.getPromptHistory() : [];
         history.unshift({
           promptType,
           projectId,
@@ -1230,7 +1229,11 @@ export function copyPromptToClipboard(text, toastCallback, promptType = 'unknown
         if (history.length > 20) {
           history.splice(20);
         }
-        localStorage.setItem('alurkarya_prompt_history', JSON.stringify(history));
+        if (window.savePromptHistory) {
+          window.savePromptHistory(history);
+        } else {
+          localStorage.setItem('alurkarya_prompt_history', JSON.stringify(history));
+        }
       } catch (e) {
         console.error("Failed to write prompt history", e);
       }

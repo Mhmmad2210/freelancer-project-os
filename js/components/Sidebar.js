@@ -113,17 +113,25 @@ export class SidebarNav {
             <option value="id" ${activeLang === 'id' ? 'selected' : ''}>Bahasa Indonesia</option>
           </select>
         </div>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 2px; width: 100%;">
-          <div style="display: flex; align-items: center; gap: 6px;">
-            ${getIcon('help', '', 12)}
-            <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.7rem; color: var(--text-muted); text-decoration: none; transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--text-muted)'">
-              ${t('viewGuide', 'View Guide')}
-            </a>
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 2px; width: 100%;">
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              ${getIcon('help', '', 12)}
+              <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" style="font-size: 0.7rem; color: var(--text-muted); text-decoration: none; transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+                ${t('viewGuide', 'View Guide')}
+              </a>
+            </div>
+            <button id="btn-sidebar-lock" style="background: none; border: none; padding: 0; color: var(--text-muted); font-size: 0.7rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-danger)'" onmouseout="this.style.color='var(--text-muted)'" title="${t('privacy.lockWorkspace', 'Lock Workspace')}">
+              ${getIcon('lock', '', 12)}
+              <span>${t('privacy.lockWorkspace', 'Lock Workspace')}</span>
+            </button>
           </div>
-          <button id="btn-sidebar-lock" style="background: none; border: none; padding: 0; color: var(--text-muted); font-size: 0.7rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-danger)'" onmouseout="this.style.color='var(--text-muted)'" title="${t('privacy.lockWorkspace', 'Lock Workspace')}">
-            ${getIcon('lock', '', 12)}
-            <span>${t('privacy.lockWorkspace', 'Lock Workspace')}</span>
-          </button>
+          <div style="display: flex; align-items: center; justify-content: flex-end; width: 100%;">
+            <button id="btn-sidebar-switch-ws" style="background: none; border: none; padding: 0; color: var(--text-muted); font-size: 0.7rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--text-muted)'" title="${activeLang === 'id' ? 'Ganti Workspace' : 'Switch Workspace'}">
+              🔄
+              <span>${activeLang === 'id' ? 'Ganti Workspace' : 'Switch Workspace'}</span>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -159,6 +167,13 @@ export class SidebarNav {
         } else {
           window.dispatchEvent(new CustomEvent('alurkarya:lock-workspace', { detail: { reason: 'manual' } }));
         }
+      });
+    }
+
+    const switchWsBtn = footerEl.querySelector('#btn-sidebar-switch-ws');
+    if (switchWsBtn) {
+      switchWsBtn.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('alurkarya:switch-workspace'));
       });
     }
 

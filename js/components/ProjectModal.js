@@ -2366,8 +2366,7 @@ Please extract and format as a clean bulleted list containing:
       const targetLang = (langSelector && langSelector.value !== 'app') ? langSelector.value : getLanguage();
 
       if (currentCategory === 'history') {
-        const historyStr = localStorage.getItem('alurkarya_prompt_history') || '[]';
-        const history = JSON.parse(historyStr);
+        const history = window.getPromptHistory ? window.getPromptHistory() : [];
         if (history.length === 0) {
           promptPreview.textContent = targetLang === 'id' ? "Belum ada riwayat prompt yang tercatat." : "No prompt history recorded yet.";
         } else {

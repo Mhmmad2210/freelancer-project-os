@@ -369,7 +369,59 @@ export class WorkspaceStore {
    */
   loadState() {
     try {
-      const stored = localStorage.getItem('freelancer_os_workspace');
+      // 1. Run storage migration first
+      const migrationDone = localStorage.getItem('alurkarya_workspace_migration_v1_done') === 'true';
+      const indexStr = localStorage.getItem('alurkarya_workspace_index');
+      const index = indexStr ? JSON.parse(indexStr) : [];
+      
+      const oldState = localStorage.getItem('freelancer_os_workspace');
+      const oldProfile = localStorage.getItem('alurkarya_freelancer_profile');
+      
+      if (!migrationDone && (oldState || oldProfile) && index.length === 0) {
+        const lang = localStorage.getItem('alurkarya_language') || 'en';
+        const wsName = lang === 'id' ? 'Workspace Saya' : 'My Workspace';
+        const wsId = 'wk_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).substring(4);
+        
+        const defaultWorkspace = {
+          workspaceId: wsId,
+          workspaceName: wsName,
+          createdAt: new Date().toISOString(),
+          lastOpenedAt: new Date().toISOString(),
+          workspacePinHash: null
+        };
+        localStorage.setItem('alurkarya_workspace_index', JSON.stringify([defaultWorkspace]));
+        
+        if (oldState) {
+          localStorage.setItem(`alurkarya_workspace_${wsId}_state`, oldState);
+        }
+        if (oldProfile) {
+          localStorage.setItem(`alurkarya_workspace_${wsId}_profile`, oldProfile);
+        }
+        const oldCurrency = localStorage.getItem('alurkarya_default_currency');
+        if (oldCurrency) {
+          localStorage.setItem(`alurkarya_workspace_${wsId}_settings`, JSON.stringify({ defaultCurrency: oldCurrency }));
+        }
+        localStorage.setItem('alurkarya_workspace_migration_v1_done', 'true');
+      }
+
+      // 2. Check if a workspace is active
+      const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+      if (!activeWorkspaceId) {
+        // Return a blank state if no workspace is active
+        this.projects = [];
+        this.clients = [];
+        this.invoices = [];
+        this.quotations = [];
+        this.weeklyReflections = '';
+        this.availability = { timezone: 'Asia/Jakarta', slots: [] };
+        this.freelancerProfile = { freelancerName: '', freelancerRole: '' };
+        return;
+      }
+
+      const stateKey = `alurkarya_workspace_${activeWorkspaceId}_state`;
+      const profileKey = `alurkarya_workspace_${activeWorkspaceId}_profile`;
+
+      const stored = localStorage.getItem(stateKey);
       if (stored) {
         const parsed = JSON.parse(stored);
         this.projects = parsed.projects || [];
@@ -379,7 +431,7 @@ export class WorkspaceStore {
         this.weeklyReflections = parsed.weeklyReflections || this.getDefaultReflections();
         this.availability = parsed.availability || this.getDefaultAvailability();
         
-        const storedProfile = localStorage.getItem('alurkarya_freelancer_profile');
+        const storedProfile = localStorage.getItem(profileKey);
         this.freelancerProfile = storedProfile ? JSON.parse(storedProfile) : (parsed.freelancerProfile || this.getDefaultFreelancerProfile());
 
         let migrated = false;
@@ -427,7 +479,7 @@ export class WorkspaceStore {
             p.currency = 'IDR';
             migrated = true;
           }
-          const defaultCurrency = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+          const defaultCurrency = window.getDefaultCurrency ? window.getDefaultCurrency() : 'IDR';
           if (!p.projectCurrency) {
             p.projectCurrency = defaultCurrency;
             migrated = true;
@@ -565,6 +617,7 @@ export class WorkspaceStore {
         }
 
       } else {
+        // Initialize default clean state for this workspace
         this.projects = [];
         this.clients = [];
         this.invoices = [];
@@ -596,6 +649,12 @@ export class WorkspaceStore {
    */
   saveState() {
     try {
+      const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+      if (!activeWorkspaceId) return;
+
+      const stateKey = `alurkarya_workspace_${activeWorkspaceId}_state`;
+      const profileKey = `alurkarya_workspace_${activeWorkspaceId}_profile`;
+
       const bundle = {
         projects: this.projects,
         clients: this.clients,
@@ -605,10 +664,11 @@ export class WorkspaceStore {
         availability: this.availability,
         freelancerProfile: this.freelancerProfile
       };
-      localStorage.setItem('freelancer_os_workspace', JSON.stringify(bundle));
+      
+      localStorage.setItem(stateKey, JSON.stringify(bundle));
       
       if (this.freelancerProfile) {
-        localStorage.setItem('alurkarya_freelancer_profile', JSON.stringify(this.freelancerProfile));
+        localStorage.setItem(profileKey, JSON.stringify(this.freelancerProfile));
       }
       
       this.notifyListeners();
@@ -629,6 +689,73 @@ export class WorkspaceStore {
     this.availability = this.getDefaultAvailability();
     this.freelancerProfile = this.getDefaultFreelancerProfile();
     this.saveState();
+  }
+
+  getWorkspaces() {
+    const str = localStorage.getItem('alurkarya_workspace_index');
+    return str ? JSON.parse(str) : [];
+  }
+
+  saveWorkspaces(index) {
+    localStorage.setItem('alurkarya_workspace_index', JSON.stringify(index));
+  }
+
+  createWorkspace(name, pinHash = null) {
+    const index = this.getWorkspaces();
+    const wsId = 'wk_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).substring(4);
+
+    const newWs = {
+      workspaceId: wsId,
+      workspaceName: name.trim(),
+      createdAt: new Date().toISOString(),
+      lastOpenedAt: new Date().toISOString(),
+      workspacePinHash: pinHash
+    };
+
+    index.push(newWs);
+    this.saveWorkspaces(index);
+
+    // Initialize default state for this workspace
+    const bundle = {
+      projects: [],
+      clients: [],
+      invoices: [],
+      quotations: [],
+      weeklyReflections: this.getDefaultReflections(),
+      availability: this.getDefaultAvailability(),
+      freelancerProfile: this.getDefaultFreelancerProfile()
+    };
+    localStorage.setItem(`alurkarya_workspace_${wsId}_state`, JSON.stringify(bundle));
+    localStorage.setItem(`alurkarya_workspace_${wsId}_profile`, JSON.stringify(bundle.freelancerProfile));
+    localStorage.setItem(`alurkarya_workspace_${wsId}_settings`, JSON.stringify({ defaultCurrency: 'IDR' }));
+
+    return newWs;
+  }
+
+  deleteWorkspace(id) {
+    let index = this.getWorkspaces();
+    index = index.filter(w => w.workspaceId !== id);
+    this.saveWorkspaces(index);
+
+    localStorage.removeItem(`alurkarya_workspace_${id}_state`);
+    localStorage.removeItem(`alurkarya_workspace_${id}_profile`);
+    localStorage.removeItem(`alurkarya_workspace_${id}_settings`);
+  }
+
+  deleteAllLocalData() {
+    const index = this.getWorkspaces();
+    index.forEach(w => {
+      localStorage.removeItem(`alurkarya_workspace_${w.workspaceId}_state`);
+      localStorage.removeItem(`alurkarya_workspace_${w.workspaceId}_profile`);
+      localStorage.removeItem(`alurkarya_workspace_${w.workspaceId}_settings`);
+    });
+    localStorage.removeItem('alurkarya_workspace_index');
+    localStorage.removeItem('alurkarya_workspace_migration_v1_done');
+    localStorage.removeItem('freelancer_os_workspace');
+    localStorage.removeItem('alurkarya_freelancer_profile');
+    localStorage.removeItem('alurkarya_default_currency');
+    
+    sessionStorage.clear();
   }
 
   addDemoProjectsNonDestructively() {
@@ -1197,6 +1324,20 @@ export class WorkspaceStore {
 
   /* --- Backup IO Actions --- */
   exportBackup() {
+    const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+    let defaultCurrency = 'IDR';
+    if (activeWorkspaceId) {
+      const settingsStr = localStorage.getItem(`alurkarya_workspace_${activeWorkspaceId}_settings`);
+      if (settingsStr) {
+        try {
+          const settings = JSON.parse(settingsStr);
+          if (settings.defaultCurrency) defaultCurrency = settings.defaultCurrency;
+        } catch(e) {}
+      }
+    } else {
+      defaultCurrency = window.getDefaultCurrency ? window.getDefaultCurrency() : 'IDR';
+    }
+
     const bundle = {
       projects: this.projects,
       clients: this.clients,
@@ -1205,22 +1346,46 @@ export class WorkspaceStore {
       weeklyReflections: this.weeklyReflections,
       availability: this.availability,
       freelancerProfile: this.freelancerProfile,
-      defaultCurrency: localStorage.getItem('alurkarya_default_currency') || 'IDR'
+      defaultCurrency: defaultCurrency
     };
     return JSON.stringify(bundle, null, 2);
   }
 
-  importBackup(jsonString) {
+  importBackup(jsonString, targetWorkspaceId = null) {
     try {
       const parsed = JSON.parse(jsonString);
       if (parsed.projects && parsed.clients && parsed.invoices) {
-        if (parsed.defaultCurrency) {
-          localStorage.setItem('alurkarya_default_currency', parsed.defaultCurrency);
-        } else {
-          if (!localStorage.getItem('alurkarya_default_currency')) {
-            localStorage.setItem('alurkarya_default_currency', 'IDR');
-          }
+        let wsId = targetWorkspaceId === 'NEW_WORKSPACE' ? null : (targetWorkspaceId || sessionStorage.getItem('alurkarya_active_workspace_id'));
+        
+        // If we don't have an active workspace or we want to create a new one:
+        if (!wsId) {
+          const lang = localStorage.getItem('alurkarya_language') || 'en';
+          const defaultWsName = lang === 'id' ? 'Workspace Impor' : 'Imported Workspace';
+          const wsName = prompt(
+            lang === 'id' ? 'Masukkan nama workspace baru:' : 'Enter new workspace name:',
+            defaultWsName
+          ) || defaultWsName;
+          
+          const index = this.getWorkspaces();
+          wsId = 'wk_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).substring(4);
+          
+          const newWs = {
+            workspaceId: wsId,
+            workspaceName: wsName.trim(),
+            createdAt: new Date().toISOString(),
+            lastOpenedAt: new Date().toISOString(),
+            workspacePinHash: null
+          };
+          index.push(newWs);
+          this.saveWorkspaces(index);
+          
+          sessionStorage.setItem('alurkarya_active_workspace_id', wsId);
+          sessionStorage.setItem('alurkarya_session_unlocked', 'true');
         }
+
+        const currency = parsed.defaultCurrency || 'IDR';
+        localStorage.setItem(`alurkarya_workspace_${wsId}_settings`, JSON.stringify({ defaultCurrency: currency }));
+        
         this.projects = parsed.projects;
         this.clients = parsed.clients;
         this.invoices = parsed.invoices;
@@ -1228,14 +1393,14 @@ export class WorkspaceStore {
         this.weeklyReflections = parsed.weeklyReflections || this.getDefaultReflections();
         this.availability = parsed.availability || this.getDefaultAvailability();
         this.freelancerProfile = parsed.freelancerProfile || this.getDefaultFreelancerProfile();
-        
+
         this.projects = this.projects.map(p => {
           if (p.budget < 1000000) p.budget *= 1000;
           if (!p.currency) p.currency = 'IDR';
-          const defaultCurrency = localStorage.getItem('alurkarya_default_currency') || 'IDR';
-          if (!p.projectCurrency) p.projectCurrency = defaultCurrency;
-          if (!p.invoiceCurrency) p.invoiceCurrency = p.projectCurrency || defaultCurrency;
-          if (!p.paymentCurrency) p.paymentCurrency = p.invoiceCurrency || p.projectCurrency || defaultCurrency;
+          if (!p.projectCurrency) p.projectCurrency = currency;
+          if (!p.invoiceCurrency) p.invoiceCurrency = p.projectCurrency || currency;
+          if (!p.paymentCurrency) p.paymentCurrency = p.invoiceCurrency || p.projectCurrency || currency;
+          
           if (p.downPaymentPercent === undefined) {
             p.downPaymentPercent = 50;
             p.downPaymentAmount = Math.round(p.budget * 0.5);
@@ -1253,6 +1418,25 @@ export class WorkspaceStore {
             p.quotationId = '';
             p.quotationStatus = 'None';
           }
+          if (p.clientType === undefined) p.clientType = 'General';
+          if (p.customClientName === undefined) p.customClientName = '';
+          if (p.customCategory === undefined) p.customCategory = '';
+          if (p.createdAt === undefined) p.createdAt = new Date().toISOString();
+          if (p.revisionCount === undefined) p.revisionCount = p.revisionRound !== undefined ? p.revisionRound : 0;
+          if (p.maxRevision === undefined) p.maxRevision = p.maxRevisionRounds !== undefined ? p.maxRevisionRounds : 3;
+          if (p.clientApprovalStatus === undefined) p.clientApprovalStatus = 'Pending Review';
+          if (p.invoiceNumber === undefined) p.invoiceNumber = '';
+          if (p.invoiceDate === undefined) p.invoiceDate = '';
+          if (p.invoiceDueDate === undefined) p.invoiceDueDate = '';
+          if (p.invoiceAmount === undefined) p.invoiceAmount = 0;
+          if (p.invoiceFileLink === undefined) p.invoiceFileLink = '';
+          if (p.paymentTerms === undefined) p.paymentTerms = '';
+          if (p.paymentDueDate === undefined) p.paymentDueDate = '';
+          if (p.paymentReceiptLink === undefined) p.paymentReceiptLink = '';
+          if (p.lastFollowUpDate === undefined) p.lastFollowUpDate = '';
+          if (p.nextFollowUpDate === undefined) p.nextFollowUpDate = '';
+          if (p.rawFileDownloadLink === undefined) p.rawFileDownloadLink = '';
+          if (p.isCompletedLocked === undefined) p.isCompletedLocked = false;
           if (p.holdReason === undefined) p.holdReason = '';
           if (p.holdDate === undefined) p.holdDate = '';
           if (p.holdFollowUpDate === undefined) p.holdFollowUpDate = '';
@@ -1261,39 +1445,39 @@ export class WorkspaceStore {
           if (p.meetingType === undefined) p.meetingType = 'Google Meet';
           if (p.meetingTimezone === undefined) p.meetingTimezone = 'Asia/Jakarta';
           if (p.clientRequest === undefined) p.clientRequest = '';
-          if (p.keyDiscussionPoints === undefined) { p.keyDiscussionPoints = ''; }
-          if (p.decisionMade === undefined) { p.decisionMade = ''; }
-          if (p.actionItems === undefined) { p.actionItems = ''; }
-          if (p.clientConcern === undefined) { p.clientConcern = ''; }
-          if (p.clientExpectation === undefined) { p.clientExpectation = ''; }
-          if (p.clientReviewDate === undefined) { p.clientReviewDate = ''; }
-          if (p.finalDeliveryDate === undefined) { p.finalDeliveryDate = ''; }
-          if (p.clientVisibleNotes === undefined) { p.clientVisibleNotes = ''; }
-          if (p.previewLink === undefined) { p.previewLink = ''; }
-          if (p.draftLink === undefined) { p.draftLink = ''; }
-          if (p.reviewLink === undefined) { p.reviewLink = ''; }
-          if (p.fileFolderLink === undefined) { p.fileFolderLink = ''; }
-          if (p.stagingLink === undefined) { p.stagingLink = ''; }
-          if (p.finalFileLink === undefined) { p.finalFileLink = ''; }
-          if (p.deliveryDate === undefined) { p.deliveryDate = ''; }
-          if (p.handoverNotes === undefined) { p.handoverNotes = ''; }
-          if (p.approvalStatus === undefined) { p.approvalStatus = 'Pending Review'; }
-          if (p.approvedAt === undefined) { p.approvedAt = ''; }
-          if (p.clientFeedbackSummary === undefined) { p.clientFeedbackSummary = ''; }
-          if (p.revisionRule === undefined) { p.revisionRule = ''; }
-          if (p.invoiceStatus === undefined) { p.invoiceStatus = 'Not Created'; }
-          if (p.paymentStatus === undefined) { p.paymentStatus = 'Not Started'; }
-          if (p.amountPaid === undefined) { p.amountPaid = 0; }
-          if (p.amountDue === undefined) { p.amountDue = 0; }
-          if (p.paymentMethod === undefined) { p.paymentMethod = ''; }
-          if (p.paymentNotes === undefined) { p.paymentNotes = ''; }
-          if (p.receiptLink === undefined) { p.receiptLink = p.paymentReceiptLink || ''; }
-          if (p.invoiceFileLink === undefined) { p.invoiceFileLink = ''; }
-          if (p.deliveryStatus === undefined) { p.deliveryStatus = 'Not Submitted'; }
-          if (p.clientConfirmedDelivery === undefined) { p.clientConfirmedDelivery = false; }
-          if (p.firstCutLink === undefined) { p.firstCutLink = ''; }
-          if (p.designPreviewLink === undefined) { p.designPreviewLink = ''; }
-          if (p.sourceFileLink === undefined) { p.sourceFileLink = ''; }
+          if (p.keyDiscussionPoints === undefined) p.keyDiscussionPoints = '';
+          if (p.decisionMade === undefined) p.decisionMade = '';
+          if (p.actionItems === undefined) p.actionItems = '';
+          if (p.clientConcern === undefined) p.clientConcern = '';
+          if (p.clientExpectation === undefined) p.clientExpectation = '';
+          if (p.clientReviewDate === undefined) p.clientReviewDate = '';
+          if (p.finalDeliveryDate === undefined) p.finalDeliveryDate = '';
+          if (p.clientVisibleNotes === undefined) p.clientVisibleNotes = '';
+          if (p.previewLink === undefined) p.previewLink = '';
+          if (p.draftLink === undefined) p.draftLink = '';
+          if (p.reviewLink === undefined) p.reviewLink = '';
+          if (p.fileFolderLink === undefined) p.fileFolderLink = '';
+          if (p.stagingLink === undefined) p.stagingLink = '';
+          if (p.finalFileLink === undefined) p.finalFileLink = '';
+          if (p.deliveryDate === undefined) p.deliveryDate = '';
+          if (p.handoverNotes === undefined) p.handoverNotes = '';
+          if (p.approvalStatus === undefined) p.approvalStatus = 'Pending Review';
+          if (p.approvedAt === undefined) p.approvedAt = '';
+          if (p.clientFeedbackSummary === undefined) p.clientFeedbackSummary = '';
+          if (p.invoiceStatus === undefined) p.invoiceStatus = 'Not Created';
+          if (p.paymentStatus === undefined) p.paymentStatus = 'Not Started';
+          if (p.amountPaid === undefined) p.amountPaid = 0;
+          if (p.amountDue === undefined) p.amountDue = 0;
+          if (p.paymentMethod === undefined) p.paymentMethod = '';
+          if (p.paymentNotes === undefined) p.paymentNotes = '';
+          if (p.receiptLink === undefined) p.receiptLink = p.paymentReceiptLink || '';
+          if (p.invoiceFileLink === undefined) p.invoiceFileLink = '';
+          if (p.deliveryStatus === undefined) p.deliveryStatus = 'Not Submitted';
+          if (p.clientConfirmedDelivery === undefined) p.clientConfirmedDelivery = false;
+          if (p.firstCutLink === undefined) p.firstCutLink = '';
+          if (p.designPreviewLink === undefined) p.designPreviewLink = '';
+          if (p.sourceFileLink === undefined) p.sourceFileLink = '';
+          
           if (!p.deliveryChecklist || !Array.isArray(p.deliveryChecklist)) {
             const generalChecklist = ["Brief", "Draft", "Review", "Revision", "Invoice", "Payment", "Final delivery"];
             let defaultLabels = generalChecklist;

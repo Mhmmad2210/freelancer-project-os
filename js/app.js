@@ -19,6 +19,7 @@ import { WorkflowDiagnose } from './components/WorkflowDiagnose.js';
 import { FreelancerProfile } from './components/FreelancerProfile.js';
 import { TemplatesModal } from './components/TemplatesModal.js';
 import { EntryModeSelector } from './components/EntryModeSelector.js';
+import { WorkspaceProfileSelection } from './components/WorkspaceProfileSelection.js';
 import { getLanguage, setLanguage, t } from './i18n.js';
 
 class FreelancerApp {
@@ -355,11 +356,23 @@ class FreelancerApp {
 
         const reader = new FileReader();
         reader.onload = (event) => {
-          const result = store.importBackup(event.target.result);
+          const isIndo = getLanguage() === 'id';
+          const confirmText = isIndo
+            ? 'Ingin mengimpor backup ini ke dalam workspace saat ini?\n\nKlik OK untuk mengimpor ke workspace saat ini, atau Cancel untuk membuat workspace baru dari backup ini.'
+            : 'Import this backup into your current active workspace?\n\nClick OK to import into current workspace, or Cancel to create a new workspace from this backup.';
+          
+          const importIntoCurrent = confirm(confirmText);
+          let result;
+          if (importIntoCurrent) {
+            result = store.importBackup(event.target.result);
+          } else {
+            result = store.importBackup(event.target.result, 'NEW_WORKSPACE');
+          }
+
           if (result) {
             this.triggerToast(t('toast.backupImported', 'Workspace restored successfully from backup'), 'text-success');
             picker.value = '';
-            this.switchView(this.activeTab); // Reload active views
+            setTimeout(() => window.location.reload(), 1000);
           } else {
             this.triggerToast(t('toast.backupImportFailed', 'Structural check failed. Invalid workspace backup format.'), 'text-danger');
           }
@@ -687,8 +700,10 @@ class FreelancerApp {
     sessionStorage.setItem('alurkarya_lock_reason', reason);
     // 2. Remove the session unlock flag
     sessionStorage.removeItem('alurkarya_session_unlocked');
+    // 3. Clear active workspace ID
+    sessionStorage.removeItem('alurkarya_active_workspace_id');
     
-    // 3. Close open project modals and cleanup any dialogs
+    // 4. Close open project modals and cleanup any dialogs
     if (this.projectModal && typeof this.projectModal.close === 'function') {
       this.projectModal.close();
     }
@@ -696,7 +711,19 @@ class FreelancerApp {
     const openModals = document.querySelectorAll('.modal-overlay, .modal, .custom-modal');
     openModals.forEach(m => m.remove());
     
-    // 4. Force reload page to re-render in locked state (AccessGate)
+    // 5. Force reload page to re-render in locked state (AccessGate)
+    window.location.reload();
+  }
+
+  switchWorkspace() {
+    sessionStorage.removeItem('alurkarya_active_workspace_id');
+
+    if (this.projectModal && typeof this.projectModal.close === 'function') {
+      this.projectModal.close();
+    }
+    const openModals = document.querySelectorAll('.modal-overlay, .modal, .custom-modal');
+    openModals.forEach(m => m.remove());
+
     window.location.reload();
   }
 
@@ -750,6 +777,10 @@ class FreelancerApp {
       const reason = e.detail && e.detail.reason ? e.detail.reason : 'manual';
       this.lockWorkspace(reason);
     });
+
+    window.addEventListener('alurkarya:switch-workspace', () => {
+      this.switchWorkspace();
+    });
   }
 }
 
@@ -776,8 +807,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Freelancer Mode - Check Access Gate
     const isGranted = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
     if (isGranted) {
-      window.app = new FreelancerApp();
-      window.app.init();
+      const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+      if (activeWorkspaceId) {
+        window.app = new FreelancerApp();
+        window.app.init();
+      } else {
+        const workspaceSelection = new WorkspaceProfileSelection(root, store, () => {
+          window.location.reload();
+        });
+        workspaceSelection.render();
+      }
     } else {
       const gate = new AccessGate(root, () => {
         window.location.reload();

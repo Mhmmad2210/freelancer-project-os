@@ -180,14 +180,14 @@ export class ClientsView {
       // Group budgets by currency to prevent mixed currency sum bugs
       const clientBudgetGroups = {};
       clientProjects.forEach(p => {
-        const cur = p.projectCurrency || localStorage.getItem('alurkarya_default_currency') || 'IDR';
+        const cur = p.projectCurrency || (window.getDefaultCurrency ? window.getDefaultCurrency() : 'IDR');
         if (!clientBudgetGroups[cur]) clientBudgetGroups[cur] = 0;
         clientBudgetGroups[cur] += Number(p.budget) || 0;
       });
       const clientCurrencies = Object.keys(clientBudgetGroups);
       let totalProjectValFormatted = '';
       if (clientCurrencies.length === 0) {
-        const def = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+        const def = window.getDefaultCurrency ? window.getDefaultCurrency() : 'IDR';
         totalProjectValFormatted = formatMoney(0, def);
       } else {
         totalProjectValFormatted = clientCurrencies.map(cur => formatMoney(clientBudgetGroups[cur], cur)).join(' + ');

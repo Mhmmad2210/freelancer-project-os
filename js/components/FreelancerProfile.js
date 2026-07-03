@@ -26,7 +26,7 @@ export class FreelancerProfile {
 
     const profile = this.store.getFreelancerProfile();
     const activeLang = getLanguage();
-    const defaultCurrency = localStorage.getItem('alurkarya_default_currency') || 'IDR';
+    const defaultCurrency = window.getDefaultCurrency ? window.getDefaultCurrency() : 'IDR';
 
     const viewEl = document.createElement('div');
     viewEl.className = 'profile-viewport';
@@ -142,11 +142,16 @@ export class FreelancerProfile {
         ${getIcon('alert', '', 16)} ${t('privacy.dangerZone', 'Danger Zone / Zona Bahaya')}
       </h3>
       <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.45;">
-        ${t('privacy.sharedDeviceNotice', 'Using a shared device? Lock your workspace when finished to protect client and project data. This helps protect privacy on shared devices.')}
+        ${getLanguage() === 'id' 
+          ? 'Pakai laptop bersama? Pilih workspace milikmu dan kunci setelah selesai agar data project dan client tetap aman.'
+          : 'Using a shared laptop? Choose your own workspace and lock it when finished to protect project and client data.'}
       </p>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button type="button" class="btn btn-secondary text-danger" id="btn-clear-local-data" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
-          ${t('privacy.clearLocalData', 'Clear Local Workspace Data')}
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary text-danger" id="btn-delete-workspace" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
+          ${getLanguage() === 'id' ? 'Hapus Workspace Ini' : 'Delete This Workspace'}
+        </button>
+        <button type="button" class="btn btn-secondary text-danger" id="btn-delete-all-local" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
+          ${getLanguage() === 'id' ? 'Hapus Semua Data Lokal' : 'Delete All Local Data'}
         </button>
       </div>
     `;
@@ -200,7 +205,11 @@ export class FreelancerProfile {
 
     viewEl.querySelector('#profile-currency-select').addEventListener('change', (e) => {
       const newCurrency = e.target.value;
-      localStorage.setItem('alurkarya_default_currency', newCurrency);
+      if (window.setDefaultCurrency) {
+        window.setDefaultCurrency(newCurrency);
+      } else {
+        localStorage.setItem('alurkarya_default_currency', newCurrency);
+      }
       this.onTriggerToast(t('toast.defaultCurrencyUpdated', 'Default currency updated.'), 'text-success');
     });
 
@@ -215,25 +224,44 @@ export class FreelancerProfile {
       window.location.reload();
     });
 
-    viewEl.querySelector('#btn-clear-local-data').addEventListener('click', () => {
-      const promptWarning = t('privacy.clearLocalDataWarning', 'This will delete AlurKarya workspace data stored in this browser. Export a backup first if needed.');
-      const confirmVal = prompt(promptWarning + '\n\n' + (getLanguage() === 'id' ? 'Ketik HAPUS untuk mengonfirmasi:' : 'Type DELETE to confirm:'));
-      if (confirmVal === 'DELETE' || confirmVal === 'HAPUS') {
-        // Clear only AlurKarya local storage keys
-        for (let i = localStorage.length - 1; i >= 0; i--) {
-          const key = localStorage.key(i);
-          if (key && (key.startsWith('alurkarya_') || key === 'freelancer_os_workspace')) {
-            localStorage.removeItem(key);
-          }
-        }
-        // Clear session storage keys
-        for (let i = sessionStorage.length - 1; i >= 0; i--) {
-          const key = sessionStorage.key(i);
-          if (key && key.startsWith('alurkarya_')) {
-            sessionStorage.removeItem(key);
-          }
-        }
-        window.location.reload();
+    viewEl.querySelector('#btn-delete-workspace').addEventListener('click', () => {
+      const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+      if (!activeWorkspaceId) return;
+
+      const isIndo = getLanguage() === 'id';
+      const warningText = isIndo
+        ? 'PERINGATAN: Tindakan ini akan menghapus workspace saat ini beserta seluruh data di dalamnya secara permanen.\nDisarankan untuk melakukan ekspor backup terlebih dahulu.\n\nKetik HAPUS untuk mengonfirmasi:'
+        : 'WARNING: This will permanently delete the current workspace and all its local data.\nIt is highly recommended to export a backup first.\n\nType DELETE to confirm:';
+
+      const confirmVal = prompt(warningText);
+      const expected = isIndo ? 'HAPUS' : 'DELETE';
+      
+      if (confirmVal === expected) {
+        this.store.deleteWorkspace(activeWorkspaceId);
+        sessionStorage.removeItem('alurkarya_active_workspace_id');
+        sessionStorage.removeItem('alurkarya_session_unlocked');
+        this.onTriggerToast(isIndo ? 'Workspace berhasil dihapus.' : 'Workspace deleted successfully.', 'text-success');
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        this.onTriggerToast(isIndo ? 'Penghapusan dibatalkan.' : 'Deletion cancelled.', 'text-muted');
+      }
+    });
+
+    viewEl.querySelector('#btn-delete-all-local').addEventListener('click', () => {
+      const isIndo = getLanguage() === 'id';
+      const warningText = isIndo
+        ? 'PERINGATAN KRITIS: Tindakan ini akan menghapus SELURUH workspace dan semua data lokal AlurKarya di browser ini secara permanen!\nPastikan Anda sudah mengekspor data backup penting.\n\nKetik HAPUS untuk mengonfirmasi:'
+        : 'CRITICAL WARNING: This will permanently delete ALL workspaces and all AlurKarya local data stored in this browser!\nMake sure you have exported backups for any important data.\n\nType DELETE to confirm:';
+
+      const confirmVal = prompt(warningText);
+      const expected = isIndo ? 'HAPUS' : 'DELETE';
+
+      if (confirmVal === expected) {
+        this.store.deleteAllLocalData();
+        this.onTriggerToast(isIndo ? 'Semua data lokal berhasil dihapus.' : 'All local data cleared successfully.', 'text-success');
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        this.onTriggerToast(isIndo ? 'Penghapusan dibatalkan.' : 'Deletion cancelled.', 'text-muted');
       }
     });
   }
