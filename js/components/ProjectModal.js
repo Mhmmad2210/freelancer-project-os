@@ -519,6 +519,13 @@ export class ProjectModal {
                     ${t('projectModal.deliveryCenterDesc', 'Organize preview links, final files, source files, approval status, and handover notes before marking a project as completed.')}
                   </p>
                   
+                  <div style="background: rgba(255, 255, 255, 0.015); border: 1px solid rgba(255, 255, 255, 0.05); padding: 10px 12px; border-radius: 8px; font-size: 0.7rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 14px;">
+                    ℹ️ <strong>${getLanguage() === 'id' ? 'Disclaimer File:' : 'File Disclaimer:'}</strong>
+                    ${getLanguage() === 'id'
+                      ? 'AlurKarya tidak menyimpan file asli. File tetap berada di Google Drive, Figma, Canva, Dropbox, atau platform pilihanmu. AlurKarya hanya menyimpan link untuk membantu mengatur review, delivery, invoice, dan payment. Keamanan file mengikuti permission di platform asal.'
+                      : 'AlurKarya does not store your actual files. Your files stay in Google Drive, Figma, Canva, Dropbox, or your preferred platform. AlurKarya only stores links to help manage review, delivery, invoice, and payment flow. File security follows the permissions set on the original platform.'}
+                  </div>
+                  
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
                     <div class="form-group">
                       <label>${t('delivery.status', 'Delivery Status')}</label>

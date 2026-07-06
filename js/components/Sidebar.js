@@ -132,6 +132,11 @@ export class SidebarNav {
               <span>${activeLang === 'id' ? 'Ganti Workspace' : 'Switch Workspace'}</span>
             </button>
           </div>
+          <div style="font-size: 0.62rem; color: var(--text-muted); line-height: 1.35; margin-top: 6px; padding: 6px 8px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 6px; width: 100%; box-sizing: border-box; text-align: left;">
+            ℹ️ ${activeLang === 'id' 
+              ? 'Pakai laptop bersama? Gunakan Ganti Workspace agar tiap freelancer memakai workspace masing-masing. Gunakan Kunci Workspace setelah selesai.'
+              : 'Using a shared laptop? Use Switch Workspace so each freelancer uses their own workspace. Lock your workspace when finished.'}
+          </div>
         </div>
       </div>
     `;

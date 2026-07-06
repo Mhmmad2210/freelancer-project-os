@@ -972,6 +972,52 @@ export class WorkspaceStore {
     return newProject;
   }
 
+  createProjectInActiveWorkspace(projectInput) {
+    const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+    if (!activeWorkspaceId) {
+      throw new Error("No active workspace");
+    }
+
+    const clientName = (projectInput.clientName || '').trim();
+    if (!clientName) {
+      throw new Error("Client name is required");
+    }
+    let client = this.clients.find(c => c.name.toLowerCase() === clientName.toLowerCase());
+    if (!client) {
+      client = {
+        id: generateId(),
+        name: clientName,
+        businessName: '',
+        email: '',
+        phone: '',
+        status: 'Active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      this.clients.push(client);
+    }
+
+    const projectData = {
+      title: projectInput.title || 'Untitled Project',
+      clientId: client.id,
+      clientName: client.name,
+      currency: projectInput.currency || 'IDR',
+      projectCurrency: projectInput.currency || 'IDR',
+      budget: Number(projectInput.budget) || 0,
+      stage: projectInput.stage || 'new_lead',
+      nextAction: projectInput.nextAction || 'Email client proposal draft',
+      dueDate: projectInput.dueDate || new Date().toISOString().split('T')[0],
+      description: projectInput.notes || '',
+      internalNotes: projectInput.notes || '',
+      reviewLink: projectInput.reviewLink || '',
+      finalFileLink: projectInput.deliveryLink || '',
+      customCategory: projectInput.category || ''
+    };
+
+    const newProject = this.addProject(projectData);
+    return newProject;
+  }
+
   updateProject(id, updates) {
     this.projects = this.projects.map(p => {
       if (p.id === id) {

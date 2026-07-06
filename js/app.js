@@ -69,7 +69,81 @@ class FreelancerApp {
     this.mountViews();
     this.bindGlobalEvents();
     
-    this.checkGuidedStartModal();
+    // Bind public AlurKaryaActions API for AlurPandu child windows
+    window.AlurKaryaActions = {
+      lockWorkspace: () => {
+        this.lockWorkspace('manual');
+      },
+      openWorkspaceSwitcher: () => {
+        this.switchWorkspace();
+      },
+      exportBackup: () => {
+        const backupBtn = document.getElementById('btn-backup-export');
+        if (backupBtn) {
+          backupBtn.click();
+        } else {
+          try {
+            const dataStr = store.exportBackup();
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute('href', dataUri);
+            downloadAnchor.setAttribute('download', `freelancer_os_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            
+            const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+            if (wsId) {
+              const workspaces = store.getWorkspaces() || [];
+              const currentWs = workspaces.find(w => w.workspaceId === wsId);
+              if (currentWs) {
+                currentWs.lastBackupAt = new Date().toISOString();
+                store.saveWorkspaces(workspaces);
+              }
+            }
+            localStorage.setItem('alurkarya_backup_exported', 'true');
+          } catch (e) {
+            console.error("AlurKaryaActions exportBackup programmatically failed:", e);
+          }
+        }
+      },
+      saveProjectLinks: (projectId, links) => {
+        const projects = store.projects || [];
+        const projectExists = projects.some(p => p.id === projectId);
+        if (!projectExists) {
+          console.error("AlurKaryaActions.saveProjectLinks: Project ID not found:", projectId);
+          return;
+        }
+        
+        const safeLinks = {};
+        const urlFields = ['briefLink', 'previewLink', 'reviewLink', 'finalFileLink', 'deliveryLink', 'sourceFileLink', 'stagingLink', 'fileFolderLink'];
+        urlFields.forEach(field => {
+          if (links[field] !== undefined) {
+            safeLinks[field] = String(links[field]).trim();
+          }
+        });
+        
+        store.updateProject(projectId, safeLinks);
+        store.saveState();
+        this.refreshActiveView();
+      }
+    };
+    
+    // Check for pending success toast
+    const pendingToast = sessionStorage.getItem('alurkarya_toast_pending');
+    if (pendingToast) {
+      sessionStorage.removeItem('alurkarya_toast_pending');
+      setTimeout(() => this.triggerToast(pendingToast, "text-success"), 100);
+    }
+
+    // Check if new workspace onboarding is triggered
+    if (sessionStorage.getItem('alurkarya_new_workspace_created') === 'true') {
+      sessionStorage.removeItem('alurkarya_new_workspace_created');
+      setTimeout(() => this.showNewWorkspaceOnboardingModal(), 200);
+    } else {
+      this.checkGuidedStartModal();
+    }
 
     // Start inactivity and tab visibility listeners
     this.WORKSPACE_IDLE_LOCK_MINUTES = 15;
@@ -336,10 +410,25 @@ class FreelancerApp {
         downloadAnchor.click();
         downloadAnchor.remove();
 
+        // Save lastBackupAt timestamp on active workspace details:
+        const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+        if (wsId) {
+          try {
+            const workspaces = store.getWorkspaces() || [];
+            const currentWs = workspaces.find(w => w.workspaceId === wsId);
+            if (currentWs) {
+              currentWs.lastBackupAt = new Date().toISOString();
+              store.saveWorkspaces(workspaces);
+            }
+          } catch(err) {
+            console.error("Failed to save backup timestamp in workspace index:", err);
+          }
+        }
+        localStorage.setItem('alurkarya_backup_exported', 'true');
+
         this.triggerToast(t('toast.backupExported', 'Workspace backup file exported successfully'), 'text-success');
       });
     }
-
     // 2. Backup Import triggers
     const picker = document.getElementById('backup-file-picker');
     const btnBackupImport = document.getElementById('btn-backup-import');
@@ -781,6 +870,99 @@ class FreelancerApp {
     window.addEventListener('alurkarya:switch-workspace', () => {
       this.switchWorkspace();
     });
+  }
+
+  showNewWorkspaceOnboardingModal() {
+    const isIndo = getLanguage() === 'id';
+    
+    let overlay = document.getElementById('new-workspace-onboarding-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      overlay.id = 'new-workspace-onboarding-overlay';
+      document.body.appendChild(overlay);
+    }
+
+    const title = isIndo ? 'Workspace berhasil dibuat' : 'Workspace created';
+    const bodyText = isIndo
+      ? 'Workspace ini menyimpan data AlurKarya di browser ini. Untuk keamanan, gunakan PIN jika laptop dipakai bersama, kunci workspace setelah selesai, dan ekspor backup secara berkala.'
+      : 'This workspace stores your AlurKarya data in this browser. For safer shared-device use, add a PIN, lock your workspace when finished, and export backups regularly.';
+    
+    // Backup Education
+    const backupTitle = isIndo ? 'Lindungi Data Anda (Backup)' : 'Protect Your Data (Backup)';
+    const backupBody = isIndo
+      ? 'Data workspace disimpan di browser ini. Gunakan Ekspor Backup agar data bisa dipulihkan atau dipindahkan ke device lain.'
+      : 'Workspace data is stored in this browser. Use Export Backup so your data can be restored or moved to another device.';
+    const backupCta = isIndo ? 'Ekspor Backup' : 'Export Backup';
+    
+    // Onboarding Polish / AlurPandu Integration
+    const panduTitle = isIndo ? 'Setup dengan AlurPandu' : 'Setup with AlurPandu';
+    const panduCta = isIndo ? 'Lanjut Setup dengan AlurPandu' : 'Continue Setup with AlurPandu';
+    const startExploringLabel = isIndo ? 'Mulai Jelajahi Board' : 'Start Exploring Board';
+
+    overlay.innerHTML = `
+      <div class="modal-container" style="max-width: 520px; border-radius: var(--border-radius-lg); background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 24px 64px rgba(0,0,0,0.6); padding: 24px; color: #f8fafc; font-family: inherit;">
+        <div style="text-align: center; margin-bottom: 16px;">
+          <div style="font-size: 3rem; margin-bottom: 10px; color: #10b981; filter: drop-shadow(0 2px 8px rgba(16,185,129,0.3));">🎉</div>
+          <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">${title}</h3>
+        </div>
+
+        <p style="font-size: 0.8rem; color: #94a3b8; line-height: 1.5; margin: 0 0 20px 0; text-align: center;">
+          ${bodyText}
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+          <!-- Onboarding / AlurPandu Card -->
+          <div style="background: rgba(139, 92, 246, 0.04); border: 1px solid rgba(139, 92, 246, 0.15); padding: 14px 16px; border-radius: 12px;">
+            <h4 style="font-size: 0.88rem; font-weight: 700; color: #fff; margin: 0 0 6px 0; display: flex; align-items: center; gap: 6px;">
+              🧭 ${panduTitle}
+            </h4>
+            <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" id="btn-onboarding-pandu-cta" style="font-size: 0.72rem; padding: 10px; display: inline-flex; align-items: center; gap: 4px; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25); text-decoration: none; width: 100%; justify-content: center; font-weight: 600;">
+              ${panduCta}
+            </a>
+          </div>
+
+          <!-- Backup Education Card -->
+          <div style="background: rgba(245, 158, 11, 0.04); border: 1px solid rgba(245, 158, 11, 0.15); padding: 14px 16px; border-radius: 12px;">
+            <h4 style="font-size: 0.88rem; font-weight: 700; color: #fff; margin: 0 0 6px 0; display: flex; align-items: center; gap: 6px;">
+              💾 ${backupTitle}
+            </h4>
+            <p style="font-size: 0.76rem; color: #cbd5e1; line-height: 1.5; margin: 0 0 12px 0;">
+              ${backupBody}
+            </p>
+            <button class="btn btn-secondary btn-sm" id="btn-onboarding-backup-cta" style="font-size: 0.72rem; padding: 8px 12px; display: inline-flex; align-items: center; gap: 4px; width: 100%; justify-content: center; font-weight: 600; border-color: rgba(255,255,255,0.08);">
+              ${getIcon('download', '', 12)} ${backupCta}
+            </button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: center;">
+          <button class="btn btn-secondary" id="btn-close-onboarding-modal" style="font-size: 0.8rem; padding: 8px 24px; font-weight: 600; width: 100%;">
+            ${startExploringLabel}
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Bind event listeners
+    overlay.querySelector('#btn-close-onboarding-modal').addEventListener('click', () => {
+      overlay.remove();
+    });
+
+    overlay.querySelector('#btn-onboarding-backup-cta').addEventListener('click', () => {
+      // Trigger the export backup action
+      const backupBtn = document.getElementById('btn-backup-export');
+      if (backupBtn) {
+        backupBtn.click();
+      }
+    });
+
+    const panduLink = overlay.querySelector('#btn-onboarding-pandu-cta');
+    if (panduLink) {
+      panduLink.addEventListener('click', () => {
+        overlay.remove();
+      });
+    }
   }
 }
 

@@ -498,6 +498,7 @@ export class KanbanBoard {
         ? 'Tambahkan project pertama atau impor backup jika kamu sudah punya data sebelumnya untuk mulai mengelola workflow client-to-paid.'
         : 'Add your first project or import a backup if you already have saved data to start managing your client-to-paid workflow.';
       const addText = lang === 'id' ? 'Tambah Project' : 'Add Project';
+      const panduText = lang === 'id' ? 'Buat Project Pertama lewat AlurPandu' : 'Create First Project with AlurPandu';
       
       emptyStateBox.innerHTML = `
         <div style="font-size: 2.2rem; margin-bottom: 12px; color: var(--color-primary-glow); filter: drop-shadow(0 2px 8px rgba(139,92,246,0.3));">💼</div>
@@ -507,6 +508,9 @@ export class KanbanBoard {
         </p>
         <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center;">
           <button class="btn btn-primary btn-sm" id="btn-empty-add-project" style="padding: 8px 18px; font-weight: 600;">${getIcon('plus', '', 14)} ${addText}</button>
+          <a href="alurpandu-guided-start.html#setup-checklist" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="padding: 8px 18px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            ${getIcon('externalLink', '', 14)} <span>${panduText}</span>
+          </a>
         </div>
       `;
       canvas.appendChild(emptyStateBox);

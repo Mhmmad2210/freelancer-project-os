@@ -111,12 +111,55 @@ export class WorkspaceProfileSelection {
       this.renderPinPrompt(wrapper, isIndo);
     } else if (this.showCreateForm) {
       this.renderCreateForm(wrapper, isIndo);
+    } else if (workspaces.length === 0) {
+      this.renderEmptyOnboardingCard(wrapper, isIndo);
     } else {
       this.renderSelection(wrapper, workspaces, isIndo);
     }
 
     this.container.appendChild(wrapper);
     this.bindEvents(wrapper, workspaces);
+  }
+
+  renderEmptyOnboardingCard(wrapper, isIndo) {
+    const title = isIndo ? 'Buat Workspace Pribadi' : 'Create Personal Workspace';
+    const body = isIndo
+      ? 'Simpan project, client, invoice, payment, dan link delivery di workspace lokal milikmu. Jika laptop dipakai bersama, setiap freelancer bisa punya workspace masing-masing.'
+      : 'Keep your projects, clients, invoices, payments, and delivery links inside your own local workspace. If a laptop is shared, each freelancer can have their own workspace.';
+    const securityNote = isIndo
+      ? 'PIN workspace membantu melindungi akses kasual di browser ini. Ini bukan akun cloud atau enkripsi file.'
+      : 'A workspace PIN helps protect casual access in this browser. It is not a cloud account or file encryption.';
+    const ctaLabel = isIndo ? 'Buat Workspace' : 'Create Workspace';
+    const secondaryCtaLabel = isIndo ? 'Impor Backup' : 'Import Backup';
+
+    wrapper.innerHTML += `
+      <div class="access-card" style="padding: 28px;">
+        <div class="access-brand" style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px;">
+          <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 130px; margin-bottom: 8px;">
+          <h2 style="font-size: 1.3rem; font-weight: 700; color: #f8fafc; margin: 0; text-align: center; font-family: 'Space Grotesk', sans-serif;">${title}</h2>
+        </div>
+
+        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin: 0 0 16px 0; text-align: center;">
+          ${body}
+        </p>
+
+        <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 12px 14px; border-radius: 10px; font-size: 0.72rem; color: #f59e0b; line-height: 1.45; margin-bottom: 24px; text-align: left; display: flex; gap: 8px; align-items: flex-start;">
+          <span style="font-size: 1rem;">⚠️</span>
+          <span><strong>${isIndo ? 'Catatan Keamanan:' : 'Security Note:'}</strong> ${securityNote}</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="btn btn-primary" id="btn-show-create-empty" style="font-size: 0.82rem; padding: 12px; font-weight: 600; width: 100%;">
+            ${getIcon('plus', '', 14)} ${ctaLabel}
+          </button>
+          <button class="btn btn-secondary" id="btn-import-backup-empty" style="font-size: 0.82rem; padding: 12px; font-weight: 600; width: 100%; border-color: rgba(255,255,255,0.08);">
+            ${getIcon('download', '', 14)} ${secondaryCtaLabel}
+          </button>
+        </div>
+
+        <input type="file" id="ws-backup-file-input-empty" accept=".json" style="display: none;" />
+      </div>
+    `;
   }
 
   renderSelection(wrapper, workspaces, isIndo) {
@@ -190,21 +233,35 @@ export class WorkspaceProfileSelection {
   }
 
   renderCreateForm(wrapper, isIndo) {
-    const title = isIndo ? 'Buat Workspace Baru' : 'Create New Workspace';
+    const title = isIndo ? 'Buat Workspace Pribadi' : 'Create Personal Workspace';
     const nameLabel = isIndo ? 'Nama Workspace' : 'Workspace Name';
-    const pinLabel = isIndo ? 'Workspace PIN (Opsional)' : 'Workspace PIN (Optional)';
+    const pinLabel = isIndo ? 'PIN Workspace opsional' : 'Optional Workspace PIN';
     const pinConfirmLabel = isIndo ? 'Konfirmasi PIN' : 'Confirm PIN';
     const createBtnLabel = isIndo ? 'Buat Sekarang' : 'Create Now';
     const cancelBtnLabel = isIndo ? 'Batal' : 'Cancel';
+    
+    const bodyText = isIndo
+      ? 'Workspace ini menyimpan project, client, invoice, payment, dan link delivery di browser ini. Jika laptop dipakai bersama, setiap freelancer bisa punya workspace masing-masing.'
+      : 'This workspace stores your projects, clients, invoices, payments, and delivery links in this browser. If a laptop is shared, each freelancer can have their own workspace.';
+    
     const noteText = isIndo
-      ? 'PIN melindungi akses kasual di browser ini. Ini bukan akun cloud atau storage terenkripsi.'
-      : 'PIN protects casual access on this browser. It is not a cloud account or encrypted storage.';
+      ? 'Kamu bisa menambahkan PIN, mengunci workspace, mengganti workspace, dan ekspor backup kapan saja.'
+      : 'You can add a PIN, lock your workspace, switch workspaces, and export backups anytime.';
+
+    const helperText = isIndo
+      ? 'PIN membantu melindungi akses kasual di browser ini, terutama jika laptop dipakai bersama.'
+      : 'A PIN helps protect casual access in this browser, especially when a laptop is shared.';
+
+    const securityNoteText = isIndo
+      ? 'PIN ini bukan akun cloud atau enkripsi file.'
+      : 'This PIN is not a cloud account or file encryption.';
 
     wrapper.innerHTML += `
       <div class="access-card">
-        <div class="access-brand" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <div class="access-brand" style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 12px;">
           <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 130px; margin-bottom: 8px;">
           <h2 style="font-size: 1.25rem; font-weight: 700; color: #f8fafc; margin: 0; text-align: center;">${title}</h2>
+          <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; text-align: center; margin: 6px 0 0 0;">${bodyText}</p>
         </div>
 
         <form id="create-workspace-form" class="workspace-form">
@@ -215,15 +272,21 @@ export class WorkspaceProfileSelection {
           
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${pinLabel}</label>
-            <input type="password" id="ws-pin-input" class="form-control" placeholder="e.g. 1234" maxlength="8" pattern="[0-9]*" inputmode="numeric" style="font-size: 0.8rem; padding: 10px;" />
+            <input type="password" id="ws-pin-input" class="form-control" placeholder="e.g. 1234" maxlength="8" style="font-size: 0.8rem; padding: 10px;" />
+            <small style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px;">${helperText}</small>
           </div>
 
-          <div class="form-group" id="ws-pin-confirm-group" style="display: none;">
+          <div class="form-group" id="ws-pin-confirm-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${pinConfirmLabel}</label>
-            <input type="password" id="ws-pin-confirm-input" class="form-control" placeholder="Confirm PIN" maxlength="8" pattern="[0-9]*" inputmode="numeric" style="font-size: 0.8rem; padding: 10px;" />
+            <input type="password" id="ws-pin-confirm-input" class="form-control" placeholder="${isIndo ? 'Konfirmasi PIN' : 'Confirm PIN'}" maxlength="8" style="font-size: 0.8rem; padding: 10px;" />
           </div>
 
-          <small class="pin-note">⚠️ ${noteText}</small>
+          <div id="ws-create-error" style="color: #ef4444; font-size: 0.75rem; text-align: center; font-weight: 600; display: none; margin-bottom: 12px; line-height: 1.45;"></div>
+
+          <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 8px; font-size: 0.68rem; color: #f59e0b; line-height: 1.4; margin-bottom: 14px;">
+            <strong>${isIndo ? 'Catatan Keamanan:' : 'Security Note:'}</strong> ${securityNoteText}<br/>
+            <span>💡 ${noteText}</span>
+          </div>
 
           <div style="display: flex; gap: 10px; margin-top: 10px;">
             <button type="button" class="btn btn-secondary" id="btn-cancel-create" style="font-size: 0.78rem; padding: 10px;">
@@ -258,10 +321,10 @@ export class WorkspaceProfileSelection {
 
         <form id="pin-unlock-form" style="display: flex; flex-direction: column; gap: 14px; margin-top: 12px;">
           <div class="form-group">
-            <input type="password" id="ws-unlock-pin" class="form-control" required autofocus maxlength="8" pattern="[0-9]*" inputmode="numeric" placeholder="PIN" style="font-size: 1.1rem; padding: 12px; text-align: center; letter-spacing: 6px;" />
+            <input type="password" id="ws-unlock-pin" class="form-control" required autofocus maxlength="8" placeholder="PIN" style="font-size: 1.1rem; padding: 12px; text-align: center; letter-spacing: 6px;" />
           </div>
 
-          ${this.pinError ? `<div style="color: var(--color-danger); font-size: 0.75rem; text-align: center; font-weight: 600;">⚠️ ${this.pinError}</div>` : ''}
+          ${this.pinError ? `<div style="color: #ef4444; font-size: 0.75rem; text-align: center; font-weight: 600;">⚠️ ${this.pinError}</div>` : ''}
 
           <div style="display: flex; gap: 10px; margin-top: 6px;">
             <button type="button" class="btn btn-secondary" id="btn-cancel-pin" style="font-size: 0.78rem; padding: 10px;">
@@ -284,6 +347,37 @@ export class WorkspaceProfileSelection {
   }
 
   bindEvents(wrapper, workspaces) {
+    // 0. Empty State Card Events
+    const createEmptyBtn = wrapper.querySelector('#btn-show-create-empty');
+    if (createEmptyBtn) {
+      createEmptyBtn.addEventListener('click', () => {
+        this.showCreateForm = true;
+        this.render();
+      });
+    }
+
+    const importEmptyBtn = wrapper.querySelector('#btn-import-backup-empty');
+    const backupEmptyInput = wrapper.querySelector('#ws-backup-file-input-empty');
+    if (importEmptyBtn && backupEmptyInput) {
+      importEmptyBtn.addEventListener('click', () => {
+        backupEmptyInput.click();
+      });
+      backupEmptyInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = this.store.importBackup(event.target.result);
+          if (result) {
+            window.location.reload();
+          } else {
+            alert(getLanguage() === 'id' ? 'Gagal mengimpor file backup' : 'Failed to parse backup file');
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
     // 1. Selection Screen Events
     const createBtn = wrapper.querySelector('#btn-show-create');
     if (createBtn) {
@@ -336,29 +430,42 @@ export class WorkspaceProfileSelection {
     const createForm = wrapper.querySelector('#create-workspace-form');
     if (createForm) {
       const pinInput = createForm.querySelector('#ws-pin-input');
-      const pinConfirmGroup = createForm.querySelector('#ws-pin-confirm-group');
       const pinConfirmInput = createForm.querySelector('#ws-pin-confirm-input');
-
-      pinInput.addEventListener('input', () => {
-        if (pinInput.value) {
-          pinConfirmGroup.style.display = 'block';
-          pinConfirmInput.required = true;
-        } else {
-          pinConfirmGroup.style.display = 'none';
-          pinConfirmInput.required = false;
-          pinConfirmInput.value = '';
-        }
-      });
 
       createForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nameVal = createForm.querySelector('#ws-name-input').value.trim();
         const pinVal = pinInput.value;
         const confirmVal = pinConfirmInput.value;
+        const errorEl = createForm.querySelector('#ws-create-error');
+        const isIndo = getLanguage() === 'id';
 
-        if (pinVal && pinVal !== confirmVal) {
-          alert(getLanguage() === 'id' ? 'PIN konfirmasi tidak cocok!' : 'Confirm PIN does not match!');
-          return;
+        if (errorEl) {
+          errorEl.style.display = 'none';
+          errorEl.textContent = '';
+        }
+
+        if (pinVal) {
+          if (pinVal.length < 4) {
+            const errMsg = isIndo ? 'PIN minimal 4 karakter.' : 'PIN must be at least 4 characters.';
+            if (errorEl) {
+              errorEl.textContent = '⚠️ ' + errMsg;
+              errorEl.style.display = 'block';
+            } else {
+              alert(errMsg);
+            }
+            return;
+          }
+          if (pinVal !== confirmVal) {
+            const errMsg = isIndo ? 'PIN tidak cocok. Cek kembali PIN dan konfirmasinya.' : 'PIN does not match. Check the PIN and confirmation.';
+            if (errorEl) {
+              errorEl.textContent = '⚠️ ' + errMsg;
+              errorEl.style.display = 'block';
+            } else {
+              alert(errMsg);
+            }
+            return;
+          }
         }
 
         let pinHash = null;
@@ -367,6 +474,12 @@ export class WorkspaceProfileSelection {
         }
 
         const newWs = this.store.createWorkspace(nameVal, pinHash);
+        
+        // Save success toast & newly created flag to sessionStorage
+        const successMsg = isIndo ? "Workspace berhasil dibuat." : "Workspace created.";
+        sessionStorage.setItem('alurkarya_toast_pending', successMsg);
+        sessionStorage.setItem('alurkarya_new_workspace_created', 'true');
+
         this.selectWorkspace(newWs);
       });
 
@@ -383,11 +496,14 @@ export class WorkspaceProfileSelection {
         e.preventDefault();
         const enteredPin = pinForm.querySelector('#ws-unlock-pin').value;
         const hash = await this.sha256(enteredPin);
+        const isIndo = getLanguage() === 'id';
         
         if (hash === this.pinPromptWorkspace.workspacePinHash) {
           this.selectWorkspace(this.pinPromptWorkspace);
         } else {
-          this.pinError = getLanguage() === 'id' ? 'PIN salah!' : 'Incorrect PIN!';
+          this.pinError = isIndo 
+            ? 'PIN tidak cocok. Cek kembali PIN dan konfirmasinya.' 
+            : 'PIN does not match. Check the PIN and confirmation.';
           this.render();
         }
       });
