@@ -386,9 +386,14 @@ class FreelancerApp {
       }
     });
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        this.closeMobileMenu();
+    // Intercept clicks on alurpandu links to maintain opener access and sync session storage
+    document.addEventListener('click', (e) => {
+      const anchor = e.target.closest('a');
+      if (anchor && anchor.getAttribute('href') && anchor.getAttribute('href').includes('alurpandu-guided-start.html')) {
+        e.preventDefault();
+        const activeWs = sessionStorage.getItem('alurkarya_active_workspace_id') || '';
+        const unlocked = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
+        window.open(`alurpandu-guided-start.html?workspace_id=${activeWs}&session_unlocked=${unlocked}`, '_blank');
       }
     });
 
@@ -529,7 +534,9 @@ class FreelancerApp {
     const reopenOnboardingBtn = document.getElementById('btn-reopen-onboarding');
     if (reopenOnboardingBtn) {
       reopenOnboardingBtn.addEventListener('click', () => {
-        window.open('alurpandu-guided-start.html', '_blank', 'noopener,noreferrer');
+        const activeWs = sessionStorage.getItem('alurkarya_active_workspace_id') || '';
+        const unlocked = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
+        window.open(`alurpandu-guided-start.html?workspace_id=${activeWs}&session_unlocked=${unlocked}`, '_blank');
       });
     }
 
@@ -539,8 +546,38 @@ class FreelancerApp {
       diagnoseBtn.addEventListener('click', () => {
         const report = this.runWorkflowDiagnosis();
         const alertMsg = getLanguage() === 'id'
-          ? `Diagnosa AlurKarya:\n- Jumlah Project: ${report.projectCount}\n- Jumlah Client: ${report.clientCount}\n- Bahasa: ${report.selectedLanguage}\n- Mata Uang Default: ${report.defaultCurrency}\n- Halaman Aktif: ${report.activeView}\n- Kolom Ter-render: ${report.kanbanColumnsRendered}\n- Status Parse Storage: ${report.localStorageParseStatus}\n- Status Sesi: ${report.migrationStatus}\n\nMembuka kuesioner alur kerja...`
-          : `AlurKarya Diagnostics:\n- Project Count: ${report.projectCount}\n- Client Count: ${report.clientCount}\n- Selected Language: ${report.selectedLanguage}\n- Default Currency: ${report.defaultCurrency}\n- Active View: ${report.activeView}\n- Kanban Columns Rendered: ${report.kanbanColumnsRendered}\n- Storage Parse Status: ${report.localStorageParseStatus}\n- Session Status: ${report.migrationStatus}\n\nOpening workflow questionnaire...`;
+          ? `Diagnosa AlurKarya:\n` +
+            `- Active Workspace ID: ${report.activeWorkspaceId}\n` +
+            `- Profile UI Version: ${report.profileUiVersion}\n` +
+            `- Jumlah Project: ${report.projectCount}\n` +
+            `- Jumlah Project Terlihat di Kanban: ${report.visibleKanbanProjectCount}\n` +
+            `- Project per Stage: ${JSON.stringify(report.projectsByStage)}\n` +
+            `- Kata Kunci Pencarian: "${report.activeSearchQuery}"\n` +
+            `- Filter Aktif: View Mode: ${report.activeFilters.viewMode}, Sort: ${report.activeFilters.sortMode}\n` +
+            `- Stage Tidak Valid: ${report.invalidStageCount}\n` +
+            `- Project Tanpa Judul/Nama: ${report.missingTitleCount}\n` +
+            `- Sumber Data Sinkron: ${report.sameStateSource}\n` +
+            `- Bahasa: ${report.selectedLanguage}\n` +
+            `- Mata Uang Default: ${report.defaultCurrency}\n` +
+            `- Halaman Aktif: ${report.activeView}\n` +
+            `- Status Parse Storage: ${report.localStorageParseStatus}\n` +
+            `- Status Sesi: ${report.migrationStatus}\n\nMembuka kuesioner alur kerja...`
+          : `AlurKarya Diagnostics:\n` +
+            `- Active Workspace ID: ${report.activeWorkspaceId}\n` +
+            `- Profile UI Version: ${report.profileUiVersion}\n` +
+            `- Project Count: ${report.projectCount}\n` +
+            `- Visible Kanban Project Count: ${report.visibleKanbanProjectCount}\n` +
+            `- Projects by Stage: ${JSON.stringify(report.projectsByStage)}\n` +
+            `- Active Search Query: "${report.activeSearchQuery}"\n` +
+            `- Active Filters: View Mode: ${report.activeFilters.viewMode}, Sort: ${report.activeFilters.sortMode}\n` +
+            `- Invalid Stages: ${report.invalidStageCount}\n` +
+            `- Missing Title/ProjectName Count: ${report.missingTitleCount}\n` +
+            `- Same State Source: ${report.sameStateSource}\n` +
+            `- Selected Language: ${report.selectedLanguage}\n` +
+            `- Default Currency: ${report.defaultCurrency}\n` +
+            `- Active View: ${report.activeView}\n` +
+            `- Storage Parse Status: ${report.localStorageParseStatus}\n` +
+            `- Session Status: ${report.migrationStatus}\n\nOpening workflow questionnaire...`;
         alert(alertMsg);
         this.openDiagnoseModal();
       });
@@ -551,9 +588,12 @@ class FreelancerApp {
     let lsParseStatus = 'OK';
     let localData = null;
     try {
-      const stored = localStorage.getItem('freelancer_os_workspace');
-      if (stored) {
-        localData = JSON.parse(stored);
+      const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
+      if (activeWorkspaceId) {
+        const stored = localStorage.getItem(`alurkarya_workspace_${activeWorkspaceId}_state`);
+        if (stored) {
+          localData = JSON.parse(stored);
+        }
       }
     } catch (e) {
       lsParseStatus = 'Error: ' + e.message;
@@ -577,12 +617,36 @@ class FreelancerApp {
     // Stage keys found
     const stagesFound = [...new Set(projects.map(p => p.stage || 'undefined'))];
 
+    // Projects by stage
+    const projectsByStage = {};
+    projects.forEach(p => {
+      const s = p.stage || 'undefined';
+      projectsByStage[s] = (projectsByStage[s] || 0) + 1;
+    });
+
+    // Invalid stages check
+    const knownStages = ['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed', 'on_hold'];
+    const invalidStageCount = projects.filter(p => !knownStages.includes(p.stage)).length;
+
+    // Missing titles check
+    const missingTitleCount = projects.filter(p => !p.title || !p.projectName).length;
+
+    // Total visible project cards
+    const visibleCount = document.querySelectorAll('.project-card:not(.column-preview-card)').length;
+
     // Whether Kanban columns rendered
     const kanbanCanvas = document.getElementById('kanban-board-canvas');
     const colsRendered = kanbanCanvas ? kanbanCanvas.querySelectorAll('.kanban-column').length : 0;
 
     const report = {
+      profileUiVersion: 'profile-form-v2',
+      activeWorkspaceId: sessionStorage.getItem('alurkarya_active_workspace_id') || 'None',
       projectCount: projects.length,
+      visibleKanbanProjectCount: visibleCount,
+      projectsByStage: projectsByStage,
+      invalidStageCount: invalidStageCount,
+      missingTitleCount: missingTitleCount,
+      sameStateSource: 'Yes (Shared store)',
       clientCount: clients.length,
       selectedLanguage: lang,
       defaultCurrency: currency,

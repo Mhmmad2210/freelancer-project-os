@@ -272,13 +272,23 @@ export class WorkspaceProfileSelection {
           
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${pinLabel}</label>
-            <input type="password" id="ws-pin-input" class="form-control" placeholder="e.g. 1234" maxlength="8" style="font-size: 0.8rem; padding: 10px;" />
+            <div style="position: relative; width: 100%;">
+              <input type="password" id="ws-pin-input" class="form-control" placeholder="e.g. 1234" maxlength="8" style="font-size: 0.8rem; padding: 10px; padding-right: 38px; width: 100%; box-sizing: border-box;" />
+              <button type="button" id="ws-pin-toggle-btn" aria-label="${isIndo ? 'Tampilkan PIN' : 'Show PIN'}" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                ${getIcon('eye', '', 16)}
+              </button>
+            </div>
             <small style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px;">${helperText}</small>
           </div>
 
           <div class="form-group" id="ws-pin-confirm-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${pinConfirmLabel}</label>
-            <input type="password" id="ws-pin-confirm-input" class="form-control" placeholder="${isIndo ? 'Konfirmasi PIN' : 'Confirm PIN'}" maxlength="8" style="font-size: 0.8rem; padding: 10px;" />
+            <div style="position: relative; width: 100%;">
+              <input type="password" id="ws-pin-confirm-input" class="form-control" placeholder="${isIndo ? 'Konfirmasi PIN' : 'Confirm PIN'}" maxlength="8" style="font-size: 0.8rem; padding: 10px; padding-right: 38px; width: 100%; box-sizing: border-box;" />
+              <button type="button" id="ws-pin-confirm-toggle-btn" aria-label="${isIndo ? 'Tampilkan PIN' : 'Show PIN'}" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                ${getIcon('eye', '', 16)}
+              </button>
+            </div>
           </div>
 
           <div id="ws-create-error" style="color: #ef4444; font-size: 0.75rem; text-align: center; font-weight: 600; display: none; margin-bottom: 12px; line-height: 1.45;"></div>
@@ -320,8 +330,13 @@ export class WorkspaceProfileSelection {
         </div>
 
         <form id="pin-unlock-form" style="display: flex; flex-direction: column; gap: 14px; margin-top: 12px;">
-          <div class="form-group">
-            <input type="password" id="ws-unlock-pin" class="form-control" required autofocus maxlength="8" placeholder="PIN" style="font-size: 1.1rem; padding: 12px; text-align: center; letter-spacing: 6px;" />
+          <div class="form-group" style="position: relative;">
+            <div style="position: relative; width: 100%;">
+              <input type="password" id="ws-unlock-pin" class="form-control" required autofocus maxlength="8" placeholder="PIN" style="font-size: 1.1rem; padding: 12px; padding-right: 48px; text-align: center; letter-spacing: 6px; width: 100%; box-sizing: border-box;" />
+              <button type="button" id="ws-unlock-pin-toggle-btn" aria-label="${isIndo ? 'Tampilkan PIN' : 'Show PIN'}" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                ${getIcon('eye', '', 18)}
+              </button>
+            </div>
           </div>
 
           ${this.pinError ? `<div style="color: #ef4444; font-size: 0.75rem; text-align: center; font-weight: 600;">⚠️ ${this.pinError}</div>` : ''}
@@ -432,6 +447,32 @@ export class WorkspaceProfileSelection {
       const pinInput = createForm.querySelector('#ws-pin-input');
       const pinConfirmInput = createForm.querySelector('#ws-pin-confirm-input');
 
+      const pinToggle = createForm.querySelector('#ws-pin-toggle-btn');
+      if (pinToggle && pinInput) {
+        pinToggle.addEventListener('click', () => {
+          const isIndo = getLanguage() === 'id';
+          const isPassword = pinInput.type === 'password';
+          pinInput.type = isPassword ? 'text' : 'password';
+          pinToggle.innerHTML = isPassword ? getIcon('eyeOff', '', 16) : getIcon('eye', '', 16);
+          const showText = isIndo ? 'Tampilkan PIN' : 'Show PIN';
+          const hideText = isIndo ? 'Sembunyikan PIN' : 'Hide PIN';
+          pinToggle.setAttribute('aria-label', isPassword ? hideText : showText);
+        });
+      }
+
+      const confirmToggle = createForm.querySelector('#ws-pin-confirm-toggle-btn');
+      if (confirmToggle && pinConfirmInput) {
+        confirmToggle.addEventListener('click', () => {
+          const isIndo = getLanguage() === 'id';
+          const isPassword = pinConfirmInput.type === 'password';
+          pinConfirmInput.type = isPassword ? 'text' : 'password';
+          confirmToggle.innerHTML = isPassword ? getIcon('eyeOff', '', 16) : getIcon('eye', '', 16);
+          const showText = isIndo ? 'Tampilkan PIN' : 'Show PIN';
+          const hideText = isIndo ? 'Sembunyikan PIN' : 'Hide PIN';
+          confirmToggle.setAttribute('aria-label', isPassword ? hideText : showText);
+        });
+      }
+
       createForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nameVal = createForm.querySelector('#ws-name-input').value.trim();
@@ -492,9 +533,24 @@ export class WorkspaceProfileSelection {
     // 3. PIN Prompt Events
     const pinForm = wrapper.querySelector('#pin-unlock-form');
     if (pinForm) {
+      const unlockPinInput = pinForm.querySelector('#ws-unlock-pin');
+      const unlockPinToggle = pinForm.querySelector('#ws-unlock-pin-toggle-btn');
+      
+      if (unlockPinToggle && unlockPinInput) {
+        unlockPinToggle.addEventListener('click', () => {
+          const isIndo = getLanguage() === 'id';
+          const isPassword = unlockPinInput.type === 'password';
+          unlockPinInput.type = isPassword ? 'text' : 'password';
+          unlockPinToggle.innerHTML = isPassword ? getIcon('eyeOff', '', 18) : getIcon('eye', '', 18);
+          const showText = isIndo ? 'Tampilkan PIN' : 'Show PIN';
+          const hideText = isIndo ? 'Sembunyikan PIN' : 'Hide PIN';
+          unlockPinToggle.setAttribute('aria-label', isPassword ? hideText : showText);
+        });
+      }
+
       pinForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const enteredPin = pinForm.querySelector('#ws-unlock-pin').value;
+        const enteredPin = unlockPinInput.value;
         const hash = await this.sha256(enteredPin);
         const isIndo = getLanguage() === 'id';
         
@@ -502,8 +558,8 @@ export class WorkspaceProfileSelection {
           this.selectWorkspace(this.pinPromptWorkspace);
         } else {
           this.pinError = isIndo 
-            ? 'PIN tidak cocok. Cek kembali PIN dan konfirmasinya.' 
-            : 'PIN does not match. Check the PIN and confirmation.';
+            ? 'PIN Workspace belum sesuai. Coba lagi.' 
+            : 'Workspace PIN does not match. Try again.';
           this.render();
         }
       });

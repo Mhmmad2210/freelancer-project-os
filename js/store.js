@@ -2,7 +2,7 @@
    FREELANCER PROJECT OS - CENTRAL STORAGE & STORE COMPONENT
    ========================================================================== */
 
-import { generateId, getBrowserTimezone, getInitials } from './utils.js';
+import { generateId, getBrowserTimezone, getInitials, normalizeProject } from './utils.js';
 import { applyTemplateProjects } from './components/FreelancerTemplates.js';
 
 
@@ -424,7 +424,7 @@ export class WorkspaceStore {
       const stored = localStorage.getItem(stateKey);
       if (stored) {
         const parsed = JSON.parse(stored);
-        this.projects = parsed.projects || [];
+        this.projects = (parsed.projects || []).map(p => normalizeProject(p));
         this.clients = parsed.clients || [];
         this.invoices = parsed.invoices || [];
         this.quotations = parsed.quotations || [];
@@ -471,6 +471,7 @@ export class WorkspaceStore {
 
         // STANDARD DATA MODEL FILLER
         this.projects = this.projects.map(p => {
+          p = normalizeProject(p);
           if (p.budget < 1000000) {
             p.budget = p.budget * 1000;
             migrated = true;
@@ -967,9 +968,10 @@ export class WorkspaceStore {
         }));
       })()
     };
-    this.projects.push(newProject);
+    const normalized = normalizeProject(newProject);
+    this.projects.push(normalized);
     this.saveState();
-    return newProject;
+    return normalized;
   }
 
   createProjectInActiveWorkspace(projectInput) {
@@ -1597,9 +1599,9 @@ export class WorkspaceStore {
 
   getDefaultFreelancerProfile() {
     return {
-      freelancerName: '',
-      freelancerRole: '',
-      freelancerInitials: '',
+      freelancerName: 'Your Name',
+      freelancerRole: 'Freelancer',
+      freelancerInitials: 'YN',
       freelancerAvatar: '',
       freelancerEmail: '',
       freelancerBio: '',

@@ -2,18 +2,28 @@ import { WorkspaceStore } from './store.js';
 
 // Setup workspace session from window.opener if missing in current tab
 const currentActive = sessionStorage.getItem('alurkarya_active_workspace_id');
-if (!currentActive && window.opener && !window.opener.closed) {
-  try {
-    const openerActive = window.opener.sessionStorage.getItem('alurkarya_active_workspace_id');
-    if (openerActive) {
-      sessionStorage.setItem('alurkarya_active_workspace_id', openerActive);
-      const openerUnlocked = window.opener.sessionStorage.getItem('alurkarya_session_unlocked');
-      if (openerUnlocked) {
-        sessionStorage.setItem('alurkarya_session_unlocked', openerUnlocked);
-      }
+if (!currentActive) {
+  // Check URL params first (safer fallback if opener is isolated)
+  const urlParams = new URLSearchParams(window.location.search);
+  const wsParam = urlParams.get('workspace_id');
+  if (wsParam) {
+    sessionStorage.setItem('alurkarya_active_workspace_id', wsParam);
+    if (urlParams.get('session_unlocked') === 'true') {
+      sessionStorage.setItem('alurkarya_session_unlocked', 'true');
     }
-  } catch (e) {
-    console.warn("Could not copy sessionStorage from opener:", e);
+  } else if (window.opener && !window.opener.closed) {
+    try {
+      const openerActive = window.opener.sessionStorage.getItem('alurkarya_active_workspace_id');
+      if (openerActive) {
+        sessionStorage.setItem('alurkarya_active_workspace_id', openerActive);
+        const openerUnlocked = window.opener.sessionStorage.getItem('alurkarya_session_unlocked');
+        if (openerUnlocked) {
+          sessionStorage.setItem('alurkarya_session_unlocked', openerUnlocked);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not copy sessionStorage from opener:", e);
+    }
   }
 }
 

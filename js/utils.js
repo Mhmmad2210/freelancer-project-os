@@ -509,21 +509,21 @@ export function isOutsideWorkingHours(dateStr, timeStr, availability, meetingTim
 
 /**
  * Generates initials from a full name (e.g. "Aris Aulia" -> "AA", "Mohammad Irsyad Ridwan" -> "MR").
- * If the name is empty, returns "YK".
+ * If the name is empty, returns "YN".
  * @param {string} name
  * @returns {string}
  */
 export function getInitials(name) {
-  if (!name) return 'YK';
+  if (!name) return 'YN';
   const clean = name.trim().replace(/\s+/g, ' ');
-  if (!clean) return 'YK';
+  if (!clean) return 'YN';
   const parts = clean.split(' ');
   if (parts.length === 1) {
-    return parts[0].substring(0, 2).toUpperCase() || 'YK';
+    return parts[0].substring(0, 2).toUpperCase() || 'YN';
   }
   const first = parts[0][0] || '';
   const last = parts[parts.length - 1][0] || '';
-  return (first + last).toUpperCase() || 'YK';
+  return (first + last).toUpperCase() || 'YN';
 }
 
 /**
@@ -725,4 +725,78 @@ export function isValidImageUrl(url) {
   if (!url || typeof url !== 'string') return false;
   const trimmed = url.trim();
   return /^https?:\/\//i.test(trimmed) || /^data:image\//i.test(trimmed);
+}
+
+/**
+ * Ensures a project object is compliant with all schema expectations of the Kanban Board,
+ * Agenda, Client Portal, and modals.
+ * @param {object} p - Project instance to normalize
+ * @returns {object} Normalized project instance
+ */
+export function normalizeProject(p) {
+  if (!p || typeof p !== 'object') return p;
+
+  // 1. Identification
+  if (!p.id) {
+    p.id = generateId();
+  }
+
+  // 2. Unify title and legacy projectName fields
+  const displayTitle = p.title || p.projectName || p.name || 'Untitled Project';
+  p.title = displayTitle;
+  p.projectName = displayTitle;
+
+  // 3. Client details
+  p.clientId = p.clientId || '';
+  p.clientName = p.clientName || '';
+
+  // 4. Category
+  p.category = p.category || p.customCategory || 'Design';
+  p.customCategory = p.customCategory || p.category || 'Design';
+
+  // 5. Stage normalization & fallback
+  let currentStage = p.stage || p.status || 'new_lead';
+  if (currentStage === 'Queue' || currentStage === 'queue') {
+    currentStage = 'proposal_sent';
+  }
+  const knownStages = ['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed', 'on_hold'];
+  if (!knownStages.includes(currentStage)) {
+    currentStage = 'new_lead';
+  }
+  p.stage = currentStage;
+
+  // 6. Action Tag
+  p.nextAction = p.nextAction || 'Email client proposal draft';
+
+  // 7. Timeline / Due Date
+  p.dueDate = p.dueDate || new Date().toISOString().split('T')[0];
+
+  // 8. Value & Budget
+  p.budget = Number(p.budget) || Number(p.estimatedValue) || 0;
+  p.estimatedValue = Number(p.estimatedValue) || Number(p.budget) || 0;
+
+  // 9. Currency
+  const defaultCurrency = window.getDefaultCurrency ? window.getDefaultCurrency() : 'IDR';
+  p.currency = p.currency || p.projectCurrency || defaultCurrency || 'IDR';
+  p.projectCurrency = p.projectCurrency || p.currency || defaultCurrency || 'IDR';
+
+  // 10. Priority
+  p.priority = p.priority || 'Medium';
+
+  // 11. Notes & Descriptions in sync
+  const notesText = p.notes || p.internalNotes || p.description || '';
+  p.notes = notesText;
+  p.internalNotes = notesText;
+  p.description = notesText;
+
+  // 12. Handover & Delivery Links
+  p.reviewLink = p.reviewLink || '';
+  p.deliveryLink = p.deliveryLink || p.finalFileLink || '';
+  p.finalFileLink = p.finalFileLink || p.deliveryLink || '';
+
+  // 13. Timestamps
+  p.createdAt = p.createdAt || new Date().toISOString();
+  p.updatedAt = p.updatedAt || new Date().toISOString();
+
+  return p;
 }

@@ -53,9 +53,16 @@ export class FreelancerProfile {
     // Page Intro matching premium aesthetics
     const introBox = document.createElement('div');
     introBox.className = 'portfolio-intro-box';
+    introBox.style.cssText = 'max-width: 1100px; margin: 0 auto 8px auto; width: 100%; box-sizing: border-box;';
+    
+    const headerTitle = isIndo ? 'Profil Freelancer' : 'Freelancer Profile';
+    const headerDesc = isIndo 
+      ? 'Atur detail pribadi, spesialisasi, bio, lokasi, dan link portfolio Anda. Data ini disinkronkan dengan kartu profil sidebar dan Client Dashboard.'
+      : 'Manage your personal details, specialization, bio, location, and portfolio link. This data syncs with the sidebar profile card and Client Dashboard.';
+      
     introBox.innerHTML = `
-      <h2>${isIndo ? 'Profil Freelancer' : 'Freelancer Profile'}</h2>
-      <p style="margin-top: 6px;">${isIndo ? 'Atur detail profil kamu untuk disinkronkan dengan kartu sidebar dan Client Workspace Portal.' : 'Configure your personal details to synchronize with your sidebar profile card and the Client Workspace Portal.'}</p>
+      <h2>${headerTitle}</h2>
+      <p style="margin-top: 6px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">${headerDesc}</p>
     `;
     viewEl.appendChild(introBox);
 
@@ -259,7 +266,7 @@ export class FreelancerProfile {
               </small>
             </div>
             <button type="button" class="btn btn-secondary text-danger" id="btn-delete-workspace" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
-              ${isIndo ? 'Hapus Workspace' : 'Delete Workspace'}
+              ${isIndo ? 'Hapus Workspace Ini' : 'Delete This Workspace'}
             </button>
           </div>
 
@@ -274,13 +281,18 @@ export class FreelancerProfile {
               </small>
             </div>
             <button type="button" class="btn btn-secondary text-danger" id="btn-delete-all-local" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
-              ${isIndo ? 'Hapus Semua Data' : 'Delete All Data'}
+              ${isIndo ? 'Hapus Semua Data di Browser Ini' : 'Delete All Data in This Browser'}
             </button>
           </div>
         </div>
       </div>
     `;
     viewEl.appendChild(settingsBox);
+
+    const versionMarker = document.createElement('div');
+    versionMarker.style.cssText = 'font-size: 0.6rem; color: var(--text-muted); text-align: center; margin-top: 16px; opacity: 0.3;';
+    versionMarker.textContent = 'Profile UI Version: profile-form-v2';
+    viewEl.appendChild(versionMarker);
 
     this.container.appendChild(viewEl);
 

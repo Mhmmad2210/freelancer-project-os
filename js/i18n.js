@@ -303,8 +303,8 @@ export const translations = {
     access: {
       welcome: "Welcome to AlurKarya",
       tagline: "Manage freelance projects from client to paid.",
-      passwordLabel: "Access Password",
-      passwordPlaceholder: "Enter your password",
+      passwordLabel: "AlurKarya Access Code",
+      passwordPlaceholder: "Enter the access code you received",
       submitBtn: "Enter Workspace",
       hasNoAccess: "Don’t have access yet? Enter activation code",
       successMsg: "Access granted. Preparing your workspace…",
@@ -313,10 +313,11 @@ export const translations = {
       activateBtn: "Activate Access",
       backToLogin: "Back to login",
       footerNote: "Private access for AlurKarya early users.",
-      errorEmptyPassword: "Please enter your password.",
-      errorInvalidPassword: "Incorrect password. Please try again.",
+      errorEmptyPassword: "Please enter the access code.",
+      errorInvalidPassword: "Access code does not match. Check the code you received.",
       errorEmptyCode: "Please enter your activation code.",
-      errorInvalidCode: "Invalid activation code. Please contact support."
+      errorInvalidCode: "Invalid activation code. Please contact support.",
+      accessCodeHelper: "The AlurKarya Access Code opens the app. A Workspace PIN protects your personal workspace in this browser."
     },
     // Delivery Center
     delivery: {
@@ -1028,7 +1029,7 @@ export const translations = {
       autoLockNotice: "For privacy, your workspace was locked after inactivity.",
       autoLockNoticeHidden: "For privacy, your workspace was locked after being inactive in the background.",
       clearedNotice: "Workspace data has been cleared from this browser.",
-      dangerZone: "Danger Zone"
+      dangerZone: "Workspace Data Settings"
     },
     app: {
       diagnose: "Diagnose",
@@ -1360,8 +1361,8 @@ export const translations = {
     access: {
       welcome: "Selamat Datang di AlurKarya",
       tagline: "Kelola project freelance dari lead hingga lunas.",
-      passwordLabel: "Kata Sandi Akses",
-      passwordPlaceholder: "Masukkan kata sandi Anda",
+      passwordLabel: "Kode Akses AlurKarya",
+      passwordPlaceholder: "Masukkan kode akses yang kamu terima",
       submitBtn: "Masuk ke Workspace",
       hasNoAccess: "Belum punya akses? Masukkan kode aktivasi",
       successMsg: "Akses diberikan. Menyiapkan workspace Anda…",
@@ -1370,10 +1371,11 @@ export const translations = {
       activateBtn: "Aktifkan Akses",
       backToLogin: "Kembali ke login",
       footerNote: "Akses pribadi untuk pengguna awal AlurKarya.",
-      errorEmptyPassword: "Mohon masukkan kata sandi Anda.",
-      errorInvalidPassword: "Kata sandi salah. Silakan coba lagi.",
+      errorEmptyPassword: "Mohon masukkan kode akses Anda.",
+      errorInvalidPassword: "Kode akses belum sesuai. Cek kembali kode yang kamu terima.",
       errorEmptyCode: "Mohon masukkan kode aktivasi Anda.",
-      errorInvalidCode: "Kode aktivasi tidak valid. Silakan hubungi dukungan pelanggan."
+      errorInvalidCode: "Kode aktivasi tidak valid. Silakan hubungi dukungan pelanggan.",
+      accessCodeHelper: "Kode Akses AlurKarya digunakan untuk membuka aplikasi. PIN Workspace digunakan untuk melindungi workspace pribadi di browser ini."
     },
     delivery: {
       status: "Status Delivery",
@@ -2079,7 +2081,7 @@ export const translations = {
       autoLockNotice: "Demi privasi, workspace dikunci setelah tidak ada aktivitas.",
       autoLockNoticeHidden: "Demi privasi, workspace dikunci setelah sekian lama tidak aktif di latar belakang.",
       clearedNotice: "Data workspace telah dihapus dari browser ini.",
-      dangerZone: "Zona Bahaya"
+      dangerZone: "Pengaturan Data Workspace"
     },
     app: {
       diagnose: "Diagnosa",

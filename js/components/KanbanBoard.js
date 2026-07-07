@@ -484,8 +484,11 @@ export class KanbanBoard {
     const state = this.store.getState() || {};
     const projects = Array.isArray(state.projects) ? state.projects : [];
 
+    const onHoldMount = document.getElementById('on-hold-projects-mount');
+
     // Check if there are no projects in database
     if (projects.length === 0) {
+      if (onHoldMount) onHoldMount.style.display = 'none';
       const emptyStateBox = document.createElement('div');
       emptyStateBox.className = 'empty-state-box';
       emptyStateBox.style.cssText = 'margin: 0 0 24px 0; padding: 32px 20px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); backdrop-filter: var(--glass-backdrop); width: 100%;';
@@ -515,33 +518,33 @@ export class KanbanBoard {
       `;
       canvas.appendChild(emptyStateBox);
       emptyStateBox.querySelector('#btn-empty-add-project').addEventListener('click', () => this.showNewProjectDrawer());
-    }
-
-    canvas.style.display = 'block';
-    let track = canvas.querySelector('.kanban-scroll-track');
-    if (!track) {
-      track = document.createElement('div');
-      track.className = 'kanban-scroll-track';
-      track.id = 'kanban-board-track';
-      canvas.appendChild(track);
-    } else {
-      track.innerHTML = '';
+      return;
     }
 
     const filteredProjects = projects.filter(p => {
       if (!this.searchQuery) return true;
-      const title = p.title || '';
-      const clientName = p.clientName || '';
+      const title = (p.title || '').toLowerCase();
+      const projectName = (p.projectName || '').toLowerCase();
+      const clientName = (p.clientName || '').toLowerCase();
+      const category = (p.category || '').toLowerCase();
+      const nextAction = (p.nextAction || '').toLowerCase();
+      const notes = (p.notes || p.internalNotes || p.description || '').toLowerCase();
       const tags = Array.isArray(p.tags) ? p.tags : [];
+
       return (
-        title.toLowerCase().includes(this.searchQuery) ||
-        clientName.toLowerCase().includes(this.searchQuery) ||
+        title.includes(this.searchQuery) ||
+        projectName.includes(this.searchQuery) ||
+        clientName.includes(this.searchQuery) ||
+        category.includes(this.searchQuery) ||
+        nextAction.includes(this.searchQuery) ||
+        notes.includes(this.searchQuery) ||
         tags.some(tag => tag.toLowerCase().includes(this.searchQuery))
       );
     });
 
     // If all projects are hidden by filters/search
-    if (projects.length > 0 && filteredProjects.length === 0) {
+    if (filteredProjects.length === 0) {
+      if (onHoldMount) onHoldMount.style.display = 'none';
       const filterEmptyBox = document.createElement('div');
       filterEmptyBox.className = 'empty-state-box';
       filterEmptyBox.style.cssText = 'margin: 0 0 24px 0; padding: 24px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); width: 100%;';
@@ -555,6 +558,18 @@ export class KanbanBoard {
         <span style="font-size: 0.82rem; color: var(--text-muted);">${filterText}</span>
       `;
       canvas.appendChild(filterEmptyBox);
+      return;
+    }
+
+    canvas.style.display = 'block';
+    let track = canvas.querySelector('.kanban-scroll-track');
+    if (!track) {
+      track = document.createElement('div');
+      track.className = 'kanban-scroll-track';
+      track.id = 'kanban-board-track';
+      canvas.appendChild(track);
+    } else {
+      track.innerHTML = '';
     }
 
     const activeSortMode = localStorage.getItem('alurkarya_board_sort_mode') || 'default';

@@ -278,8 +278,16 @@ export class AccessGate {
       <!-- Password Access Form -->
       <form class="gate-form" id="password-form" style="display: flex; flex-direction: column; gap: 20px;">
         <div class="access-field">
-          <label class="access-label" for="password-input">${t('access.passwordLabel', 'Access Password')}</label>
-          <input type="password" id="password-input" class="access-input" placeholder="${t('access.passwordPlaceholder', 'Enter your password')}" required autocomplete="current-password">
+          <label class="access-label" for="password-input">${t('access.passwordLabel', 'AlurKarya Access Code')}</label>
+          <div style="position: relative; width: 100%;">
+            <input type="password" id="password-input" class="access-input" style="padding-right: 48px;" placeholder="${t('access.passwordPlaceholder', 'Enter the access code you received')}" required autocomplete="current-password">
+            <button type="button" id="password-toggle-btn" aria-label="${getLanguage() === 'id' ? 'Tampilkan kode' : 'Show code'}" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 6px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 10;">
+              ${getIcon('eye', '', 18)}
+            </button>
+          </div>
+          <small style="font-size: 0.72rem; color: #64748b; line-height: 1.4; margin-top: 4px; display: block;">
+            ${t('access.accessCodeHelper', 'The AlurKarya Access Code opens the app. A Workspace PIN protects your personal workspace in this browser.')}
+          </small>
         </div>
         <button type="submit" class="access-button" id="password-submit-btn">
           ${t('access.submitBtn', 'Enter Workspace')}
@@ -330,6 +338,20 @@ export class AccessGate {
  
     const showActivationBtn = cardEl.querySelector('#btn-show-activation');
     const showPasswordBtn = cardEl.querySelector('#btn-show-password');
+    const passwordToggle = cardEl.querySelector('#password-toggle-btn');
+    
+    if (passwordToggle && passwordInput) {
+      passwordToggle.addEventListener('click', () => {
+        const isIndo = getLanguage() === 'id';
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        passwordToggle.innerHTML = isPassword ? getIcon('eyeOff', '', 18) : getIcon('eye', '', 18);
+        
+        const showText = isIndo ? 'Tampilkan kode' : 'Show code';
+        const hideText = isIndo ? 'Sembunyikan kode' : 'Hide code';
+        passwordToggle.setAttribute('aria-label', isPassword ? hideText : showText);
+      });
+    }
  
     // Handle Lock Reason Notice
     const lockReason = sessionStorage.getItem('alurkarya_lock_reason');
