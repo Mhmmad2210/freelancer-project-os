@@ -1524,6 +1524,17 @@ function saveFirstProject() {
     // Save project using store helper
     const newProject = store.createProjectInActiveWorkspace(projectInput);
     
+    // Dispatch refresh event to parent app if opened via window.open
+    if (window.opener && !window.opener.closed) {
+      try {
+        window.opener.dispatchEvent(new CustomEvent('alurkarya:workspace-state-updated', {
+          detail: { source: 'project-created', projectId: newProject.id }
+        }));
+      } catch (err) {
+        console.warn("Could not dispatch event to opener:", err);
+      }
+    }
+
     // Close form
     closeProjectCreatorModal();
 

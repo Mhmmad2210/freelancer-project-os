@@ -850,7 +850,7 @@ export class WorkspaceStore {
       paymentCurrency: projectData.paymentCurrency || projectData.invoiceCurrency || projectData.projectCurrency || localStorage.getItem('alurkarya_default_currency') || 'IDR',
       stage: projectData.stage || 'new_lead',
       description: projectData.description || '',
-      dueDate: projectData.dueDate || new Date().toISOString().split('T')[0],
+      dueDate: projectData.dueDate || '',
       priority: projectData.priority || 'Medium',
       briefLink: projectData.briefLink || '',
       assetLink: projectData.assetLink || '',
@@ -859,7 +859,7 @@ export class WorkspaceStore {
       maxRevisionRounds: maxRevisionVal,
       revisionNotes: '',
       paymentStatus: projectData.paymentStatus || 'None',
-      nextAction: projectData.nextAction || 'Email client proposal draft',
+      nextAction: projectData.nextAction || '',
       internalNotes: projectData.internalNotes || '',
       portfolioShowcase: false,
       portfolioDescription: '',
@@ -1023,13 +1023,18 @@ export class WorkspaceStore {
   updateProject(id, updates) {
     this.projects = this.projects.map(p => {
       if (p.id === id) {
+        if (updates.title && !updates.projectName) {
+          updates.projectName = updates.title;
+        } else if (updates.projectName && !updates.title) {
+          updates.title = updates.projectName;
+        }
         const updated = { ...p, ...updates };
         if (updates.title) {
           this.invoices = this.invoices.map(inv => 
             inv.projectId === id ? { ...inv, projectName: updates.title } : inv
           );
         }
-        return updated;
+        return normalizeProject(updated);
       }
       return p;
     });

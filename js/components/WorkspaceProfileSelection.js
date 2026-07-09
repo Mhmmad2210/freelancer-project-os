@@ -34,72 +34,150 @@ export class WorkspaceProfileSelection {
     // Embedded styling for Workspace selection screen
     const styleEl = document.createElement('style');
     styleEl.textContent = `
+      .access-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: radial-gradient(circle at 50% 50%, hsl(224, 45%, 6%) 0%, hsl(224, 60%, 2%) 100%);
+        color: #f8fafc;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        box-sizing: border-box;
+        width: 100%;
+      }
+      .access-card {
+        width: min(92vw, 560px);
+        background: rgba(11, 17, 32, 0.45);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45), 0 0 40px rgba(139, 92, 246, 0.03);
+        padding: 40px 36px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        position: relative;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      .access-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #6D5DFB, #9B5CFF);
+      }
+      .access-brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+      }
+      .access-sub {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        line-height: 1.5;
+        max-width: 440px;
+        margin-top: 4px;
+      }
       .workspace-list {
         display: flex;
         flex-direction: column;
         gap: 12px;
-        margin-top: 16px;
+        margin-top: 8px;
         max-height: 280px;
         overflow-y: auto;
         padding-right: 4px;
       }
       .workspace-item {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 14px 18px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 16px 20px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        transition: all 0.2s ease;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .workspace-item:hover {
         background: rgba(139, 92, 246, 0.08);
-        border-color: rgba(139, 92, 246, 0.3);
-        transform: translateY(-1px);
+        border-color: rgba(139, 92, 246, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(139, 92, 246, 0.1);
+      }
+      .workspace-item:hover .ws-arrow {
+        transform: translateX(4px);
+        color: var(--color-primary);
       }
       .workspace-meta {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
       }
       .workspace-title {
-        font-weight: 600;
-        font-size: 0.9rem;
+        font-weight: 700;
+        font-size: 0.95rem;
         color: #f1f5f9;
         display: flex;
         align-items: center;
         gap: 8px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
       }
       .workspace-date {
-        font-size: 0.68rem;
-        color: var(--text-muted);
+        font-size: 0.72rem;
+        color: #64748b;
+      }
+      .ws-arrow {
+        transition: all 0.2s ease;
+        color: #475569;
+        font-weight: bold;
       }
       .ws-btn-group {
         display: flex;
-        gap: 10px;
-        margin-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
-        padding-top: 20px;
+        gap: 12px;
+        justify-content: center;
+        width: 100%;
+        margin-top: 8px;
       }
       .ws-btn-group button {
         flex: 1;
+        padding: 12px 18px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 12px;
       }
       .workspace-form {
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        margin-top: 16px;
-        background: rgba(255, 255, 255, 0.02);
+        gap: 16px;
+        background: rgba(255, 255, 255, 0.01);
         border: 1px solid rgba(255, 255, 255, 0.04);
-        padding: 16px;
-        border-radius: 14px;
+        padding: 20px;
+        border-radius: 18px;
       }
       .pin-note {
-        font-size: 0.68rem;
-        color: var(--text-muted);
-        line-height: 1.4;
+        font-size: 0.7rem;
+        color: #94a3b8;
+        line-height: 1.45;
+      }
+      .safety-notice {
+        background: rgba(239, 68, 68, 0.03);
+        border: 1px solid rgba(239, 68, 68, 0.15);
+        padding: 14px 16px;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        color: #f87171;
+        line-height: 1.5;
+        text-align: left;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
       }
     `;
     wrapper.appendChild(styleEl);
@@ -123,36 +201,47 @@ export class WorkspaceProfileSelection {
 
   renderEmptyOnboardingCard(wrapper, isIndo) {
     const title = isIndo ? 'Buat Workspace Pribadi' : 'Create Personal Workspace';
+    const subHeader = isIndo
+      ? 'AlurKarya adalah aplikasi berbasis lokal-first. Seluruh data project, invoice, dan client disimpan langsung di perangkat Anda secara aman dan tidak pernah diunggah ke server cloud.'
+      : 'AlurKarya is a local-first application. All project, invoice, and client data is saved securely on your local device and is never uploaded to cloud servers.';
     const body = isIndo
-      ? 'Simpan project, client, invoice, payment, dan link delivery di workspace lokal milikmu. Jika laptop dipakai bersama, setiap freelancer bisa punya workspace masing-masing.'
-      : 'Keep your projects, clients, invoices, payments, and delivery links inside your own local workspace. If a laptop is shared, each freelancer can have their own workspace.';
+      ? 'Mulai dengan membuat workspace lokal baru untuk mengelola workflow client-to-paid Anda.'
+      : 'Get started by creating a new local workspace to manage your client-to-paid workflow.';
+    const ctaLabel = isIndo ? 'Buat Workspace Baru' : 'Create New Workspace';
+    const secondaryCtaLabel = isIndo ? 'Impor Backup' : 'Import Backup';
+    const safetyNote = isIndo
+      ? '<strong>Pemberitahuan Penting:</strong> Menghapus cache browser secara permanen (Clear Site Data) dapat menghapus data workspace lokal Anda. Pastikan untuk selalu mengekspor file backup secara berkala.'
+      : '<strong>Important Notice:</strong> Clearing browser cache permanently (Clear Site Data) will erase your local workspace data. Always export a backup file regularly.';
     const securityNote = isIndo
       ? 'PIN workspace membantu melindungi akses kasual di browser ini. Ini bukan akun cloud atau enkripsi file.'
       : 'A workspace PIN helps protect casual access in this browser. It is not a cloud account or file encryption.';
-    const ctaLabel = isIndo ? 'Buat Workspace' : 'Create Workspace';
-    const secondaryCtaLabel = isIndo ? 'Impor Backup' : 'Import Backup';
 
     wrapper.innerHTML += `
-      <div class="access-card" style="padding: 28px;">
-        <div class="access-brand" style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px;">
-          <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 130px; margin-bottom: 8px;">
-          <h2 style="font-size: 1.3rem; font-weight: 700; color: #f8fafc; margin: 0; text-align: center; font-family: 'Space Grotesk', sans-serif;">${title}</h2>
+      <div class="access-card">
+        <div class="access-brand">
+          <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 140px; margin-bottom: 12px;">
+          <h2 style="font-size: 1.4rem; font-weight: 800; color: #f8fafc; margin: 0; font-family: 'Space Grotesk', sans-serif;">${title}</h2>
+          <p class="access-sub">${subHeader}</p>
         </div>
 
-        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin: 0 0 16px 0; text-align: center;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin: 0; text-align: center;">
           ${body}
         </p>
 
-        <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 12px 14px; border-radius: 10px; font-size: 0.72rem; color: #f59e0b; line-height: 1.45; margin-bottom: 24px; text-align: left; display: flex; gap: 8px; align-items: flex-start;">
-          <span style="font-size: 1rem;">⚠️</span>
-          <span><strong>${isIndo ? 'Catatan Keamanan:' : 'Security Note:'}</strong> ${securityNote}</span>
+        <div class="safety-notice">
+          <span style="font-size: 1.1rem; line-height: 1;">⚠️</span>
+          <span>${safetyNote}</span>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button class="btn btn-primary" id="btn-show-create-empty" style="font-size: 0.82rem; padding: 12px; font-weight: 600; width: 100%;">
+        <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.45; text-align: center; margin: 0 auto; max-width: 440px;">
+          ℹ️ ${securityNote}
+        </p>
+
+        <div class="ws-btn-group" style="flex-direction: column; gap: 10px;">
+          <button class="btn btn-primary" id="btn-show-create-empty" style="width: 100%; padding: 14px;">
             ${getIcon('plus', '', 14)} ${ctaLabel}
           </button>
-          <button class="btn btn-secondary" id="btn-import-backup-empty" style="font-size: 0.82rem; padding: 12px; font-weight: 600; width: 100%; border-color: rgba(255,255,255,0.08);">
+          <button class="btn btn-secondary" id="btn-import-backup-empty" style="width: 100%; padding: 14px; border-color: rgba(255,255,255,0.08);">
             ${getIcon('download', '', 14)} ${secondaryCtaLabel}
           </button>
         </div>
@@ -164,48 +253,42 @@ export class WorkspaceProfileSelection {
 
   renderSelection(wrapper, workspaces, isIndo) {
     const title = isIndo ? 'Pilih Workspace' : 'Select Workspace';
-    const createBtnLabel = isIndo ? 'Buat Workspace' : 'Create Workspace';
+    const subHeader = isIndo
+      ? 'AlurKarya adalah aplikasi berbasis lokal-first. Seluruh data project, invoice, dan client disimpan langsung di perangkat Anda secara aman dan tidak pernah diunggah ke server cloud.'
+      : 'AlurKarya is a local-first application. All project, invoice, and client data is saved securely on your local device and is never uploaded to cloud servers.';
+    const createBtnLabel = isIndo ? 'Buat Workspace Baru' : 'Create New Workspace';
     const importBtnLabel = isIndo ? 'Impor Backup' : 'Import Backup';
-    const noticeText = isIndo
-      ? 'Pakai laptop bersama? Pilih workspace milikmu dan kunci setelah selesai agar data project dan client tetap aman.'
-      : 'Using a shared laptop? Choose your own workspace and lock it when finished to protect project and client data.';
+    const safetyNote = isIndo
+      ? '<strong>Pemberitahuan Penting:</strong> Menghapus cache browser secara permanen (Clear Site Data) dapat menghapus data workspace lokal Anda. Pastikan untuk selalu mengekspor file backup secara berkala.'
+      : '<strong>Important Notice:</strong> Clearing browser cache permanently (Clear Site Data) will erase your local workspace data. Always export a backup file regularly.';
 
     let listHtml = '';
-    if (workspaces.length === 0) {
-      listHtml = `
-        <div style="text-align: center; padding: 30px 10px; color: var(--text-muted); font-size: 0.8rem; line-height: 1.45;">
-          ${isIndo 
-            ? 'Belum ada workspace lokal. Silakan buat workspace baru atau impor dari file backup.' 
-            : 'No local workspaces found. Please create a new workspace or import from backup.'}
+    listHtml = workspaces.map(w => {
+      const hasPin = !!w.workspacePinHash;
+      const lastOpened = w.lastOpenedAt 
+        ? new Date(w.lastOpenedAt).toLocaleDateString(isIndo ? 'id-ID' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '-';
+      return `
+        <div class="workspace-item" data-id="${w.workspaceId}">
+          <div class="workspace-meta">
+            <span class="workspace-title">
+              ${getIcon('folder', '', 15)}
+              ${w.workspaceName}
+              ${hasPin ? `<span style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(245,158,11,0.15); color: var(--color-warning); margin-left: 6px; display: inline-flex; align-items: center; gap: 4px;">🔒 PIN</span>` : ''}
+            </span>
+            <span class="workspace-date">${isIndo ? 'Terakhir dibuka' : 'Last opened'}: ${lastOpened}</span>
+          </div>
+          <span class="ws-arrow" style="font-size: 1.1rem;">&rarr;</span>
         </div>
       `;
-    } else {
-      listHtml = workspaces.map(w => {
-        const hasPin = !!w.workspacePinHash;
-        const lastOpened = w.lastOpenedAt 
-          ? new Date(w.lastOpenedAt).toLocaleDateString(isIndo ? 'id-ID' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-          : '-';
-        return `
-          <div class="workspace-item" data-id="${w.workspaceId}">
-            <div class="workspace-meta">
-              <span class="workspace-title">
-                ${getIcon('folder', '', 14)}
-                ${w.workspaceName}
-                ${hasPin ? `<span style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(245,158,11,0.15); color: var(--color-warning); margin-left: 6px;">🔒 PIN</span>` : ''}
-              </span>
-              <span class="workspace-date">${isIndo ? 'Terakhir dibuka' : 'Last opened'}: ${lastOpened}</span>
-            </div>
-            <span style="color: var(--text-muted); font-size: 0.8rem;">&rarr;</span>
-          </div>
-        `;
-      }).join('');
-    }
+    }).join('');
 
     wrapper.innerHTML += `
       <div class="access-card">
-        <div class="access-brand" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-          <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 130px; margin-bottom: 8px;">
-          <h2 style="font-size: 1.25rem; font-weight: 700; color: #f8fafc; margin: 0; text-align: center;">${title}</h2>
+        <div class="access-brand">
+          <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 140px; margin-bottom: 12px;">
+          <h2 style="font-size: 1.4rem; font-weight: 800; color: #f8fafc; margin: 0; font-family: 'Space Grotesk', sans-serif;">${title}</h2>
+          <p class="access-sub">${subHeader}</p>
         </div>
         
         <div class="workspace-list">
@@ -213,18 +296,17 @@ export class WorkspaceProfileSelection {
         </div>
 
         <div class="ws-btn-group">
-          <button class="btn btn-primary" id="btn-show-create" style="font-size: 0.78rem; padding: 10px; border-radius: 8px;">
+          <button class="btn btn-primary" id="btn-show-create">
             ${getIcon('plus', '', 14)} ${createBtnLabel}
           </button>
-          <button class="btn btn-secondary" id="btn-import-backup" style="font-size: 0.78rem; padding: 10px; border-radius: 8px; border-color: rgba(255,255,255,0.08);">
+          <button class="btn btn-secondary" id="btn-import-backup" style="border-color: rgba(255,255,255,0.08);">
             ${getIcon('download', '', 14)} ${importBtnLabel}
           </button>
         </div>
 
-        <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px; margin-top: 8px; text-align: center;">
-          <small style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.4; display: block;">
-            💡 ${noticeText}
-          </small>
+        <div class="safety-notice">
+          <span style="font-size: 1.1rem; line-height: 1;">⚠️</span>
+          <span>${safetyNote}</span>
         </div>
         
         <input type="file" id="ws-backup-file-input" accept=".json" style="display: none;" />
@@ -233,20 +315,17 @@ export class WorkspaceProfileSelection {
   }
 
   renderCreateForm(wrapper, isIndo) {
-    const title = isIndo ? 'Buat Workspace Pribadi' : 'Create Personal Workspace';
+    const title = isIndo ? 'Buat Workspace Baru' : 'Create New Workspace';
     const nameLabel = isIndo ? 'Nama Workspace' : 'Workspace Name';
-    const pinLabel = isIndo ? 'PIN Workspace opsional' : 'Optional Workspace PIN';
+    const enablePinLabel = isIndo ? 'Lindungi workspace ini dengan PIN' : 'Protect this workspace with a PIN';
+    const pinLabel = isIndo ? 'PIN Workspace' : 'Workspace PIN';
     const pinConfirmLabel = isIndo ? 'Konfirmasi PIN' : 'Confirm PIN';
     const createBtnLabel = isIndo ? 'Buat Sekarang' : 'Create Now';
     const cancelBtnLabel = isIndo ? 'Batal' : 'Cancel';
     
     const bodyText = isIndo
-      ? 'Workspace ini menyimpan project, client, invoice, payment, dan link delivery di browser ini. Jika laptop dipakai bersama, setiap freelancer bisa punya workspace masing-masing.'
-      : 'This workspace stores your projects, clients, invoices, payments, and delivery links in this browser. If a laptop is shared, each freelancer can have their own workspace.';
-    
-    const noteText = isIndo
-      ? 'Kamu bisa menambahkan PIN, mengunci workspace, mengganti workspace, dan ekspor backup kapan saja.'
-      : 'You can add a PIN, lock your workspace, switch workspaces, and export backups anytime.';
+      ? 'Buat workspace lokal baru di browser ini. Data Anda akan disimpan sepenuhnya secara lokal.'
+      : 'Create a new local workspace in this browser. Your data will be stored entirely locally.';
 
     const helperText = isIndo
       ? 'PIN membantu melindungi akses kasual di browser ini, terutama jika laptop dipakai bersama.'
@@ -258,51 +337,57 @@ export class WorkspaceProfileSelection {
 
     wrapper.innerHTML += `
       <div class="access-card">
-        <div class="access-brand" style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 12px;">
-          <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 130px; margin-bottom: 8px;">
-          <h2 style="font-size: 1.25rem; font-weight: 700; color: #f8fafc; margin: 0; text-align: center;">${title}</h2>
-          <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; text-align: center; margin: 6px 0 0 0;">${bodyText}</p>
+        <div class="access-brand">
+          <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 140px; margin-bottom: 12px;">
+          <h2 style="font-size: 1.4rem; font-weight: 800; color: #f8fafc; margin: 0; font-family: 'Space Grotesk', sans-serif;">${title}</h2>
+          <p class="access-sub">${bodyText}</p>
         </div>
 
         <form id="create-workspace-form" class="workspace-form">
           <div class="form-group">
-            <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${nameLabel}</label>
-            <input type="text" id="ws-name-input" class="form-control" placeholder="e.g. Design Studio" required style="font-size: 0.8rem; padding: 10px;" />
+            <label style="font-size: 0.75rem; display: block; margin-bottom: 6px; color: #cbd5e1; font-weight: 600;">${nameLabel}</label>
+            <input type="text" id="ws-name-input" class="form-control" placeholder="e.g. Design Studio" required style="font-size: 0.85rem; padding: 12px;" />
+          </div>
+
+          <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 4px; user-select: none;">
+            <input type="checkbox" id="ws-enable-pin-check" style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--color-primary);" />
+            <label for="ws-enable-pin-check" style="font-size: 0.78rem; color: #cbd5e1; cursor: pointer; font-weight: 500;">${enablePinLabel}</label>
           </div>
           
-          <div class="form-group">
-            <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${pinLabel}</label>
-            <div style="position: relative; width: 100%;">
-              <input type="password" id="ws-pin-input" class="form-control" placeholder="e.g. 1234" maxlength="8" style="font-size: 0.8rem; padding: 10px; padding-right: 38px; width: 100%; box-sizing: border-box;" />
-              <button type="button" id="ws-pin-toggle-btn" aria-label="${isIndo ? 'Tampilkan PIN' : 'Show PIN'}" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 10;">
-                ${getIcon('eye', '', 16)}
-              </button>
+          <div id="ws-pin-fields-container" style="display: none; flex-direction: column; gap: 16px;">
+            <div class="form-group">
+              <label style="font-size: 0.75rem; display: block; margin-bottom: 6px; color: #cbd5e1; font-weight: 600;">${pinLabel}</label>
+              <div style="position: relative; width: 100%;">
+                <input type="password" id="ws-pin-input" class="form-control" placeholder="e.g. 1234" maxlength="8" style="font-size: 0.85rem; padding: 12px; padding-right: 42px; width: 100%; box-sizing: border-box;" />
+                <button type="button" id="ws-pin-toggle-btn" aria-label="${isIndo ? 'Tampilkan PIN' : 'Show PIN'}" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                  ${getIcon('eye', '', 16)}
+                </button>
+              </div>
+              <small style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 4px;">${helperText}</small>
             </div>
-            <small style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px;">${helperText}</small>
-          </div>
 
-          <div class="form-group" id="ws-pin-confirm-group">
-            <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${pinConfirmLabel}</label>
-            <div style="position: relative; width: 100%;">
-              <input type="password" id="ws-pin-confirm-input" class="form-control" placeholder="${isIndo ? 'Konfirmasi PIN' : 'Confirm PIN'}" maxlength="8" style="font-size: 0.8rem; padding: 10px; padding-right: 38px; width: 100%; box-sizing: border-box;" />
-              <button type="button" id="ws-pin-confirm-toggle-btn" aria-label="${isIndo ? 'Tampilkan PIN' : 'Show PIN'}" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 10;">
-                ${getIcon('eye', '', 16)}
-              </button>
+            <div class="form-group">
+              <label style="font-size: 0.75rem; display: block; margin-bottom: 6px; color: #cbd5e1; font-weight: 600;">${pinConfirmLabel}</label>
+              <div style="position: relative; width: 100%;">
+                <input type="password" id="ws-pin-confirm-input" class="form-control" placeholder="${isIndo ? 'Konfirmasi PIN' : 'Confirm PIN'}" maxlength="8" style="font-size: 0.85rem; padding: 12px; padding-right: 42px; width: 100%; box-sizing: border-box;" />
+                <button type="button" id="ws-pin-confirm-toggle-btn" aria-label="${isIndo ? 'Tampilkan PIN' : 'Show PIN'}" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                  ${getIcon('eye', '', 16)}
+                </button>
+              </div>
+            </div>
+
+            <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 8px; font-size: 0.68rem; color: #f59e0b; line-height: 1.4;">
+              <strong>${isIndo ? 'Catatan Keamanan:' : 'Security Note:'}</strong> ${securityNoteText}
             </div>
           </div>
 
-          <div id="ws-create-error" style="color: #ef4444; font-size: 0.75rem; text-align: center; font-weight: 600; display: none; margin-bottom: 12px; line-height: 1.45;"></div>
+          <div id="ws-create-error" style="color: #ef4444; font-size: 0.75rem; text-align: center; font-weight: 600; display: none; margin-bottom: 4px; line-height: 1.45;"></div>
 
-          <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 8px; font-size: 0.68rem; color: #f59e0b; line-height: 1.4; margin-bottom: 14px;">
-            <strong>${isIndo ? 'Catatan Keamanan:' : 'Security Note:'}</strong> ${securityNoteText}<br/>
-            <span>💡 ${noteText}</span>
-          </div>
-
-          <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button type="button" class="btn btn-secondary" id="btn-cancel-create" style="font-size: 0.78rem; padding: 10px;">
+          <div style="display: flex; gap: 12px; margin-top: 10px;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-create" style="flex: 1; padding: 12px; font-size: 0.8rem; font-weight: 600;">
               ${cancelBtnLabel}
             </button>
-            <button type="submit" class="btn btn-primary" style="font-size: 0.78rem; padding: 10px; font-weight: 600;">
+            <button type="submit" class="btn btn-primary" style="flex: 1; padding: 12px; font-size: 0.8rem; font-weight: 600;">
               ${createBtnLabel}
             </button>
           </div>
@@ -323,36 +408,38 @@ export class WorkspaceProfileSelection {
 
     wrapper.innerHTML += `
       <div class="access-card">
-        <div class="access-brand" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-          <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 130px; margin-bottom: 8px;">
-          <h2 style="font-size: 1.25rem; font-weight: 700; color: #f8fafc; margin: 0; text-align: center;">${title}</h2>
-          <small style="color: var(--color-primary); font-weight: 600; margin-top: 4px;">${this.pinPromptWorkspace.workspaceName}</small>
+        <div class="access-brand">
+          <img src="assets/brand/alurkarya-logo-secondary-white.svg" alt="AlurKarya" style="width: 140px; margin-bottom: 12px;">
+          <h2 style="font-size: 1.4rem; font-weight: 800; color: #f8fafc; margin: 0; font-family: 'Space Grotesk', sans-serif;">${title}</h2>
+          <small style="color: var(--color-primary); font-weight: 700; margin-top: 6px; font-size: 0.9rem;">${this.pinPromptWorkspace.workspaceName}</small>
         </div>
 
-        <form id="pin-unlock-form" style="display: flex; flex-direction: column; gap: 14px; margin-top: 12px;">
+        <form id="pin-unlock-form" style="display: flex; flex-direction: column; gap: 16px; margin-top: 8px;">
           <div class="form-group" style="position: relative;">
             <div style="position: relative; width: 100%;">
-              <input type="password" id="ws-unlock-pin" class="form-control" required autofocus maxlength="8" placeholder="PIN" style="font-size: 1.1rem; padding: 12px; padding-right: 48px; text-align: center; letter-spacing: 6px; width: 100%; box-sizing: border-box;" />
+              <input type="password" id="ws-unlock-pin" class="form-control" required autofocus maxlength="8" placeholder="PIN" style="font-size: 1.2rem; padding: 14px; padding-right: 48px; text-align: center; letter-spacing: 6px; width: 100%; box-sizing: border-box; font-weight: 700;" />
               <button type="button" id="ws-unlock-pin-toggle-btn" aria-label="${isIndo ? 'Tampilkan PIN' : 'Show PIN'}" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 10;">
                 ${getIcon('eye', '', 18)}
               </button>
             </div>
           </div>
 
-          ${this.pinError ? `<div style="color: #ef4444; font-size: 0.75rem; text-align: center; font-weight: 600;">⚠️ ${this.pinError}</div>` : ''}
+          <div id="ws-unlock-error" style="color: #ef4444; font-size: 0.75rem; text-align: center; font-weight: 600; display: ${this.pinError ? 'block' : 'none'}; line-height: 1.45;">
+            ${this.pinError ? '⚠️ ' + this.pinError : ''}
+          </div>
 
-          <div style="display: flex; gap: 10px; margin-top: 6px;">
-            <button type="button" class="btn btn-secondary" id="btn-cancel-pin" style="font-size: 0.78rem; padding: 10px;">
+          <div style="display: flex; gap: 12px; margin-top: 6px;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-pin" style="flex: 1; padding: 12px; font-size: 0.8rem; font-weight: 600;">
               ${cancelBtnLabel}
             </button>
-            <button type="submit" class="btn btn-primary" style="font-size: 0.78rem; padding: 10px; font-weight: 600;">
+            <button type="submit" class="btn btn-primary" style="flex: 1; padding: 12px; font-size: 0.8rem; font-weight: 600;">
               ${unlockBtnLabel}
             </button>
           </div>
 
-          <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; margin-top: 10px; text-align: center;">
-            <span style="font-size: 0.75rem; font-weight: 600; color: var(--color-warning); display: block; margin-bottom: 4px;">${forgotPinLabel}</span>
-            <small style="font-size: 0.68rem; color: var(--text-muted); line-height: 1.45; display: block; max-width: 280px; margin: 0 auto;">
+          <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px; margin-top: 10px; text-align: center;">
+            <span style="font-size: 0.78rem; font-weight: 700; color: var(--color-warning); display: block; margin-bottom: 6px;">${forgotPinLabel}</span>
+            <small style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.5; display: block; max-width: 320px; margin: 0 auto;">
               ${forgotPinWarning}
             </small>
           </div>
@@ -444,8 +531,26 @@ export class WorkspaceProfileSelection {
     // 2. Create Workspace Form Events
     const createForm = wrapper.querySelector('#create-workspace-form');
     if (createForm) {
+      const pinCheck = createForm.querySelector('#ws-enable-pin-check');
+      const pinFieldsContainer = createForm.querySelector('#ws-pin-fields-container');
       const pinInput = createForm.querySelector('#ws-pin-input');
       const pinConfirmInput = createForm.querySelector('#ws-pin-confirm-input');
+
+      if (pinCheck && pinFieldsContainer) {
+        pinCheck.addEventListener('change', () => {
+          if (pinCheck.checked) {
+            pinFieldsContainer.style.display = 'flex';
+            pinInput.setAttribute('required', 'true');
+            pinConfirmInput.setAttribute('required', 'true');
+          } else {
+            pinFieldsContainer.style.display = 'none';
+            pinInput.removeAttribute('required');
+            pinConfirmInput.removeAttribute('required');
+            pinInput.value = '';
+            pinConfirmInput.value = '';
+          }
+        });
+      }
 
       const pinToggle = createForm.querySelector('#ws-pin-toggle-btn');
       if (pinToggle && pinInput) {
@@ -476,8 +581,6 @@ export class WorkspaceProfileSelection {
       createForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nameVal = createForm.querySelector('#ws-name-input').value.trim();
-        const pinVal = pinInput.value;
-        const confirmVal = pinConfirmInput.value;
         const errorEl = createForm.querySelector('#ws-create-error');
         const isIndo = getLanguage() === 'id';
 
@@ -486,7 +589,21 @@ export class WorkspaceProfileSelection {
           errorEl.textContent = '';
         }
 
-        if (pinVal) {
+        let pinHash = null;
+        if (pinCheck && pinCheck.checked) {
+          const pinVal = pinInput.value;
+          const confirmVal = pinConfirmInput.value;
+
+          if (!pinVal) {
+            const errMsg = isIndo ? 'PIN wajib diisi jika Anda mengaktifkan proteksi PIN.' : 'PIN is required when PIN protection is enabled.';
+            if (errorEl) {
+              errorEl.textContent = '⚠️ ' + errMsg;
+              errorEl.style.display = 'block';
+            } else {
+              alert(errMsg);
+            }
+            return;
+          }
           if (pinVal.length < 4) {
             const errMsg = isIndo ? 'PIN minimal 4 karakter.' : 'PIN must be at least 4 characters.';
             if (errorEl) {
@@ -507,10 +624,6 @@ export class WorkspaceProfileSelection {
             }
             return;
           }
-        }
-
-        let pinHash = null;
-        if (pinVal) {
           pinHash = await this.sha256(pinVal);
         }
 

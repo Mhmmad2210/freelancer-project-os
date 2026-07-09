@@ -397,6 +397,16 @@ class FreelancerApp {
       }
     });
 
+    // Handle external state updates (e.g. project creation from AlurPandu tab)
+    window.addEventListener('alurkarya:workspace-state-updated', (e) => {
+      console.log("[App] Workspace state updated externally:", e.detail);
+      store.loadState();
+      this.refreshActiveView();
+      if (this.sidebar) {
+        this.sidebar.update(this.activeTab);
+      }
+    });
+
     this.globalEventsBound = true;
   }
 
@@ -549,7 +559,9 @@ class FreelancerApp {
           ? `Diagnosa AlurKarya:\n` +
             `- Active Workspace ID: ${report.activeWorkspaceId}\n` +
             `- Profile UI Version: ${report.profileUiVersion}\n` +
-            `- Jumlah Project: ${report.projectCount}\n` +
+            `- Jumlah Project di State: ${report.projectCount}\n` +
+            `- Jumlah Project Agenda: ${report.agendaProjectCount}\n` +
+            `- Jumlah Project Kanban: ${report.kanbanProjectCount}\n` +
             `- Jumlah Project Terlihat di Kanban: ${report.visibleKanbanProjectCount}\n` +
             `- Project per Stage: ${JSON.stringify(report.projectsByStage)}\n` +
             `- Kata Kunci Pencarian: "${report.activeSearchQuery}"\n` +
@@ -565,7 +577,9 @@ class FreelancerApp {
           : `AlurKarya Diagnostics:\n` +
             `- Active Workspace ID: ${report.activeWorkspaceId}\n` +
             `- Profile UI Version: ${report.profileUiVersion}\n` +
-            `- Project Count: ${report.projectCount}\n` +
+            `- Project Count in State: ${report.projectCount}\n` +
+            `- Agenda Project Count: ${report.agendaProjectCount}\n` +
+            `- Kanban Project Count: ${report.kanbanProjectCount}\n` +
             `- Visible Kanban Project Count: ${report.visibleKanbanProjectCount}\n` +
             `- Projects by Stage: ${JSON.stringify(report.projectsByStage)}\n` +
             `- Active Search Query: "${report.activeSearchQuery}"\n` +
@@ -642,6 +656,8 @@ class FreelancerApp {
       profileUiVersion: 'profile-form-v2',
       activeWorkspaceId: sessionStorage.getItem('alurkarya_active_workspace_id') || 'None',
       projectCount: projects.length,
+      agendaProjectCount: projects.length,
+      kanbanProjectCount: projects.length,
       visibleKanbanProjectCount: visibleCount,
       projectsByStage: projectsByStage,
       invalidStageCount: invalidStageCount,
@@ -652,6 +668,7 @@ class FreelancerApp {
       defaultCurrency: currency,
       activeView: activeView,
       activeFilters: activeFilters,
+      activeSearchQuery: searchVal,
       stageKeysFound: stagesFound,
       localStorageParseStatus: lsParseStatus,
       migrationStatus: sessionStorage.getItem('alurkarya_session_unlocked') ? 'Unlocked' : 'Locked',

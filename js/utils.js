@@ -745,10 +745,13 @@ export function normalizeProject(p) {
   const displayTitle = p.title || p.projectName || p.name || 'Untitled Project';
   p.title = displayTitle;
   p.projectName = displayTitle;
+  p.name = displayTitle;
 
   // 3. Client details
+  const clientDisplayName = p.clientName || p.client || '';
+  p.clientName = clientDisplayName;
+  p.client = clientDisplayName;
   p.clientId = p.clientId || '';
-  p.clientName = p.clientName || '';
 
   // 4. Category
   p.category = p.category || p.customCategory || 'Design';
@@ -764,19 +767,22 @@ export function normalizeProject(p) {
     currentStage = 'new_lead';
   }
   p.stage = currentStage;
+  p.status = currentStage;
 
   // 6. Action Tag
-  p.nextAction = p.nextAction || 'Email client proposal draft';
+  p.nextAction = p.nextAction || '';
 
   // 7. Timeline / Due Date
-  p.dueDate = p.dueDate || new Date().toISOString().split('T')[0];
+  const dueDateVal = p.dueDate || p.deadline || '';
+  p.dueDate = dueDateVal;
+  p.deadline = dueDateVal;
 
   // 8. Value & Budget
   p.budget = Number(p.budget) || Number(p.estimatedValue) || 0;
   p.estimatedValue = Number(p.estimatedValue) || Number(p.budget) || 0;
 
   // 9. Currency
-  const defaultCurrency = window.getDefaultCurrency ? window.getDefaultCurrency() : 'IDR';
+  const defaultCurrency = window.getDefaultCurrency ? window.getDefaultCurrency() : (localStorage.getItem('alurkarya_default_currency') || 'IDR');
   p.currency = p.currency || p.projectCurrency || defaultCurrency || 'IDR';
   p.projectCurrency = p.projectCurrency || p.currency || defaultCurrency || 'IDR';
 

@@ -484,6 +484,22 @@ export class KanbanBoard {
     const state = this.store.getState() || {};
     const projects = Array.isArray(state.projects) ? state.projects : [];
 
+    const hasMalformedData = projects.some(p => (!p.title && !p.projectName) || !p.stage);
+    if (hasMalformedData) {
+      const warningBanner = document.createElement('div');
+      warningBanner.style.cssText = 'background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--border-radius-sm); padding: 12px 16px; margin: 0 0 16px 0; font-size: 0.75rem; color: #f87171; display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; width: 100%; box-sizing: border-box;';
+      const warningText = getLanguage() === 'id'
+        ? 'Ada data project yang perlu diperbaiki. Buka Diagnosa untuk detail.'
+        : 'Some project data needs recovery. Open Diagnosis for details.';
+      warningBanner.innerHTML = `⚠️ ${warningText}`;
+      warningBanner.addEventListener('click', () => {
+        if (window.app) {
+          window.app.sidebar.setActiveTab('diagnose');
+        }
+      });
+      canvas.appendChild(warningBanner);
+    }
+
     const onHoldMount = document.getElementById('on-hold-projects-mount');
 
     // Check if there are no projects in database
@@ -547,17 +563,33 @@ export class KanbanBoard {
       if (onHoldMount) onHoldMount.style.display = 'none';
       const filterEmptyBox = document.createElement('div');
       filterEmptyBox.className = 'empty-state-box';
-      filterEmptyBox.style.cssText = 'margin: 0 0 24px 0; padding: 24px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); width: 100%;';
+      filterEmptyBox.style.cssText = 'margin: 0 0 24px 0; padding: 32px 24px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px;';
       
       const lang = getLanguage();
       const filterText = lang === 'id' 
         ? 'Tidak ada project yang cocok dengan filter saat ini.' 
         : 'No projects match the current filter.';
+      const clearText = lang === 'id' ? 'Bersihkan Filter' : 'Clear Filter';
       
       filterEmptyBox.innerHTML = `
-        <span style="font-size: 0.82rem; color: var(--text-muted);">${filterText}</span>
+        <span style="font-size: 0.82rem; color: var(--text-muted); display: block;">${filterText}</span>
+        <button class="btn btn-secondary btn-sm" id="btn-clear-filter" style="padding: 6px 14px; font-size: 0.72rem; font-weight: 600;">
+          ${clearText}
+        </button>
       `;
       canvas.appendChild(filterEmptyBox);
+
+      const clearBtn = filterEmptyBox.querySelector('#btn-clear-filter');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          this.searchQuery = '';
+          const searchEl = document.getElementById('board-search');
+          if (searchEl) {
+            searchEl.value = '';
+          }
+          this.renderBoardOnly();
+        });
+      }
       return;
     }
 
