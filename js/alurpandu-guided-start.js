@@ -317,16 +317,24 @@ const translations = {
   en: {
     app_title: "AlurKarya Onboarding Guide",
     nav_title: "AlurPandu Onboarding",
-    menu_start: "Mulai di Sini",
+    sidebar_tagline: "A guided setup for managing freelance projects from client to paid.",
+    crumb_workspace: "AlurKarya Workspace",
+    crumb_start: "Start Here",
+    header_badge: "Guided Start Ready",
+    menu_start: "Start Here",
     menu_audit: "Workflow Audit",
-    menu_setup: "Setup Workspace",
+    menu_safety: "Workspace & Files",
+    menu_workspace_file: "Workspace & Files",
+    menu_setup: "Workspace Setup",
     menu_flow: "Main Workflow",
-    menu_role: "Role Templates",
+    menu_template: "Choose Template",
+    menu_client_portal: "Client Portal Guide",
     menu_portal: "Client Portal Guide",
     menu_delivery: "Delivery Checklist",
     menu_invoice: "Invoice Workflow",
     menu_scripts: "Client Scripts",
-    menu_faq: "Onboarding FAQ",
+    menu_help: "Help",
+    lang_label: "Language",
     
     welcome_title: "Welcome to AlurPandu",
     welcome_subtitle: "Your step-by-step assistant to set up a clean, structured freelance operation workspace in AlurKarya.",
@@ -335,8 +343,20 @@ const translations = {
     welcome_audit_btn: "Check Workflow First",
     header_setup_btn: "Start Setup",
     
-    audit_title: "Is your workflow already organized?",
-    audit_subtitle: "Take this quick 5-question audit to check if you are prone to freelance admin chaos.",
+    start_title: "Start Here",
+    start_headline: "Start from an active project, not an empty system.",
+    start_desc: "Choose one active client project. Then fill in the client, stage, next action, deadline, review, invoice, and delivery details step by step. This helps you understand the AlurKarya workflow without feeling overwhelmed.",
+    start_cta: "Create Project Now",
+    
+    template_title: "Choose Template",
+    template_headline: "Choose a template that matches your workflow",
+    template_desc: "Use recommended checklists and important links based on your freelance role.",
+    
+    audit_section_title: "Is your workflow clear?",
+    audit_title: "Is your workflow clear?",
+    audit_subtitle: "Answer these 5 quick questions to see whether your freelance workflow is clear or still scattered.",
+    audit_headline: "Try answering without opening old chats",
+    audit_desc: "Answer these 5 quick questions to see whether your freelance workflow is clear or still scattered.",
     audit_num_1: "Question 1",
     audit_q1: "Where do you track your projects?",
     audit_btn_ya_1: "Know for Sure",
@@ -409,6 +429,7 @@ const translations = {
     btn_open_profile: "Open Freelancer Profile",
     btn_continue_setup: "Continue Project Setup",
     profile_helper_copy: "Open AlurKarya → select the profile card in the sidebar → complete your profile.",
+    profile_role_fallback: "Freelancer",
     
     flow_headline: "AlurKarya Main Workflow",
     flow_subtitle: "Each project should have a clear status so you know what needs to be done, who needs follow-up, and what is pending.",
@@ -502,16 +523,24 @@ const translations = {
   id: {
     app_title: "Panduan Onboarding AlurKarya",
     nav_title: "Onboarding AlurPandu",
+    sidebar_tagline: "Panduan setup AlurKarya untuk mulai mengelola project dari client sampai paid.",
+    crumb_workspace: "AlurKarya Workspace",
+    crumb_start: "Mulai di Sini",
+    header_badge: "Guided Start Ready",
     menu_start: "Mulai di Sini",
     menu_audit: "Workflow Audit",
+    menu_safety: "Workspace & File",
+    menu_workspace_file: "Workspace & File",
     menu_setup: "Setup Workspace",
     menu_flow: "Main Workflow",
-    menu_role: "Role Templates",
+    menu_template: "Pilih Template",
+    menu_client_portal: "Client Portal Guide",
     menu_portal: "Client Portal Guide",
     menu_delivery: "Delivery Checklist",
     menu_invoice: "Invoice Workflow",
     menu_scripts: "Client Scripts",
-    menu_faq: "Onboarding FAQ",
+    menu_help: "Bantuan",
+    lang_label: "Bahasa",
     
     welcome_title: "Selamat Datang di AlurPandu",
     welcome_subtitle: "Asisten langkah demi langkah Anda untuk setup workspace kerja freelance yang rapi dan terstruktur di AlurKarya.",
@@ -520,8 +549,20 @@ const translations = {
     welcome_audit_btn: "Cek Alur Kerja Dulu",
     header_setup_btn: "Mulai Setup",
     
+    start_title: "Mulai di Sini",
+    start_headline: "Mulai dari project aktif, bukan dari sistem kosong.",
+    start_desc: "Pilih satu project client yang sedang aktif. Lalu isi detail client, stage, next action, deadline, review, invoice, dan delivery secara bertahap. Cara ini membantu Anda memahami alur kerja AlurKarya tanpa merasa kewalahan.",
+    start_cta: "Buat Project Sekarang",
+    
+    template_title: "Pilih Template",
+    template_headline: "Pilih template sesuai cara kerja Anda",
+    template_desc: "Gunakan rekomendasi checklist dan link penting berdasarkan peran freelance Anda.",
+    
+    audit_section_title: "Apakah alur kerja Anda sudah rapi?",
     audit_title: "Apakah alur kerja Anda sudah rapi?",
-    audit_subtitle: "Ikuti audit singkat 5 pertanyaan ini untuk melihat apakah Anda rentan mengalami kekacauan admin freelance.",
+    audit_subtitle: "Jawab 5 pertanyaan singkat ini untuk melihat apakah alur kerja freelance Anda sudah jelas atau masih mudah tercecer.",
+    audit_headline: "Coba jawab tanpa membuka chat lama",
+    audit_desc: "Jawab 5 pertanyaan singkat ini untuk melihat apakah alur kerja freelance Anda sudah jelas atau masih mudah tercecer.",
     audit_num_1: "Pertanyaan 1",
     audit_q1: "Di mana Anda mencatat project-project Anda?",
     audit_btn_ya_1: "Sudah Pasti",
@@ -571,7 +612,7 @@ const translations = {
     safety_body: "Kamu tidak membuat akun cloud dulu. Kamu membuat Workspace Pribadi di browser ini. Workspace ini menyimpan data project, client, invoice, payment, dan link delivery secara lokal. Workspace bisa diberi PIN, dikunci, diganti, dan di-backup.",
     safety_note: "File asli tetap berada di Google Drive, Figma, Canva, Dropbox, atau platform pilihanmu. AlurKarya hanya menyimpan link untuk membantu mengatur review, delivery, invoice, dan payment. Keamanan file mengikuti permission di platform asal.",
     safety_step1_title: "Buat Workspace Pribadi",
-    safety_step1_body: "Gunakan workspace terpisah agar data project dan client tidak bercampur dengan pengguna lain di laptop yang sama.",
+    safety_step1_body: "Gunakan workspace terpisah agar data project and client tidak bercampur dengan pengguna lain di laptop yang sama.",
     safety_step1_cta: "Buat / Pilih Workspace",
     safety_step2_title: "Tambahkan PIN & Kunci Workspace",
     safety_step2_body: "PIN membantu melindungi akses kasual di browser ini. Setelah selesai bekerja, gunakan Kunci Workspace.",
@@ -594,6 +635,7 @@ const translations = {
     btn_open_profile: "Buka Profil Freelancer",
     btn_continue_setup: "Lanjut Setup Project",
     profile_helper_copy: "Buka AlurKarya → pilih kartu profil di sidebar → lengkapi profil.",
+    profile_role_fallback: "Freelancer",
     
     flow_headline: "Alur Utama AlurKarya",
     flow_subtitle: "Setiap project sebaiknya punya status yang jelas agar Anda tahu apa yang harus dikerjakan, siapa yang harus ditindaklanjuti, dan apa yang belum selesai.",
@@ -639,7 +681,7 @@ const translations = {
     invoice_c3_desc: "Setelah dana terverifikasi masuk ke rekening Anda, segera ubah status di AlurKarya menjadi Paid dan serahkan file final secara resmi.",
     
     scripts_headline: "Client Scripts",
-    scripts_subtitle: "Gunakan draft pesan siap pakai di bawah ini untuk berinteraksi secara profesional dengan client Anda:",
+    scripts_subtitle: "Gunakan draf pesan siap pakai di bawah ini untuk berinteraksi secara profesional dengan client Anda:",
     btn_copy_script: "Salin Script",
     
     help_headline: "Kalau bingung, mulai dari sini",
@@ -713,13 +755,35 @@ function updateDocumentLanguage() {
 
 function t(key, fallback = '') {
   const lang = getLanguage();
+  // 1. selected language translation
   if (translations[lang] && translations[lang][key] !== undefined) {
     return translations[lang][key];
   }
+  // 2. English translation
   if (translations['en'] && translations['en'][key] !== undefined) {
     return translations['en'][key];
   }
-  return fallback || key;
+  // 3. provided fallback text
+  if (fallback) {
+    return fallback;
+  }
+  
+  // Check if development environment
+  const isDev = window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1' || 
+                window.location.protocol === 'file:';
+                
+  if (isDev) {
+    console.warn(`[i18n] Missing translation for key: "${key}"`);
+    // 4. development-only human-readable fallback
+    if (typeof key === 'string') {
+      const cleanKey = key.replace(/^(menu|crumb|btn|header|label|start|welcome|audit)_/i, '');
+      return cleanKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+  }
+  
+  // 5. safe empty string for production if no fallback exists
+  return '';
 }
 
 function renderLanguage() {
