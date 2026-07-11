@@ -557,8 +557,13 @@ class FreelancerApp {
         const report = this.runWorkflowDiagnosis();
         const alertMsg = getLanguage() === 'id'
           ? `Diagnosa AlurKarya:\n` +
-            `- Active Workspace ID: ${report.activeWorkspaceId}\n` +
+            `- App Runtime Version: ${report.appRuntimeVersion}\n` +
             `- Profile UI Version: ${report.profileUiVersion}\n` +
+            `- Kanban Sync Version: ${report.kanbanSyncVersion}\n` +
+            `- Workspace Selection Version: ${report.workspaceSelectionVersion}\n` +
+            `- AlurPandu UI Version: ${report.alurpanduUiVersion}\n` +
+            `- Access Gate Version: ${report.accessGateVersion}\n` +
+            `- Active Workspace ID: ${report.activeWorkspaceId}\n` +
             `- Jumlah Project di State: ${report.projectCount}\n` +
             `- Jumlah Project Agenda: ${report.agendaProjectCount}\n` +
             `- Jumlah Project Kanban: ${report.kanbanProjectCount}\n` +
@@ -575,8 +580,13 @@ class FreelancerApp {
             `- Status Parse Storage: ${report.localStorageParseStatus}\n` +
             `- Status Sesi: ${report.migrationStatus}\n\nMembuka kuesioner alur kerja...`
           : `AlurKarya Diagnostics:\n` +
-            `- Active Workspace ID: ${report.activeWorkspaceId}\n` +
+            `- App Runtime Version: ${report.appRuntimeVersion}\n` +
             `- Profile UI Version: ${report.profileUiVersion}\n` +
+            `- Kanban Sync Version: ${report.kanbanSyncVersion}\n` +
+            `- Workspace Selection Version: ${report.workspaceSelectionVersion}\n` +
+            `- AlurPandu UI Version: ${report.alurpanduUiVersion}\n` +
+            `- Access Gate Version: ${report.accessGateVersion}\n` +
+            `- Active Workspace ID: ${report.activeWorkspaceId}\n` +
             `- Project Count in State: ${report.projectCount}\n` +
             `- Agenda Project Count: ${report.agendaProjectCount}\n` +
             `- Kanban Project Count: ${report.kanbanProjectCount}\n` +
@@ -653,7 +663,12 @@ class FreelancerApp {
     const colsRendered = kanbanCanvas ? kanbanCanvas.querySelectorAll('.kanban-column').length : 0;
 
     const report = {
+      appRuntimeVersion: 'runtime-baseline-v1',
       profileUiVersion: 'profile-form-v2',
+      kanbanSyncVersion: 'kanban-sync-v2',
+      workspaceSelectionVersion: 'workspace-selection-v2',
+      alurpanduUiVersion: 'alurpandu-i18n-v2',
+      accessGateVersion: 'access-gate-clarity-v1',
       activeWorkspaceId: sessionStorage.getItem('alurkarya_active_workspace_id') || 'None',
       projectCount: projects.length,
       agendaProjectCount: projects.length,

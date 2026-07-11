@@ -28,6 +28,7 @@ export class KanbanBoard {
     // Columns collapsed state (default all collapsed/peek mode on load)
     this.collapsedColumns = new Set(['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed']);
     localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
+    this.version = 'kanban-sync-v2';
   }
 
   showTemplatesModal() {

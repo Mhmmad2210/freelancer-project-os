@@ -20,6 +20,7 @@ export class AccessGate {
     this.devFallbackHash = 'af5af5b958efc7eafacd2eecb10938116e66c9b0f4558ba70b03fd52125483cf';
     // SHA-256 of 'alurkarya-activate'
     this.activationFallbackHash = '5ef9261ab4f6b6c8c389cbd74efd10646fc267ee9b59b31e15577723e2f04c36';
+    this.version = 'access-gate-clarity-v1';
   }
 
   async sha256(message) {

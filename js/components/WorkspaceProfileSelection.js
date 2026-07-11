@@ -14,6 +14,7 @@ export class WorkspaceProfileSelection {
     this.showCreateForm = false;
     this.pinPromptWorkspace = null; // workspace object currently prompting for PIN
     this.pinError = '';
+    this.version = 'workspace-selection-v2';
   }
 
   async sha256(message) {

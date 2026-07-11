@@ -27,6 +27,8 @@ if (!currentActive) {
   }
 }
 
+window.alurpanduUiVersion = 'alurpandu-i18n-v2';
+
 // Instantiate storage store
 const store = new WorkspaceStore();
 
