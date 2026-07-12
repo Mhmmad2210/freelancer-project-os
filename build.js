@@ -88,4 +88,65 @@ if (fs.existsSync(accessGatePath)) {
   console.error('[AlurKarya Build] ERROR: AccessGate.js not found in dist path. Verification required.');
 }
 
+// --- Automatic Build ID and Version Specifier Rewriting ---
+const buildId = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+console.log(`[AlurKarya Build] Generated Build ID: ${buildId}`);
+
+// Helper to recursively list files in directory
+function getAllFiles(dir, extFilter = null) {
+  let results = [];
+  const list = fs.readdirSync(dir);
+  list.forEach(file => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    if (stat && stat.isDirectory()) {
+      results = results.concat(getAllFiles(filePath, extFilter));
+    } else {
+      if (!extFilter || file.endsWith(extFilter)) {
+        results.push(filePath);
+      }
+    }
+  });
+  return results;
+}
+
+// 1. Process all JS module files in dist/js/ to inject build ID and version specifier
+const jsFiles = getAllFiles(path.join(distPath, 'js'), '.js');
+jsFiles.forEach(filePath => {
+  let content = fs.readFileSync(filePath, 'utf-8');
+  
+  if (content.includes('__ALURKARYA_BUILD_ID__')) {
+    content = content.replace(/__ALURKARYA_BUILD_ID__/g, buildId);
+  }
+  
+  // Replace module specifiers: from './store.js' -> from './store.js?v=2026...'
+  content = content.replace(/(from\s+['"])(\.\.?\/[^'"]+\.js)(?:\?[^'"]*)?(['"])/g, `$1$2?v=${buildId}$3`);
+  content = content.replace(/(import\s+['"])(\.\.?\/[^'"]+\.js)(?:\?[^'"]*)?(['"])/g, `$1$2?v=${buildId}$3`);
+  
+  fs.writeFileSync(filePath, content, 'utf-8');
+});
+console.log(`[AlurKarya Build] Injected build version ${buildId} specifiers in ${jsFiles.length} JS modules.`);
+
+// 2. Process all entry HTML files to version stylesheet and module script specifiers
+const htmlFiles = [
+  path.join(distPath, 'index.html'),
+  path.join(distPath, 'alurpandu-guided-start.html'),
+  path.join(distPath, 'client-briefing.html')
+];
+
+htmlFiles.forEach(filePath => {
+  if (fs.existsSync(filePath)) {
+    let content = fs.readFileSync(filePath, 'utf-8');
+    
+    // Replace script tags loading js modules
+    content = content.replace(/(<script\s+[^>]*src=["'])([^"']+\.js)(?:\?[^"']*)?(["'])/gi, `$1$2?v=${buildId}$3`);
+    
+    // Replace link tags loading stylesheets
+    content = content.replace(/(<link\s+[^>]*href=["'])([^"']+\.css)(?:\?[^"']*)?(["'])/gi, `$1$2?v=${buildId}$3`);
+    
+    fs.writeFileSync(filePath, content, 'utf-8');
+    console.log(`[AlurKarya Build] Injected build version ${buildId} into HTML assets of ${path.basename(filePath)}.`);
+  }
+});
+
 console.log('[AlurKarya Build] Build completed successfully. Artifacts ready in dist/');

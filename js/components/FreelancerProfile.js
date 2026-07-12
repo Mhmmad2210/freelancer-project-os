@@ -28,18 +28,32 @@ export class FreelancerProfile {
 
     const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
     if (!activeWorkspaceId) {
-      const warningText = isIndo 
-        ? "Pilih atau buat workspace terlebih dahulu sebelum mengubah profil."
-        : "Select or create a workspace before editing your profile.";
-      
+      const titleText = isIndo ? "Pilih workspace terlebih dahulu" : "Select a workspace first";
+      const bodyText = isIndo 
+        ? "Profil freelancer disimpan untuk setiap workspace. Pilih atau buat workspace agar kamu bisa mengatur profilmu."
+        : "Freelancer profiles are stored separately for each workspace. Select or create a workspace to manage your profile.";
+      const ctaText = isIndo ? "Pilih Workspace" : "Select Workspace";
+
       const blockerEl = document.createElement('div');
       blockerEl.className = 'focus-module-box';
-      blockerEl.style.cssText = 'max-width: 640px; padding: 32px; margin: 40px auto; text-align: center; border: 1px solid rgba(245,158,11,0.2); background: rgba(245,158,11,0.03); border-radius: 12px;';
+      blockerEl.style.cssText = 'max-width: 500px; padding: 40px; margin: 80px auto; text-align: center; border: 1px solid rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.02); border-radius: var(--border-radius-lg); display: flex; flex-direction: column; align-items: center; gap: 20px;';
       blockerEl.innerHTML = `
-        <div style="font-size: 2rem; margin-bottom: 12px;">⚠️</div>
-        <p style="font-size: 0.9rem; color: #f59e0b; font-weight: 600; margin: 0; line-height: 1.5;">${warningText}</p>
+        <div style="font-size: 3rem; filter: drop-shadow(0 4px 12px rgba(139,92,246,0.3));">💼</div>
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0;">${titleText}</h2>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0; line-height: 1.6;">${bodyText}</p>
+        <button type="button" class="btn btn-primary" id="btn-recovery-select-workspace" style="font-size: 0.8rem; padding: 10px 24px; border-radius: 8px; font-weight: 700; margin-top: 8px;">
+          ${ctaText}
+        </button>
       `;
       this.container.appendChild(blockerEl);
+      
+      const btn = blockerEl.querySelector('#btn-recovery-select-workspace');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          sessionStorage.removeItem('alurkarya_active_workspace_id');
+          window.location.reload();
+        });
+      }
       return;
     }
 
@@ -237,11 +251,11 @@ export class FreelancerProfile {
     settingsBox.className = 'focus-module-box';
     settingsBox.style.cssText = 'max-width: 1100px; padding: 24px; display: flex; flex-direction: column; gap: 16px; margin: 0 auto; width: 100%; border: 1px solid rgba(255, 255, 255, 0.08); box-sizing: border-box;';
 
-    const settingsTitle = isIndo ? 'Pengaturan Data Workspace' : 'Workspace Data Settings';
+    const settingsTitle = t('privacy.dangerZone', 'Workspace Data Settings');
     const settingsDesc = isIndo
       ? 'Atur backup, penguncian, dan penghapusan data workspace yang tersimpan di browser ini.'
       : 'Manage backup, lock, and deletion settings for workspace data stored in this browser.';
-    const advancedLabel = isIndo ? 'Tindakan Lanjutan' : 'Advanced Actions';
+    const advancedLabel = t('profile.advancedActions', 'Advanced Actions');
 
     settingsBox.innerHTML = `
       <h3 style="font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0;">
@@ -259,14 +273,14 @@ export class FreelancerProfile {
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 16px;">
             <div style="flex: 1; min-width: 250px;">
               <span style="font-size: 0.82rem; font-weight: 600; color: #f8fafc; display: block; margin-bottom: 4px;">
-                ${isIndo ? 'Hapus Workspace Ini' : 'Delete This Workspace'}
+                ${t('profile.deleteWorkspace', 'Delete This Workspace')}
               </span>
               <small style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.45; display: block;">
-                ${isIndo ? 'Menghapus hanya workspace yang sedang aktif. Workspace lain di browser ini tidak ikut terhapus.' : 'Deletes only the active workspace. Other workspaces in this browser will not be deleted.'}
+                ${t('profile.deleteWorkspaceDesc', 'Deletes only the active workspace. Other workspaces in this browser will not be deleted.')}
               </small>
             </div>
             <button type="button" class="btn btn-secondary text-danger" id="btn-delete-workspace" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
-              ${isIndo ? 'Hapus Workspace Ini' : 'Delete This Workspace'}
+              ${t('profile.deleteWorkspace', 'Delete This Workspace')}
             </button>
           </div>
 
@@ -274,14 +288,14 @@ export class FreelancerProfile {
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
             <div style="flex: 1; min-width: 250px;">
               <span style="font-size: 0.82rem; font-weight: 600; color: #f8fafc; display: block; margin-bottom: 4px;">
-                ${isIndo ? 'Hapus Semua Data di Browser Ini' : 'Delete All Data in This Browser'}
+                ${t('profile.deleteAllData', 'Delete All Data in This Browser')}
               </span>
               <small style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.45; display: block;">
-                ${isIndo ? 'Menghapus semua workspace AlurKarya yang tersimpan di browser ini. Gunakan hanya jika kamu sudah punya backup atau benar-benar ingin reset dari awal.' : 'Deletes all AlurKarya workspaces stored in this browser. Use this only if you already have a backup or truly want to start over.'}
+                ${t('profile.deleteAllDataDesc', 'Deletes all AlurKarya workspaces stored in this browser. Use this only if you already have a backup or truly want to start over.')}
               </small>
             </div>
             <button type="button" class="btn btn-secondary text-danger" id="btn-delete-all-local" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
-              ${isIndo ? 'Hapus Semua Data di Browser Ini' : 'Delete All Data in This Browser'}
+              ${t('profile.deleteAllData', 'Delete All Data in This Browser')}
             </button>
           </div>
         </div>
@@ -439,10 +453,7 @@ export class FreelancerProfile {
       const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
       if (!activeWorkspaceId) return;
 
-      const warningText = isIndo
-        ? 'PERINGATAN: Tindakan ini akan menghapus workspace saat ini beserta seluruh data di dalamnya secara permanen.\nDisarankan untuk melakukan ekspor backup terlebih dahulu.\n\nKetik HAPUS untuk mengonfirmasi:'
-        : 'WARNING: This will permanently delete the current workspace and all its local data.\nIt is highly recommended to export a backup first.\n\nType DELETE to confirm:';
-
+      const warningText = t('profile.confirmDeleteWorkspace');
       const confirmVal = prompt(warningText);
       const expected = isIndo ? 'HAPUS' : 'DELETE';
       
@@ -450,27 +461,24 @@ export class FreelancerProfile {
         this.store.deleteWorkspace(activeWorkspaceId);
         sessionStorage.removeItem('alurkarya_active_workspace_id');
         sessionStorage.removeItem('alurkarya_session_unlocked');
-        this.onTriggerToast(isIndo ? 'Workspace berhasil dihapus.' : 'Workspace deleted successfully.', 'text-success');
+        this.onTriggerToast(t('profile.workspaceDeleted', 'Workspace deleted successfully.'), 'text-success');
         setTimeout(() => window.location.reload(), 1200);
       } else {
-        this.onTriggerToast(isIndo ? 'Penghapusan dibatalkan.' : 'Deletion cancelled.', 'text-muted');
+        this.onTriggerToast(t('profile.deletionCancelled', 'Deletion cancelled.'), 'text-muted');
       }
     });
 
     viewEl.querySelector('#btn-delete-all-local').addEventListener('click', () => {
-      const warningText = isIndo
-        ? 'PERINGATAN KRITIS: Tindakan ini akan menghapus SELURUH workspace dan semua data lokal AlurKarya di browser ini secara permanen!\nPastikan Anda sudah mengekspor data backup penting.\n\nKetik HAPUS untuk mengonfirmasi:'
-        : 'CRITICAL WARNING: This will permanently delete ALL workspaces and all AlurKarya local data stored in this browser!\nMake sure you have exported backups for any important data.\n\nType DELETE to confirm:';
-
+      const warningText = t('profile.confirmDeleteAllData');
       const confirmVal = prompt(warningText);
       const expected = isIndo ? 'HAPUS' : 'DELETE';
 
       if (confirmVal === expected) {
         this.store.deleteAllLocalData();
-        this.onTriggerToast(isIndo ? 'Semua data lokal berhasil dihapus.' : 'All local data cleared successfully.', 'text-success');
+        this.onTriggerToast(t('profile.allDataCleared', 'All local data cleared successfully.'), 'text-success');
         setTimeout(() => window.location.reload(), 1200);
       } else {
-        this.onTriggerToast(isIndo ? 'Penghapusan dibatalkan.' : 'Deletion cancelled.', 'text-muted');
+        this.onTriggerToast(t('profile.deletionCancelled', 'Deletion cancelled.'), 'text-muted');
       }
     });
   }

@@ -22,6 +22,8 @@ import { EntryModeSelector } from './components/EntryModeSelector.js';
 import { WorkspaceProfileSelection } from './components/WorkspaceProfileSelection.js';
 import { getLanguage, setLanguage, t } from './i18n.js';
 
+window.ALURKARYA_BUILD_ID = '__ALURKARYA_BUILD_ID__';
+
 class FreelancerApp {
   constructor() {
     this.activeTab = 'kanban'; // Initial default view
@@ -662,14 +664,28 @@ class FreelancerApp {
     const kanbanCanvas = document.getElementById('kanban-board-canvas');
     const colsRendered = kanbanCanvas ? kanbanCanvas.querySelectorAll('.kanban-column').length : 0;
 
+    const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id') || 'None';
+    const mainScript = document.querySelector('script[src*="js/app.js"]')?.src || 'Unknown';
+    const stylesheetHref = document.querySelector('link[href*="style.css"]')?.href || 'Unknown';
+
     const report = {
       appRuntimeVersion: 'runtime-baseline-v1',
+      appBuildId: '__ALURKARYA_BUILD_ID__',
       profileUiVersion: 'profile-form-v2',
       kanbanSyncVersion: 'kanban-sync-v2',
       workspaceSelectionVersion: 'workspace-selection-v2',
       alurpanduUiVersion: 'alurpandu-i18n-v2',
       accessGateVersion: 'access-gate-clarity-v1',
-      activeWorkspaceId: sessionStorage.getItem('alurkarya_active_workspace_id') || 'None',
+      activeWorkspaceId: activeWorkspaceId,
+      activeWorkspaceIdPresent: activeWorkspaceId !== 'None' ? 'yes' : 'no',
+      profileNamespaceKey: activeWorkspaceId !== 'None' ? `alurkarya_workspace_${activeWorkspaceId}_profile` : 'None',
+      profileLoadStatus: store.getFreelancerProfile() ? 'Loaded' : 'Failed',
+      profileFormRendered: document.getElementById('freelancer-profile-form') ? 'yes' : 'no',
+      sidebarProfileSyncStatus: (window.app && window.app.sidebar) ? 'Synchronized' : 'Not Setup',
+      mainScriptUrl: mainScript,
+      stylesheetUrl: stylesheetHref,
+      serviceWorkerStatus: 'NO SERVICE WORKER CACHE',
+      cacheDiagnosisResult: (mainScript.includes('?v=') && stylesheetHref.includes('?v=')) ? 'Busted/Fresh' : 'Risk of Caching',
       projectCount: projects.length,
       agendaProjectCount: projects.length,
       kanbanProjectCount: projects.length,

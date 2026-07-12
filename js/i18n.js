@@ -738,7 +738,17 @@ export const translations = {
       language: "Language / Bahasa",
       defaultCurrency: "Default Currency",
       defaultCurrencyHelper: "Used as the default currency for new projects and invoices.",
-      openClientView: "Open Client View"
+      openClientView: "Open Client View",
+      advancedActions: "Advanced Actions",
+      deleteWorkspace: "Delete This Workspace",
+      deleteWorkspaceDesc: "Deletes only the active workspace. Other workspaces in this browser will not be deleted.",
+      deleteAllData: "Delete All Data in This Browser",
+      deleteAllDataDesc: "Deletes all AlurKarya workspaces stored in this browser. Use this only if you already have a backup or truly want to start over.",
+      confirmDeleteWorkspace: "WARNING: This will permanently delete the current workspace and all its local data.\nIt is highly recommended to export a backup first.\n\nType DELETE to confirm:",
+      confirmDeleteAllData: "CRITICAL WARNING: This will permanently delete ALL workspaces and all AlurKarya local data stored in this browser!\nMake sure you have exported backups for any important data.\n\nType DELETE to confirm:",
+      deletionCancelled: "Deletion cancelled.",
+      workspaceDeleted: "Workspace deleted successfully.",
+      allDataCleared: "All local data cleared successfully."
     },
     promptTemplates: {
       clientUpdate: {
@@ -1790,7 +1800,17 @@ export const translations = {
       language: "Bahasa / Language",
       defaultCurrency: "Mata Uang Default",
       defaultCurrencyHelper: "Digunakan sebagai mata uang default untuk project dan invoice baru.",
-      openClientView: "Buka Portal Client"
+      openClientView: "Buka Portal Client",
+      advancedActions: "Tindakan Lanjutan",
+      deleteWorkspace: "Hapus Workspace Ini",
+      deleteWorkspaceDesc: "Menghapus hanya workspace yang sedang aktif. Workspace lain di browser ini tidak ikut terhapus.",
+      deleteAllData: "Hapus Semua Data di Browser Ini",
+      deleteAllDataDesc: "Menghapus semua workspace AlurKarya yang tersimpan di browser ini. Gunakan hanya jika kamu sudah punya backup atau benar-benar ingin reset dari awal.",
+      confirmDeleteWorkspace: "PERINGATAN: Tindakan ini akan menghapus workspace saat ini beserta seluruh data di dalamnya secara permanen.\nDisarankan untuk melakukan ekspor backup terlebih dahulu.\n\nKetik HAPUS untuk mengonfirmasi:",
+      confirmDeleteAllData: "PERINGATAN KRITIS: Tindakan ini akan menghapus SELURUH workspace dan semua data lokal AlurKarya di browser ini secara permanen!\nPastikan Anda sudah mengekspor data backup penting.\n\nKetik HAPUS untuk mengonfirmasi:",
+      deletionCancelled: "Penghapusan dibatalkan.",
+      workspaceDeleted: "Workspace berhasil dihapus.",
+      allDataCleared: "Semua data lokal berhasil dihapus."
     },
     promptTemplates: {
       clientUpdate: {
