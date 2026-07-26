@@ -148,171 +148,742 @@ function updateDiagnosisOutcomeUI() {
     if (!diagnosisText) return;
 
     const notReadyCount = auditStates.filter(s => s === false).length;
+    const lang = getLanguage();
+    
+    const oldCta = document.getElementById('audit-diagnosis-cta');
+    if (oldCta) oldCta.remove();
+
     if (notReadyCount > 0) {
       const tpl = t('diagnosis_result_unprepared');
       diagnosisText.textContent = tpl.replace('{count}', notReadyCount);
+      
+      const firstUnpreparedIdx = auditStates.indexOf(false);
+      let targetStepId = 'first_project_created';
+      if (firstUnpreparedIdx === 1) targetStepId = 'review_delivery_link_added';
+      if (firstUnpreparedIdx === 2) targetStepId = 'first_client_update_prepared';
+      if (firstUnpreparedIdx === 3) targetStepId = 'deadline_added';
+      if (firstUnpreparedIdx === 4) targetStepId = 'first_backup_exported';
+      
+      const targetStep = onboardingSteps.find(s => s.id === targetStepId);
+      const stepTitle = lang === 'id' ? targetStep.titleId : targetStep.titleEn;
+      
+      const ctaBtn = document.createElement('button');
+      ctaBtn.id = 'audit-diagnosis-cta';
+      ctaBtn.className = 'btn btn-primary';
+      ctaBtn.style.marginTop = '12px';
+      ctaBtn.style.fontSize = '0.8rem';
+      ctaBtn.style.padding = '8px 16px';
+      ctaBtn.textContent = lang === 'id' 
+        ? `Rekomendasi: Jalankan Langkah "${stepTitle}"` 
+        : `Recommended: Go to "${stepTitle}"`;
+        
+      ctaBtn.onclick = () => {
+        closeWorkflowAuditModal();
+        activeExpandedStepId = targetStepId;
+        updateChecklistUI();
+        scrollToSection('#setup-checklist');
+      };
+      
+      diagnosisText.parentNode.appendChild(ctaBtn);
     } else {
       diagnosisText.textContent = t('diagnosis_result_prepared');
+      
+      const ctaBtn = document.createElement('button');
+      ctaBtn.id = 'audit-diagnosis-cta';
+      ctaBtn.className = 'btn btn-primary';
+      ctaBtn.style.marginTop = '12px';
+      ctaBtn.style.fontSize = '0.8rem';
+      ctaBtn.style.padding = '8px 16px';
+      ctaBtn.textContent = lang === 'id' ? 'Lanjutkan Onboarding' : 'Continue Onboarding';
+      ctaBtn.onclick = () => {
+        closeWorkflowAuditModal();
+        scrollToSection('#setup-checklist');
+      };
+      diagnosisText.parentNode.appendChild(ctaBtn);
     }
   }
 }
 
-// --- Setup Checklist LocalStorage Persistence ---
+window.openWorkflowAuditModal = function() {
+  const auditSec = document.getElementById('audit-workflow');
+  if (!auditSec) return;
+  
+  auditSec.style.display = 'block';
+  auditSec.style.margin = '0';
+  auditSec.style.padding = '0';
+  auditSec.style.background = 'none';
+  auditSec.style.border = 'none';
+  auditSec.style.boxShadow = 'none';
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'pandu-modal-overlay';
+  overlay.id = 'workflow-audit-modal';
+  overlay.innerHTML = `
+    <div class="pandu-modal-content" style="max-width: 800px; width: 95%;">
+      <div class="pandu-modal-header">
+        <h3 class="pandu-modal-title" style="margin:0;">Workflow Audit</h3>
+        <button class="pandu-modal-close" onclick="closeWorkflowAuditModal()">&times;</button>
+      </div>
+      <div id="modal-audit-mount" style="margin-top:16px;"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  const mount = document.getElementById('modal-audit-mount');
+  mount.appendChild(auditSec);
+};
+
+window.closeWorkflowAuditModal = function() {
+  const overlay = document.getElementById('workflow-audit-modal');
+  if (!overlay) return;
+  
+  const auditSec = document.getElementById('audit-workflow');
+  if (auditSec) {
+    const backyard = document.getElementById('scratch-relocation-backyard');
+    if (backyard) {
+      backyard.appendChild(auditSec);
+      auditSec.style.display = 'none';
+    }
+  }
+  overlay.remove();
+};
+
+// --- Setup Checklist Dynamic Accordion & Persistence ---
 const CHECKLIST_KEY = 'alurpandu_setup_checklist';
-const checklistItems = document.querySelectorAll('.checklist-items-grid .checklist-item');
 let checklistStates = Array(12).fill(false);
 
+const onboardingSteps = [
+  {
+    id: 'workspace_created',
+    titleEn: 'Create or Select Personal Workspace',
+    titleId: 'Buat atau Pilih Personal Workspace',
+    descEn: 'Workspace isolates data locally. Check or create a workspace to separate your records.',
+    descId: 'Workspace mengisolasi data secara lokal. Buat workspace baru untuk memisahkan data Anda.',
+    sectionId: 'workspace-safety',
+    ctaLabelEn: 'Open Workspace Selector',
+    ctaLabelId: 'Buka Pemilih Workspace',
+    ctaAction: 'openWorkspaceSwitcher'
+  },
+  {
+    id: 'workspace_pin_reviewed',
+    titleEn: 'Review Workspace PIN Protection',
+    titleId: 'Tinjau Keamanan PIN Workspace',
+    descEn: 'Configure a PIN to prevent casual access in shared browsers, or explicitly mark as reviewed.',
+    descId: 'Atur PIN untuk mencegah akses kasual pada browser bersama, atau tandai sebagai sudah ditinjau.',
+    sectionId: null,
+    ctaLabelEn: 'Set Workspace PIN',
+    ctaLabelId: 'Atur PIN Workspace',
+    ctaAction: 'lockWorkspace',
+    manualToggle: true
+  },
+  {
+    id: 'profile_completed',
+    titleEn: 'Complete Freelancer Profile',
+    titleId: 'Lengkapi Profil Freelancer',
+    descEn: 'Add your professional details. This data is displayed in your sidebar and client portals.',
+    descId: 'Isi informasi profil profesional Anda. Data ini tampil di sidebar dan portal client.',
+    sectionId: 'start-here',
+    ctaLabelEn: 'Open Profile Settings',
+    ctaLabelId: 'Buka Profil Freelancer',
+    ctaAction: 'profile'
+  },
+  {
+    id: 'first_project_created',
+    titleEn: 'Create First Active Project',
+    titleId: 'Buat Project Aktif Pertama',
+    descEn: 'Add one active client project to experience the end-to-end workflow.',
+    descId: 'Tambahkan 1 project client aktif untuk mencoba seluruh workflow AlurKarya.',
+    sectionId: 'project-creator-container',
+    ctaLabelEn: 'Create Project Now',
+    ctaLabelId: 'Buat Project Sekarang',
+    ctaAction: 'project_creator'
+  },
+  {
+    id: 'client_added',
+    titleEn: 'Link Client to Project',
+    titleId: 'Hubungkan Client ke Project',
+    descEn: 'Specify client name or organization for your active project to route communication.',
+    descId: 'Isi nama atau organisasi client pada project Anda agar komunikasi terarah.',
+    sectionId: null,
+    ctaLabelEn: 'Manage Clients Hub',
+    ctaLabelId: 'Buka Menu Client Hub',
+    ctaAction: 'clients'
+  },
+  {
+    id: 'project_stage_set',
+    titleEn: 'Select Project Stage (Kanban)',
+    titleId: 'Atur Stage Project (Kanban)',
+    descEn: 'Move your project beyond "New Lead" to track actual progress on the Kanban board.',
+    descId: 'Pindahkan project dari "New Lead" agar progress pengerjaan terpantau di board.',
+    sectionId: 'flow-map',
+    ctaLabelEn: 'Go to Kanban Board',
+    ctaLabelId: 'Buka Kanban Board',
+    ctaAction: 'kanban'
+  },
+  {
+    id: 'next_action_added',
+    titleEn: 'Fill in Next Action',
+    titleId: 'Isi Next Action Project',
+    descEn: 'Write a specific action task for the active project so you always know what to do next.',
+    descId: 'Tulis aksi spesifik yang perlu dikerjakan selanjutnya agar pengerjaan tidak terhambat.',
+    sectionId: null,
+    ctaLabelEn: 'Go to Kanban Board',
+    ctaLabelId: 'Buka Kanban Board',
+    ctaAction: 'kanban'
+  },
+  {
+    id: 'deadline_added',
+    titleEn: 'Set Project Deadline / Due Date',
+    titleId: 'Atur Tanggal Deadline Project',
+    descEn: 'Specify a due date so AlurKarya can warn you when revisions or deliverables are due.',
+    descId: 'Atur tanggal tenggat agar AlurKarya dapat memperingatkan Anda saat mendekati deadline.',
+    sectionId: null,
+    ctaLabelEn: 'Go to Kanban Board',
+    ctaLabelId: 'Buka Kanban Board',
+    ctaAction: 'kanban'
+  },
+  {
+    id: 'review_delivery_link_added',
+    titleEn: 'Save Preview & Delivery Links',
+    titleId: 'Simpan Link Preview & Delivery',
+    descEn: 'Store preview links (e.g. Figma, staging URLs) or delivery file links for your project.',
+    descId: 'Masukkan tautan preview (Figma/staging) atau tautan file final project Anda.',
+    sectionId: 'role-template',
+    ctaLabelEn: 'Go to Kanban Board',
+    ctaLabelId: 'Buka Kanban Board',
+    ctaAction: 'kanban'
+  },
+  {
+    id: 'first_backup_exported',
+    titleEn: 'Export Local Workspace Backup',
+    titleId: 'Ekspor Backup Workspace Lokal',
+    descEn: 'Save a backup file to secure your local data from browser cache clears.',
+    descId: 'Unduh file backup berkala agar data lokal aman jika cache browser terhapus.',
+    sectionId: null,
+    ctaLabelEn: 'Export Backup File',
+    ctaLabelId: 'Ekspor File Backup',
+    ctaAction: 'exportBackup',
+    manualToggle: true
+  },
+  {
+    id: 'client_dashboard_checked',
+    titleEn: 'Preview Client Workspace Portal',
+    titleId: 'Tinjau Client Workspace Portal',
+    descEn: 'Review the portal that clients see to verify timeline, links, and invoice status.',
+    descId: 'Lihat tampilan portal yang diakses client untuk meninjau status timeline & invoice.',
+    sectionId: 'client-portal',
+    ctaLabelEn: 'Preview Client Portal',
+    ctaLabelId: 'Buka Client Portal',
+    ctaAction: 'client-view',
+    manualToggle: true
+  },
+  {
+    id: 'first_client_update_prepared',
+    titleEn: 'Prepare Client Update Instructions',
+    titleId: 'Siapkan Update Komunikasi Client',
+    descEn: 'Prepare structured messaging templates or invoices for client follow-ups.',
+    descId: 'Siapkan draf pesan pembaruan atau tagihan invoice untuk dikirim ke client.',
+    sectionId: 'delivery-guide',
+    ctaLabelEn: 'Open Invoices Hub',
+    ctaLabelId: 'Buka Menu Invoice Ledger',
+    ctaAction: 'invoices',
+    manualToggle: true
+  }
+];
+
+let activeExpandedStepId = null;
+
+// Relocate sections to scratch-relocation-backyard when collapsed or re-rendered
+function sendSectionsToBackyard() {
+  const backyard = document.getElementById('scratch-relocation-backyard');
+  if (!backyard) return;
+  
+  const sectionsToMove = [
+    'workspace-safety',
+    'start-here',
+    'project-creator-container',
+    'flow-map',
+    'role-template',
+    'client-portal',
+    'delivery-guide',
+    'invoice-payment',
+    'client-scripts',
+    'help-section'
+  ];
+  
+  sectionsToMove.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      backyard.appendChild(el);
+      el.style.display = 'none';
+    }
+  });
+}
+
+// Secure workspace validation logic
+function getValidatedActiveWorkspaceId() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const wsParam = urlParams.get('workspace_id');
+  
+  let targetWsId = wsParam || sessionStorage.getItem('alurkarya_active_workspace_id');
+  
+  if (window.opener && !window.opener.closed) {
+    try {
+      const openerActive = window.opener.sessionStorage.getItem('alurkarya_active_workspace_id');
+      const openerUnlocked = window.opener.sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
+      if (openerActive && (!targetWsId || targetWsId === openerActive)) {
+        targetWsId = openerActive;
+        sessionStorage.setItem('alurkarya_active_workspace_id', openerActive);
+        if (openerUnlocked) {
+          sessionStorage.setItem('alurkarya_session_unlocked', 'true');
+        } else {
+          sessionStorage.removeItem('alurkarya_session_unlocked');
+        }
+      }
+    } catch (e) {
+      console.warn("Opener access restricted:", e);
+    }
+  }
+
+  let workspaces = [];
+  try {
+    const stored = localStorage.getItem('alurkarya_workspace_index');
+    workspaces = stored ? JSON.parse(stored) : [];
+  } catch (e) {}
+  
+  const foundWs = workspaces.find(w => w.workspaceId === targetWsId);
+  if (!foundWs) {
+    return null;
+  }
+  
+  const hasPin = !!foundWs.workspacePinHash;
+  let isUnlocked = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
+  
+  if (hasPin && !isUnlocked) {
+    return { workspaceId: targetWsId, locked: true };
+  }
+  
+  sessionStorage.setItem('alurkarya_active_workspace_id', targetWsId);
+  return { workspaceId: targetWsId, locked: false };
+}
+
+function renderSecurityOverlay(type) {
+  const existing = document.querySelector('.security-overlay');
+  if (existing) existing.remove();
+  
+  const lang = localStorage.getItem('alurkarya_language') || 'en';
+  
+  let title = '';
+  let message = '';
+  let btnText = '';
+  
+  if (type === 'locked') {
+    title = lang === 'id' ? 'Workspace Terkuncil' : 'Workspace Locked';
+    message = lang === 'id' 
+      ? 'Workspace ini dilindungi PIN. Silakan buka dan buka kunci dari dashboard AlurKarya utama Anda.'
+      : 'This workspace is PIN-protected. Please open and unlock it from your main AlurKarya dashboard.';
+    btnText = lang === 'id' ? 'Buka AlurKarya' : 'Open AlurKarya';
+  } else if (type === 'not_found') {
+    title = lang === 'id' ? 'Workspace Tidak Ditemukan' : 'Workspace Not Found';
+    message = lang === 'id'
+      ? 'Silakan buka AlurKarya utama Anda untuk membuat atau memilih workspace aktif.'
+      : 'Please open your main AlurKarya dashboard to create or select an active workspace.';
+    btnText = lang === 'id' ? 'Buka AlurKarya' : 'Open AlurKarya';
+  }
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'security-overlay';
+  overlay.innerHTML = `
+    <div class="security-box">
+      <div style="font-size: 3rem; margin-bottom: 16px;">🔒</div>
+      <h2 style="font-size: 1.5rem; color: var(--text-primary); margin-bottom: 12px; font-weight: 700;">${title}</h2>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px;">${message}</p>
+      <button class="btn btn-primary" onclick="goToAlurKarya()" style="padding: 10px 24px; font-size: 0.9rem; font-weight: 600;">${btnText}</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+window.goToAlurKarya = function() {
+  if (window.opener && !window.opener.closed) {
+    window.opener.focus();
+  } else {
+    window.location.href = 'index.html';
+  }
+};
+
+window.navigateToParentView = function(target) {
+  const parent = window.opener;
+  if (!parent || parent.closed) {
+    showToast(getLanguage() === 'id' 
+      ? "Gunakan fitur ini dari dashboard AlurKarya utama Anda." 
+      : "Use this feature from your main AlurKarya dashboard.");
+    return;
+  }
+  
+  parent.focus();
+
+  try {
+    if (target === 'openWorkspaceSwitcher') {
+      if (parent.AlurKaryaActions && typeof parent.AlurKaryaActions.openWorkspaceSwitcher === 'function') {
+        parent.AlurKaryaActions.openWorkspaceSwitcher();
+      } else {
+        parent.dispatchEvent(new CustomEvent('alurkarya:open-workspace-switcher'));
+      }
+    } else if (target === 'lockWorkspace') {
+      if (parent.AlurKaryaActions && typeof parent.AlurKaryaActions.lockWorkspace === 'function') {
+        parent.AlurKaryaActions.lockWorkspace();
+      } else {
+        parent.dispatchEvent(new CustomEvent('alurkarya:lock-workspace'));
+      }
+    } else if (target === 'exportBackup') {
+      if (parent.AlurKaryaActions && typeof parent.AlurKaryaActions.exportBackup === 'function') {
+        parent.AlurKaryaActions.exportBackup();
+      } else {
+        parent.dispatchEvent(new CustomEvent('alurkarya:export-backup'));
+      }
+    } else if (target === 'project_creator') {
+      openProjectCreatorModal();
+    } else {
+      if (parent.app && parent.app.sidebarNav && typeof parent.app.sidebarNav.onTabChange === 'function') {
+        parent.app.sidebarNav.onTabChange(target);
+      } else {
+        parent.dispatchEvent(new CustomEvent('alurkarya:change-tab', { detail: { tab: target } }));
+      }
+    }
+  } catch (err) {
+    console.error("Failed to route action to parent:", err);
+    showToast(getLanguage() === 'id' ? "Gagal mengirim aksi ke aplikasi utama." : "Failed to trigger action in main application.");
+  }
+};
+
 function loadChecklist() {
-  try {
-    const stored = localStorage.getItem(CHECKLIST_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      for (let i = 0; i < checklistStates.length; i++) {
-        if (parsed[i] !== undefined) {
-          checklistStates[i] = parsed[i];
-        }
-      }
-    }
-  } catch (e) {
-    console.error("Failed to read localStorage checklist:", e);
+  const sessionResult = getValidatedActiveWorkspaceId();
+  if (!sessionResult) {
+    renderSecurityOverlay('not_found');
+    return;
   }
+  if (sessionResult.locked) {
+    renderSecurityOverlay('locked');
+    return;
+  }
+
+  // Sync checklistStates array for compatibility
+  for (let i = 0; i < 12; i++) {
+    checklistStates[i] = checkIfStepCompleted(onboardingSteps[i].id);
+  }
+
+  const progress = store.getOnboardingProgress();
   
-  // Auto-check based on active workspace data
-  const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
-  if (activeWorkspaceId) {
-    // 1. Create / select Personal Workspace
-    checklistStates[0] = true;
-    
-    // 2. Add optional Workspace PIN (check PIN hash)
-    try {
-      const workspaces = store.getWorkspaces() || [];
-      const currentWs = workspaces.find(w => w.workspaceId === activeWorkspaceId);
-      if (currentWs && currentWs.workspacePinHash) {
-        checklistStates[1] = true;
-      }
-    } catch(e) {}
-
-    // 3. Complete Freelancer Profile
-    try {
-      const profile = store.freelancerProfile;
-      if (profile && profile.freelancerName && profile.freelancerName.trim()) {
-        checklistStates[2] = true;
-      }
-    } catch(e) {}
-    
-    // 4. Create First Project & Add Client
-    try {
-      const stateProjects = store.projects || [];
-      const stateClients = store.clients || [];
-      
-      if (stateProjects.length > 0) {
-        checklistStates[3] = true;
-      }
-      if (stateClients.length > 0) {
-        checklistStates[4] = true;
-      }
-      
-      if (stateProjects.length > 0) {
-        // 5. Set Project Stage
-        if (stateProjects.some(p => p.stage && p.stage !== 'new_lead')) {
-          checklistStates[5] = true;
-        }
-        // 6. Add Next Action
-        if (stateProjects.some(p => p.nextAction && p.nextAction.trim())) {
-          checklistStates[6] = true;
-        }
-        // 7. Add Deadline
-        if (stateProjects.some(p => p.dueDate && p.dueDate.trim())) {
-          checklistStates[7] = true;
-        }
-        // 8. Save Review / Delivery Links
-        if (stateProjects.some(p => p.previewLink || p.reviewLink || p.finalFileLink || p.deliveryLink)) {
-          checklistStates[8] = true;
-        }
-      }
-    } catch(e) {}
-
-    // 9. Export First Backup
-    try {
-      const workspaces = store.getWorkspaces() || [];
-      const currentWs = workspaces.find(w => w.workspaceId === activeWorkspaceId);
-      if ((currentWs && currentWs.lastBackupAt) || localStorage.getItem('alurkarya_backup_exported') === 'true') {
-        checklistStates[9] = true;
-      }
-    } catch(e) {}
-
-    // 10. Check Client Dashboard (Auto-checked if at least one project has links)
-    try {
-      const stateProjects = store.projects || [];
-      if (stateProjects.some(p => p.previewLink || p.reviewLink || p.finalFileLink || p.deliveryLink || p.sourceFileLink || p.stagingLink || p.briefLink || p.fileFolderLink)) {
-        checklistStates[10] = true;
-      }
-    } catch(e) {}
-
-    // 11. Prepare First Client Update (Auto-checked if workspace safety is acknowledged)
-    const safetyAck = localStorage.getItem('workspaceSafetyAcknowledged') === 'true' || 
-                      localStorage.getItem('alurkarya_workspace_safety_acknowledged') === 'true';
-    if (safetyAck) {
-      checklistStates[11] = true;
-    }
+  if (!activeExpandedStepId) {
+    activeExpandedStepId = progress.nextStepId !== 'completed' ? progress.nextStepId : 'workspace_created';
   }
   
   updateChecklistUI();
-}
-
-function toggleChecklist(index) {
-  checklistStates[index] = !checklistStates[index];
-  saveChecklist();
-  updateChecklistUI();
-}
-
-function saveChecklist() {
-  try {
-    localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checklistStates));
-  } catch (e) {
-    console.error("Failed to save localStorage checklist:", e);
-  }
 }
 
 function updateChecklistUI() {
-  let checkedCount = 0;
-  const items = document.querySelectorAll('.checklist-items-grid .checklist-item');
-  items.forEach((item, idx) => {
-    if (checklistStates[idx]) {
-      item.classList.add('checked');
-      checkedCount++;
-    } else {
-      item.classList.remove('checked');
-    }
-  });
-
-  // Update counter and progress bar
+  const progress = store.getOnboardingProgress();
+  const lang = getLanguage();
+  
   const counterText = document.getElementById('checklist-counter');
   const progressBar = document.getElementById('checklist-progress-bar');
   
-  const lang = getLanguage();
   if (counterText) {
-    if (lang === 'id') {
-      counterText.textContent = `${checkedCount}/${checklistStates.length} langkah selesai`;
-    } else {
-      counterText.textContent = `${checkedCount}/${checklistStates.length} steps completed`;
-    }
+    const text = lang === 'id' 
+      ? `${progress.completed}/${progress.total} langkah selesai` 
+      : `${progress.completed}/${progress.total} steps completed`;
+    counterText.textContent = text;
+    counterText.setAttribute('aria-valuenow', progress.completed);
+    counterText.setAttribute('aria-label', text);
   }
+  
   if (progressBar) {
-    const pct = (checkedCount / checklistStates.length) * 100;
+    const pct = Math.round((progress.completed / progress.total) * 100);
     progressBar.style.width = `${pct}%`;
   }
+  
+  const heroNextStepBox = document.getElementById('hero-next-step-box');
+  const heroNextStepTitle = document.getElementById('hero-next-step-title');
+  const heroNextStepDesc = document.getElementById('hero-next-step-desc');
+  const heroPrimaryCta = document.getElementById('hero-primary-cta');
+  
+  if (progress.nextStepId === 'completed') {
+    if (heroNextStepBox) heroNextStepBox.style.background = 'var(--color-success-bg)';
+    if (heroNextStepTitle) heroNextStepTitle.textContent = lang === 'id' ? 'Setup Selesai! 🎉' : 'Setup Completed! 🎉';
+    if (heroNextStepDesc) heroNextStepDesc.textContent = lang === 'id' 
+      ? 'Semua langkah setup dasar AlurKarya telah selesai di workspace ini. Anda siap bekerja!'
+      : 'All basic setup steps for AlurKarya have been completed in this workspace. You are ready!';
+    if (heroPrimaryCta) {
+      heroPrimaryCta.style.display = 'none';
+    }
+  } else {
+    const nextStep = onboardingSteps.find(s => s.id === progress.nextStepId);
+    if (nextStep) {
+      if (heroNextStepBox) heroNextStepBox.style.background = 'rgba(139, 92, 246, 0.04)';
+      if (heroNextStepTitle) heroNextStepTitle.textContent = lang === 'id' ? nextStep.titleId : nextStep.titleEn;
+      if (heroNextStepDesc) heroNextStepDesc.textContent = lang === 'id' ? nextStep.descId : nextStep.descEn;
+      if (heroPrimaryCta) {
+        heroPrimaryCta.style.display = 'block';
+        heroPrimaryCta.textContent = lang === 'id' ? nextStep.ctaLabelId : nextStep.ctaLabelEn;
+        heroPrimaryCta.onclick = () => window.navigateToParentView(nextStep.ctaAction);
+      }
+    }
+  }
+  
+  const mount = document.getElementById('onboarding-accordion-mount');
+  if (!mount) return;
+  
+  sendSectionsToBackyard();
+  
+  mount.innerHTML = '';
+  
+  onboardingSteps.forEach((step, idx) => {
+    const isStepCompleted = checkIfStepCompleted(step.id);
+    
+    let badgeText = '';
+    let badgeClass = '';
+    
+    if (isStepCompleted) {
+      badgeText = lang === 'id' ? 'Selesai' : 'Completed';
+      badgeClass = 'badge-completed';
+    } else if (step.id === progress.nextStepId) {
+      badgeText = lang === 'id' ? 'Rekomendasi' : 'Recommended';
+      badgeClass = 'badge-in-progress';
+    } else if (step.id === 'workspace_pin_reviewed') {
+      badgeText = lang === 'id' ? 'Opsional' : 'Optional';
+      badgeClass = 'badge-optional';
+    } else {
+      badgeText = lang === 'id' ? 'Belum Mulai' : 'Not Started';
+      badgeClass = 'badge-not-started';
+    }
+    
+    const isExpanded = step.id === activeExpandedStepId;
+    
+    const itemEl = document.createElement('div');
+    itemEl.className = `accordion-item ${isStepCompleted ? 'completed' : ''} ${isExpanded ? 'active' : ''}`;
+    
+    const titleText = lang === 'id' ? step.titleId : step.titleEn;
+    const descText = lang === 'id' ? step.descId : step.descEn;
+    
+    itemEl.innerHTML = `
+      <button class="accordion-header" 
+              aria-expanded="${isExpanded ? 'true' : 'false'}" 
+              aria-controls="body-${step.id}" 
+              onclick="toggleAccordion('${step.id}')">
+        <div class="accordion-header-left">
+          <div class="accordion-index">${idx + 1}</div>
+          <span class="accordion-title">${titleText}</span>
+          <span class="accordion-badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <span class="accordion-arrow">▼</span>
+      </button>
+      <div id="body-${step.id}" class="accordion-body">
+        <p class="accordion-desc">${descText}</p>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px;">
+          ${!isStepCompleted ? `
+            <button class="btn btn-primary" style="font-size: 0.8rem; padding: 6px 16px;" onclick="window.navigateToParentView('${step.ctaAction}')">
+              ${lang === 'id' ? step.ctaLabelId : step.ctaLabelEn}
+            </button>
+          ` : ''}
+          
+          ${step.manualToggle ? `
+            <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-primary); cursor: pointer; padding: 6px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; user-select: none;">
+              <input type="checkbox" id="chk-manual-${step.id}" ${isStepCompleted ? 'checked' : ''} onchange="window.toggleManualStep('${step.id}', this.checked)" style="cursor: pointer;" />
+              <span>${lang === 'id' ? 'Tandai Selesai' : 'Mark as Completed'}</span>
+            </label>
+          ` : ''}
+        </div>
+        
+        <div id="accordion-mount-${step.id}" style="margin-top: 16px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 16px; display: none;"></div>
+      </div>
+    `;
+    
+    mount.appendChild(itemEl);
+    
+    if (isExpanded) {
+      const stepMount = document.getElementById(`accordion-mount-${step.id}`);
+      if (stepMount) {
+        stepMount.style.display = 'block';
+        
+        if (step.id === 'workspace_created') {
+          const section = document.getElementById('workspace-safety');
+          if (section) {
+            section.style.display = 'block';
+            stepMount.appendChild(section);
+          }
+        } else if (step.id === 'profile_completed') {
+          const section = document.querySelector('.profile-setup-container');
+          if (section) {
+            section.style.display = 'block';
+            stepMount.appendChild(section);
+          }
+        } else if (step.id === 'first_project_created') {
+          const section = document.querySelector('.project-creator-container');
+          if (section) {
+            section.style.display = 'block';
+            stepMount.appendChild(section);
+          }
+        } else if (step.id === 'project_stage_set') {
+          const section = document.getElementById('flow-map');
+          if (section) {
+            section.style.display = 'block';
+            stepMount.appendChild(section);
+          }
+        } else if (step.id === 'review_delivery_link_added') {
+          const section = document.getElementById('role-template');
+          if (section) {
+            section.style.display = 'block';
+            stepMount.appendChild(section);
+          }
+        } else if (step.id === 'client_dashboard_checked') {
+          const section = document.getElementById('client-portal');
+          if (section) {
+            section.style.display = 'block';
+            stepMount.appendChild(section);
+          }
+        } else if (step.id === 'first_client_update_prepared') {
+          const sections = ['delivery-guide', 'invoice-payment', 'client-scripts', 'help-section'];
+          sections.forEach(sid => {
+            const section = document.getElementById(sid);
+            if (section) {
+              section.style.display = 'block';
+              stepMount.appendChild(section);
+            }
+          });
+        }
+      }
+    }
+  });
 }
 
-function resetChecklist() {
-  checklistStates = Array(12).fill(false);
-  saveChecklist();
-  updateChecklistUI();
+function checkIfStepCompleted(stepId) {
+  const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+  if (!wsId) return false;
   
-  const lang = getLanguage();
-  const toastMsg = lang === 'id' ? "Progres checklist berhasil direset." : "Checklist progress has been reset.";
-  showToast(toastMsg);
+  let manualSteps = {};
+  try {
+    const stored = localStorage.getItem(`alurkarya_workspace_${wsId}__alurpandu_progress`);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      manualSteps = parsed.manualSteps || {};
+    }
+  } catch (e) {}
+
+  if (stepId === 'workspace_created') {
+    return !!wsId;
+  }
+  if (stepId === 'workspace_pin_reviewed') {
+    try {
+      const indexStr = localStorage.getItem('alurkarya_workspace_index');
+      const index = indexStr ? JSON.parse(indexStr) : [];
+      const currentWs = index.find(w => w.workspaceId === wsId);
+      if (currentWs && currentWs.workspacePinHash) return true;
+    } catch (e) {}
+    return manualSteps['workspace_pin_reviewed'] === 'completed';
+  }
+  if (stepId === 'profile_completed') {
+    const profile = store.freelancerProfile;
+    return !!(profile && profile.freelancerName && profile.freelancerName.trim() !== '' &&
+              profile.freelancerName !== 'Your Name' && profile.freelancerName !== 'Nama Anda');
+  }
+  if (stepId === 'first_project_created') {
+    return !!(store.projects && store.projects.length > 0);
+  }
+  if (stepId === 'client_added') {
+    if (store.clients && store.clients.length > 0) return true;
+    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
+    return !!(activeProj && (activeProj.client || activeProj.clientName) && (activeProj.client || activeProj.clientName).trim() !== '');
+  }
+  if (stepId === 'project_stage_set') {
+    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
+    return !!(activeProj && activeProj.stage && activeProj.stage !== 'new_lead');
+  }
+  if (stepId === 'next_action_added') {
+    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
+    return !!(activeProj && activeProj.nextAction && activeProj.nextAction.trim() !== '');
+  }
+  if (stepId === 'deadline_added') {
+    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
+    return !!(activeProj && activeProj.dueDate && activeProj.dueDate.trim() !== '');
+  }
+  if (stepId === 'review_delivery_link_added') {
+    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
+    return !!(activeProj && (activeProj.previewLink || activeProj.reviewLink || activeProj.finalFileLink || activeProj.deliveryLink));
+  }
+  if (stepId === 'first_backup_exported') {
+    try {
+      const indexStr = localStorage.getItem('alurkarya_workspace_index');
+      const index = indexStr ? JSON.parse(indexStr) : [];
+      const currentWs = index.find(w => w.workspaceId === wsId);
+      if (currentWs && currentWs.lastBackupAt) return true;
+    } catch (e) {}
+    if (localStorage.getItem('alurkarya_backup_exported') === 'true') return true;
+    return manualSteps['first_backup_exported'] === 'completed';
+  }
+  if (stepId === 'client_dashboard_checked') {
+    return manualSteps['client_dashboard_checked'] === 'completed';
+  }
+  if (stepId === 'first_client_update_prepared') {
+    return manualSteps['first_client_update_prepared'] === 'completed';
+  }
+  return false;
 }
+
+window.toggleAccordion = function(stepId) {
+  if (activeExpandedStepId === stepId) {
+    activeExpandedStepId = null;
+  } else {
+    activeExpandedStepId = stepId;
+  }
+  updateChecklistUI();
+};
+
+window.toggleManualStep = function(stepId, isChecked) {
+  const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+  if (!wsId) return;
+  
+  let progressKey = `alurkarya_workspace_${wsId}__alurpandu_progress`;
+  let data = { manualSteps: {} };
+  try {
+    const stored = localStorage.getItem(progressKey);
+    if (stored) {
+      data = JSON.parse(stored);
+    }
+  } catch (e) {}
+  
+  if (!data.manualSteps) data.manualSteps = {};
+  data.manualSteps[stepId] = isChecked ? 'completed' : 'not_started';
+  
+  localStorage.setItem(progressKey, JSON.stringify(data));
+  
+  // Re-calculate and render everything
+  const progress = store.getOnboardingProgress();
+  if (isChecked && progress.nextStepId !== 'completed') {
+    activeExpandedStepId = progress.nextStepId;
+  }
+  
+  renderLanguage();
+};
+
+window.resetChecklist = function() {
+  const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+  if (!wsId) return;
+  
+  const progressKey = `alurkarya_workspace_${wsId}__alurpandu_progress`;
+  localStorage.removeItem(progressKey);
+  localStorage.removeItem('alurkarya_backup_exported');
+  
+  activeExpandedStepId = 'workspace_created';
+  
+  localStorage.removeItem('workspaceSafetyAcknowledged');
+  localStorage.removeItem('alurkarya_workspace_safety_acknowledged');
+  const checkbox = document.getElementById('safety-acknowledge-checkbox');
+  if (checkbox) checkbox.checked = false;
+  
+  renderLanguage();
+};
 
 // --- Global Bilingual System (i18n) ---
 const translations = {
@@ -520,8 +1091,18 @@ const translations = {
     btn_save_project: "Create Project",
     placeholder_next_action: "example: Send proposal, follow up brief, start first draft, wait for client feedback...",
     success_title: "Project Created Successfully",
-    success_message: "Your first project has been created. You can now manage it on the AlurKarya Board.",
-    btn_open_board: "Open Project Board"
+    btn_open_board: "Open Project Board",
+    "alurpandu.hero.title": "Set up AlurKarya, one step at a time",
+    "alurpandu.progress.label": "Overall Setup Progress",
+    "alurpandu.hero.next_step_label": "Next step",
+    "alurpandu.hero.view_all_steps": "View All Steps",
+    "alurpandu.hero.check_workflow": "Check My Workflow",
+    "alurpandu.step.completed": "Completed",
+    "alurpandu.step.in_progress": "In Progress",
+    "alurpandu.step.not_started": "Not Started",
+    "alurpandu.step.optional": "Optional",
+    "alurpandu.step.mark_completed": "Mark as Completed",
+    "alurpandu.step.mark_incomplete": "Mark as Incomplete"
   },
   id: {
     app_title: "Panduan Onboarding AlurKarya",
@@ -728,7 +1309,18 @@ const translations = {
     placeholder_next_action: "contoh: Kirim proposal, follow-up brief, mulai draft pertama, tunggu feedback client...",
     success_title: "Project Berhasil Dibuat",
     success_message: "Project pertama berhasil dibuat. Sekarang kamu bisa lanjut mengelola project ini di Board AlurKarya.",
-    btn_open_board: "Buka Board Project"
+    btn_open_board: "Buka Board Project",
+    "alurpandu.hero.title": "Siapkan AlurKarya Anda, satu langkah pada satu waktu",
+    "alurpandu.progress.label": "Progress Setup Keseluruhan",
+    "alurpandu.hero.next_step_label": "Langkah berikutnya",
+    "alurpandu.hero.view_all_steps": "Lihat Semua Langkah",
+    "alurpandu.hero.check_workflow": "Periksa Workflow Saya",
+    "alurpandu.step.completed": "Selesai",
+    "alurpandu.step.in_progress": "Sedang Berjalan",
+    "alurpandu.step.not_started": "Belum Mulai",
+    "alurpandu.step.optional": "Opsional",
+    "alurpandu.step.mark_completed": "Tandai Selesai",
+    "alurpandu.step.mark_incomplete": "Tandai Belum Selesai"
   }
 };
 
@@ -2013,8 +2605,6 @@ function toggleSafetyAcknowledgement() {
 // Bind methods globally so inline HTML onclick attributes function in ES Module type
 window.scrollToSection = scrollToSection;
 window.selectAudit = selectAudit;
-window.toggleChecklist = toggleChecklist;
-window.resetChecklist = resetChecklist;
 window.openParentProfile = openParentProfile;
 window.selectRole = selectRole;
 window.toggleGuideCheck = toggleGuideCheck;

@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatMoney, getDueDateStatus, getLocalizedDueDateStatus, formatDate, showCompletionWarningModal } from '../utils.js';
+import { formatCurrency, formatMoney, getDueDateStatus, getLocalizedDueDateStatus, formatDate, showCompletionWarningModal, getCanonicalStatus, getLocalizedStatus } from '../utils.js';
 import { t, getLanguage } from '../i18n.js';
 import { TemplatesModal } from './TemplatesModal.js';
 
@@ -25,10 +25,51 @@ export class KanbanBoard {
     this.draggedCardId = null;
     this.minimizedCardIds = new Set(JSON.parse(localStorage.getItem('alurkarya_minimized_cards') || '[]'));
     
-    // Columns collapsed state (default all collapsed/peek mode on load)
-    this.collapsedColumns = new Set(['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed']);
-    localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
+    // Columns collapsed state (isolated per workspace, default to collapsing 'completed' stage only)
+    const saved = this.readCollapsedColumns();
+    const VALID_STAGES = ['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed'];
+    if (saved === null) {
+      this.collapsedColumns = new Set(['completed']);
+      this.saveCollapsedColumns();
+    } else {
+      // Filter out any unknown stages and remove duplicates (Set handles duplicates)
+      const validSaved = saved.filter(stage => VALID_STAGES.includes(stage));
+      this.collapsedColumns = new Set(validSaved);
+    }
+    
     this.version = 'kanban-sync-v2';
+  }
+
+  getCollapsedColumnsStorageKey() {
+    const wsId = sessionStorage.getItem('alurkarya_active_workspace_id') || 'default';
+    return `alurkarya_workspace_${wsId}__kanban_collapsed_columns`;
+  }
+
+  readCollapsedColumns() {
+    const key = this.getCollapsedColumnsStorageKey();
+    const raw = localStorage.getItem(key);
+    if (raw === null) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return null;
+      }
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  saveCollapsedColumns() {
+    const key = this.getCollapsedColumnsStorageKey();
+    localStorage.setItem(key, JSON.stringify(Array.from(this.collapsedColumns)));
+  }
+
+  getAgendaSummaryCollapsedStorageKey() {
+    const wsId = sessionStorage.getItem('alurkarya_active_workspace_id') || 'default';
+    return `alurkarya_workspace_${wsId}__agenda_summary_collapsed`;
   }
 
   showTemplatesModal() {
@@ -89,42 +130,53 @@ export class KanbanBoard {
   }
 
   createOnboardingSection() {
+    const progress = this.store.getOnboardingProgress();
+    const isCompleted = progress.completed === progress.total;
+    const isDismissed = localStorage.getItem('alurkarya_onboarding_dismissed') === 'true';
+    
     const onboardingEl = document.createElement('div');
     onboardingEl.className = 'onboarding-panel';
-    onboardingEl.style.cssText = 'background: var(--glass-bg); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-lg); padding: 18px; margin-bottom: 16px;';
-    onboardingEl.innerHTML = `
-      <div class="onboarding-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.15rem;">🚀</span>
-          <h4 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; font-weight: 800; color: var(--text-primary);">${t('onboarding.cardTitle', 'Mulai dari 1 project aktif')}</h4>
-        </div>
-        <button class="onboarding-close-btn" style="color: var(--text-muted); background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 4px;" title="Dismiss Onboarding">&times;</button>
-      </div>
-      
-      <div class="onboarding-steps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 16px;">
-        <div class="onboarding-step" style="display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
-          <span style="font-size: 0.72rem; color: var(--color-primary); font-weight: 700; text-transform: uppercase;">1. ${t('onboarding.cardStep1', 'Pilih role')}</span>
-        </div>
-        <div class="onboarding-step" style="display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
-          <span style="font-size: 0.72rem; color: var(--color-secondary); font-weight: 700; text-transform: uppercase;">2. ${t('onboarding.cardStep2', 'Tambah project')}</span>
-        </div>
-        <div class="onboarding-step" style="display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
-          <span style="font-size: 0.72rem; color: var(--color-accent); font-weight: 700; text-transform: uppercase;">3. ${t('onboarding.cardStep3', 'Isi next action')}</span>
-        </div>
-      </div>
+    
+    if (isCompleted || isDismissed) {
+      onboardingEl.style.display = 'none';
+      return onboardingEl;
+    }
+    
+    const activeLang = getLanguage();
+    const activeWs = sessionStorage.getItem('alurkarya_active_workspace_id') || '';
+    const unlocked = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
+    const guideUrl = activeWs 
+      ? `alurpandu-guided-start.html?workspace_id=${activeWs}&session_unlocked=${unlocked}`
+      : 'alurpandu-guided-start.html';
 
-      <div class="onboarding-footer" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <button class="btn btn-primary btn-sm" id="onboarding-btn-setup" style="padding: 6px 12px; font-size: 0.75rem; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25);">${t('onboarding.ctaPrimary', 'Mulai Setup')}</button>
-        <a href="alurpandu-guided-start.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-          ${getIcon('help', '', 12)} ${t('viewGuide', 'View Guide')}
+    const labelText = activeLang === 'id' ? 'Lanjutkan Setup' : 'Continue Setup';
+    const subtextText = activeLang === 'id'
+      ? `${progress.completed} dari ${progress.total} langkah selesai`
+      : `${progress.completed} of ${progress.total} steps completed`;
+      
+    const pct = Math.round((progress.completed / progress.total) * 100);
+
+    onboardingEl.style.cssText = 'background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.15); border-radius: var(--border-radius-lg); padding: 16px; margin-bottom: 16px; position: relative; display: flex; flex-direction: column; gap: 8px;';
+    
+    onboardingEl.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">
+          🧭 <span>${labelText}</span>
+        </div>
+        <button class="onboarding-close-btn" style="color: var(--text-muted); background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 4px;" title="Dismiss Reminder">&times;</button>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-secondary);">
+        ${subtextText}
+      </div>
+      <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin: 4px 0;">
+        <div style="width: ${pct}%; height: 100%; background: var(--color-primary); border-radius: 3px;"></div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 4px;">
+        <a href="${guideUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="padding: 6px 12px; font-size: 0.75rem; background: var(--color-primary); border-color: rgba(139, 92, 246, 0.25); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+          🚀 <span>${activeLang === 'id' ? 'Buka Panduan Setup' : 'Open Setup Guide'}</span>
         </a>
       </div>
     `;
-
-    // Event listeners
-    onboardingEl.querySelector('#onboarding-btn-setup').addEventListener('click', () => {
-      this.showTemplatesModal();
-    });
 
     onboardingEl.querySelector('.onboarding-close-btn').addEventListener('click', () => {
       onboardingEl.style.display = 'none';
@@ -133,8 +185,6 @@ export class KanbanBoard {
 
     return onboardingEl;
   }
-
-
 
   createDiagnoseResultCard(result) {
     const card = document.createElement('div');
@@ -248,7 +298,7 @@ export class KanbanBoard {
     sortSelector.innerHTML = `
       <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 600;">${t('sortBy', 'Sort by')}:</span>
       <select class="form-control" id="board-sort-select" style="font-size: 0.75rem; padding: 4px 10px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); color: var(--text-secondary); cursor: pointer; height: auto;">
-        <option value="default" ${activeSortMode === 'default' ? 'selected' : ''}>${t('all', 'Default')}</option>
+        <option value="default" ${activeSortMode === 'default' ? 'selected' : ''}>${t('kanban.all', 'Default')}</option>
         <option value="dueDate" ${activeSortMode === 'dueDate' ? 'selected' : ''}>${t('projectModal.deadline', 'Due Date')}</option>
         <option value="value" ${activeSortMode === 'value' ? 'selected' : ''}>${t('projectModal.budget', 'Value')}</option>
         <option value="submitDate" ${activeSortMode === 'submitDate' ? 'selected' : ''}>${t('delivery.deliveryDate', 'Submit Date')}</option>
@@ -302,13 +352,13 @@ export class KanbanBoard {
 
     globalToggles.querySelector('#btn-collapse-all').addEventListener('click', () => {
       this.collapsedColumns = new Set(['new_lead', 'proposal_sent', 'in_progress', 'client_review', 'revision', 'invoice_sent', 'waiting_payment', 'completed']);
-      localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
+      this.saveCollapsedColumns();
       this.renderBoardOnly();
     });
 
     globalToggles.querySelector('#btn-expand-all').addEventListener('click', () => {
       this.collapsedColumns.clear();
-      localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
+      this.saveCollapsedColumns();
       this.renderBoardOnly();
     });
 
@@ -510,15 +560,10 @@ export class KanbanBoard {
       emptyStateBox.className = 'empty-state-box';
       emptyStateBox.style.cssText = 'margin: 0 0 24px 0; padding: 32px 20px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); backdrop-filter: var(--glass-backdrop); width: 100%;';
       
-      const lang = getLanguage();
-      const emptyTitle = lang === 'id' 
-        ? 'Belum ada project.' 
-        : 'No projects yet.';
-      const emptyDesc = lang === 'id' 
-        ? 'Tambahkan project pertama atau impor backup jika kamu sudah punya data sebelumnya untuk mulai mengelola workflow client-to-paid.'
-        : 'Add your first project or import a backup if you already have saved data to start managing your client-to-paid workflow.';
-      const addText = lang === 'id' ? 'Tambah Project' : 'Add Project';
-      const panduText = lang === 'id' ? 'Buat Project Pertama lewat AlurPandu' : 'Create First Project with AlurPandu';
+      const emptyTitle = t('kanban.noProjectsYet', 'No projects yet.');
+      const emptyDesc = t('kanban.noProjectsYetDescription', 'Add your first project or import a backup if you already have saved data to start managing your client-to-paid workflow.');
+      const addText = t('kanban.addProject', 'Add Project');
+      const panduText = t('kanban.createFirstProjectGuided', 'Create First Project with AlurPandu');
       
       emptyStateBox.innerHTML = `
         <div style="font-size: 2.2rem; margin-bottom: 12px; color: var(--color-primary-glow); filter: drop-shadow(0 2px 8px rgba(139,92,246,0.3));">💼</div>
@@ -566,11 +611,8 @@ export class KanbanBoard {
       filterEmptyBox.className = 'empty-state-box';
       filterEmptyBox.style.cssText = 'margin: 0 0 24px 0; padding: 32px 24px; text-align: center; background: var(--glass-bg); border: 1px dashed var(--glass-border); border-radius: var(--border-radius-lg); width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px;';
       
-      const lang = getLanguage();
-      const filterText = lang === 'id' 
-        ? 'Tidak ada project yang cocok dengan filter saat ini.' 
-        : 'No projects match the current filter.';
-      const clearText = lang === 'id' ? 'Bersihkan Filter' : 'Clear Filter';
+      const filterText = t('kanban.noFilterResults', 'No projects match the current search or filters.');
+      const clearText = t('kanban.clearFilters', 'Clear Filters');
       
       filterEmptyBox.innerHTML = `
         <span style="font-size: 0.82rem; color: var(--text-muted); display: block;">${filterText}</span>
@@ -722,7 +764,7 @@ export class KanbanBoard {
           } else {
             this.collapsedColumns.add(col.id);
           }
-          localStorage.setItem('alurkarya_kanban_columns_collapsed', JSON.stringify(Array.from(this.collapsedColumns)));
+          this.saveCollapsedColumns();
           this.renderBoardOnly();
         });
       }

@@ -474,7 +474,17 @@ export class WorkspaceProfileSelection {
           if (result) {
             window.location.reload();
           } else {
-            alert(getLanguage() === 'id' ? 'Gagal mengimpor file backup' : 'Failed to parse backup file');
+            const card = wrapper.querySelector('.access-card');
+            if (card) {
+              let errBox = card.querySelector('#import-error-box');
+              if (!errBox) {
+                errBox = document.createElement('div');
+                errBox.id = 'import-error-box';
+                errBox.style.cssText = 'color: #ef4444; font-size: 0.75rem; font-weight: 600; padding: 10px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-top: 10px; text-align: center; width: 100%; box-sizing: border-box;';
+                card.appendChild(errBox);
+              }
+              errBox.textContent = getLanguage() === 'id' ? '⚠️ Gagal mengimpor file backup' : '⚠️ Failed to parse backup file';
+            }
           }
         };
         reader.readAsText(file);
@@ -505,7 +515,17 @@ export class WorkspaceProfileSelection {
           if (result) {
             window.location.reload();
           } else {
-            alert(getLanguage() === 'id' ? 'Gagal mengimpor file backup' : 'Failed to parse backup file');
+            const card = wrapper.querySelector('.access-card');
+            if (card) {
+              let errBox = card.querySelector('#import-error-box');
+              if (!errBox) {
+                errBox = document.createElement('div');
+                errBox.id = 'import-error-box';
+                errBox.style.cssText = 'color: #ef4444; font-size: 0.75rem; font-weight: 600; padding: 10px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-top: 10px; text-align: center; width: 100%; box-sizing: border-box;';
+                card.appendChild(errBox);
+              }
+              errBox.textContent = getLanguage() === 'id' ? '⚠️ Gagal mengimpor file backup' : '⚠️ Failed to parse backup file';
+            }
           }
         };
         reader.readAsText(file);

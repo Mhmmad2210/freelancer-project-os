@@ -33,6 +33,16 @@ console.log('[AlurKarya Build] Initiating production build...');
 console.log('[AlurKarya Build] Target VITE_ACCESS_PASSWORD_HASH status:', passwordHash ? 'Configured' : 'NOT FOUND (Using empty fallback)');
 console.log('[AlurKarya Build] Target VITE_ACTIVATION_CODE_HASH status:', activationHash ? 'Configured' : 'NOT FOUND (Using empty fallback)');
 
+const isProduction = env.NODE_ENV === 'production' || env.RENDER === 'true';
+if (isProduction) {
+  if (!passwordHash) {
+    throw new Error('[AlurKarya Build] ERROR: VITE_ACCESS_PASSWORD_HASH is required for production build.');
+  }
+  if (!activationHash) {
+    throw new Error('[AlurKarya Build] ERROR: VITE_ACTIVATION_CODE_HASH is required for production build.');
+  }
+}
+
 const distPath = path.join(__dirname, 'dist');
 
 // Clear existing dist directory
@@ -60,21 +70,31 @@ function copyDirSync(src, dest, excludeFiles = []) {
   }
 }
 
-// Copy index.html, alurpandu-guided-start.html, and assets (landing.html is ignored as requested)
-fs.copyFileSync(path.join(__dirname, 'index.html'), path.join(distPath, 'index.html'));
-if (fs.existsSync(path.join(__dirname, 'alurpandu-guided-start.html'))) {
-  fs.copyFileSync(path.join(__dirname, 'alurpandu-guided-start.html'), path.join(distPath, 'alurpandu-guided-start.html'));
-}
-if (fs.existsSync(path.join(__dirname, 'client-briefing.html'))) {
-  fs.copyFileSync(path.join(__dirname, 'client-briefing.html'), path.join(distPath, 'client-briefing.html'));
-}
+// Copy explicit HTML pages required for deployment
+const htmlFiles = [
+  'index.html',
+  'landing.html',
+  'alurpandu-guided-start.html',
+  'client-briefing.html'
+];
+
+htmlFiles.forEach(file => {
+  const srcPath = path.join(__dirname, file);
+  const destPath = path.join(distPath, file);
+  if (!fs.existsSync(srcPath)) {
+    throw new Error(`[AlurKarya Build] ERROR: Required source HTML file "${file}" is missing.`);
+  }
+  fs.copyFileSync(srcPath, destPath);
+  console.log(`[AlurKarya Build] Copied ${file} to dist/`);
+});
+
 copyDirSync(path.join(__dirname, 'css'), path.join(distPath, 'css'));
 copyDirSync(path.join(__dirname, 'js'), path.join(distPath, 'js'));
 if (fs.existsSync(path.join(__dirname, 'assets'))) {
   copyDirSync(path.join(__dirname, 'assets'), path.join(distPath, 'assets'));
 }
 
-console.log('[AlurKarya Build] Copied static app assets (excluding landing.html)');
+console.log('[AlurKarya Build] Copied static app assets');
 
 // Inject password and activation hashes into the built AccessGate.js
 const accessGatePath = path.join(distPath, 'js', 'components', 'AccessGate.js');
@@ -85,7 +105,7 @@ if (fs.existsSync(accessGatePath)) {
   fs.writeFileSync(accessGatePath, content, 'utf-8');
   console.log('[AlurKarya Build] Injected VITE_ACCESS_PASSWORD_HASH and VITE_ACTIVATION_CODE_HASH into AccessGate.js');
 } else {
-  console.error('[AlurKarya Build] ERROR: AccessGate.js not found in dist path. Verification required.');
+  throw new Error('[AlurKarya Build] ERROR: AccessGate.js not found in dist path. Verification required.');
 }
 
 // --- Automatic Build ID and Version Specifier Rewriting ---
@@ -128,13 +148,14 @@ jsFiles.forEach(filePath => {
 console.log(`[AlurKarya Build] Injected build version ${buildId} specifiers in ${jsFiles.length} JS modules.`);
 
 // 2. Process all entry HTML files to version stylesheet and module script specifiers
-const htmlFiles = [
+const htmlFilesToVersion = [
   path.join(distPath, 'index.html'),
+  path.join(distPath, 'landing.html'),
   path.join(distPath, 'alurpandu-guided-start.html'),
   path.join(distPath, 'client-briefing.html')
 ];
 
-htmlFiles.forEach(filePath => {
+htmlFilesToVersion.forEach(filePath => {
   if (fs.existsSync(filePath)) {
     let content = fs.readFileSync(filePath, 'utf-8');
     
@@ -149,4 +170,22 @@ htmlFiles.forEach(filePath => {
   }
 });
 
+// 3. Post-build asset verification
+const requiredFiles = [
+  'index.html',
+  'landing.html',
+  'alurpandu-guided-start.html',
+  'client-briefing.html',
+  'js/app.js',
+  'css/style.css'
+];
+
+requiredFiles.forEach(file => {
+  const filePath = path.join(distPath, file);
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`[AlurKarya Build] ERROR: Post-build validation failed. Required output file "${file}" is missing.`);
+  }
+});
+
+console.log('[AlurKarya Build] Output verification successful. All mandatory assets are present.');
 console.log('[AlurKarya Build] Build completed successfully. Artifacts ready in dist/');

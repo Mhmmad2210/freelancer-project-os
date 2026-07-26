@@ -417,7 +417,7 @@ export class AccessGate {
       
       const val = passwordInput.value ? passwordInput.value.trim() : '';
       if (!val) {
-        showError(t('access.errorEmptyPassword', 'Please enter your password.'));
+        showError(t('access.errorEmptyPassword', 'Please enter the access code.'));
         return;
       }
 
@@ -458,7 +458,7 @@ export class AccessGate {
         }, 600);
       } else {
         // Wrong password
-        showError(t('access.errorInvalidPassword', 'Incorrect password. Please try again.'));
+        showError(t('access.errorInvalidPassword', 'Access code does not match. Check the code you received.'));
         passwordInput.value = '';
         passwordInput.focus();
         passwordSubmit.disabled = false;

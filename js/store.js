@@ -358,6 +358,19 @@ function getInitialSeedData() {
 /**
  * State store class managing local react-like notifications on triggers.
  */
+function safeJsonParse(str, fallback = null) {
+  if (!str) return fallback;
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    console.error('[ALURKARYA_STORE] JSON parse failed:', e.message);
+    return fallback;
+  }
+}
+
+/**
+ * Main application state storage container class
+ */
 export class WorkspaceStore {
   constructor() {
     this.listeners = [];
@@ -372,7 +385,7 @@ export class WorkspaceStore {
       // 1. Run storage migration first
       const migrationDone = localStorage.getItem('alurkarya_workspace_migration_v1_done') === 'true';
       const indexStr = localStorage.getItem('alurkarya_workspace_index');
-      const index = indexStr ? JSON.parse(indexStr) : [];
+      const index = safeJsonParse(indexStr, []);
       
       const oldState = localStorage.getItem('freelancer_os_workspace');
       const oldProfile = localStorage.getItem('alurkarya_freelancer_profile');
@@ -395,11 +408,11 @@ export class WorkspaceStore {
           localStorage.setItem(`alurkarya_workspace_${wsId}_state`, oldState);
         }
         if (oldProfile) {
-          localStorage.setItem(`alurkarya_workspace_${wsId}_profile`, oldProfile);
+          localStorage.setItem(`alurkarya_workspace_${wsId}__profile`, oldProfile);
         }
         const oldCurrency = localStorage.getItem('alurkarya_default_currency');
         if (oldCurrency) {
-          localStorage.setItem(`alurkarya_workspace_${wsId}_settings`, JSON.stringify({ defaultCurrency: oldCurrency }));
+          localStorage.setItem(`alurkarya_workspace_${wsId}__settings`, JSON.stringify({ defaultCurrency: oldCurrency }));
         }
         localStorage.setItem('alurkarya_workspace_migration_v1_done', 'true');
       }
@@ -419,11 +432,12 @@ export class WorkspaceStore {
       }
 
       const stateKey = `alurkarya_workspace_${activeWorkspaceId}_state`;
-      const profileKey = `alurkarya_workspace_${activeWorkspaceId}_profile`;
+      const profileKeyDouble = `alurkarya_workspace_${activeWorkspaceId}__profile`;
+      const profileKeySingle = `alurkarya_workspace_${activeWorkspaceId}_profile`;
 
       const stored = localStorage.getItem(stateKey);
       if (stored) {
-        const parsed = JSON.parse(stored);
+        const parsed = safeJsonParse(stored, {});
         this.projects = (parsed.projects || []).map(p => normalizeProject(p));
         this.clients = parsed.clients || [];
         this.invoices = parsed.invoices || [];
@@ -431,8 +445,8 @@ export class WorkspaceStore {
         this.weeklyReflections = parsed.weeklyReflections || this.getDefaultReflections();
         this.availability = parsed.availability || this.getDefaultAvailability();
         
-        const storedProfile = localStorage.getItem(profileKey);
-        this.freelancerProfile = storedProfile ? JSON.parse(storedProfile) : (parsed.freelancerProfile || this.getDefaultFreelancerProfile());
+        const storedProfile = localStorage.getItem(profileKeyDouble) || localStorage.getItem(profileKeySingle);
+        this.freelancerProfile = storedProfile ? safeJsonParse(storedProfile) : (parsed.freelancerProfile || this.getDefaultFreelancerProfile());
 
         let migrated = false;
 
@@ -654,7 +668,7 @@ export class WorkspaceStore {
       if (!activeWorkspaceId) return;
 
       const stateKey = `alurkarya_workspace_${activeWorkspaceId}_state`;
-      const profileKey = `alurkarya_workspace_${activeWorkspaceId}_profile`;
+      const profileKeyDouble = `alurkarya_workspace_${activeWorkspaceId}__profile`;
 
       const bundle = {
         projects: this.projects,
@@ -669,7 +683,7 @@ export class WorkspaceStore {
       localStorage.setItem(stateKey, JSON.stringify(bundle));
       
       if (this.freelancerProfile) {
-        localStorage.setItem(profileKey, JSON.stringify(this.freelancerProfile));
+        localStorage.setItem(profileKeyDouble, JSON.stringify(this.freelancerProfile));
       }
       
       this.notifyListeners();
@@ -694,7 +708,7 @@ export class WorkspaceStore {
 
   getWorkspaces() {
     const str = localStorage.getItem('alurkarya_workspace_index');
-    return str ? JSON.parse(str) : [];
+    return safeJsonParse(str, []);
   }
 
   saveWorkspaces(index) {
@@ -727,8 +741,8 @@ export class WorkspaceStore {
       freelancerProfile: this.getDefaultFreelancerProfile()
     };
     localStorage.setItem(`alurkarya_workspace_${wsId}_state`, JSON.stringify(bundle));
-    localStorage.setItem(`alurkarya_workspace_${wsId}_profile`, JSON.stringify(bundle.freelancerProfile));
-    localStorage.setItem(`alurkarya_workspace_${wsId}_settings`, JSON.stringify({ defaultCurrency: 'IDR' }));
+    localStorage.setItem(`alurkarya_workspace_${wsId}__profile`, JSON.stringify(bundle.freelancerProfile));
+    localStorage.setItem(`alurkarya_workspace_${wsId}__settings`, JSON.stringify({ defaultCurrency: 'IDR' }));
 
     return newWs;
   }
@@ -739,7 +753,9 @@ export class WorkspaceStore {
     this.saveWorkspaces(index);
 
     localStorage.removeItem(`alurkarya_workspace_${id}_state`);
+    localStorage.removeItem(`alurkarya_workspace_${id}__profile`);
     localStorage.removeItem(`alurkarya_workspace_${id}_profile`);
+    localStorage.removeItem(`alurkarya_workspace_${id}__settings`);
     localStorage.removeItem(`alurkarya_workspace_${id}_settings`);
   }
 
@@ -747,7 +763,9 @@ export class WorkspaceStore {
     const index = this.getWorkspaces();
     index.forEach(w => {
       localStorage.removeItem(`alurkarya_workspace_${w.workspaceId}_state`);
+      localStorage.removeItem(`alurkarya_workspace_${w.workspaceId}__profile`);
       localStorage.removeItem(`alurkarya_workspace_${w.workspaceId}_profile`);
+      localStorage.removeItem(`alurkarya_workspace_${w.workspaceId}__settings`);
       localStorage.removeItem(`alurkarya_workspace_${w.workspaceId}_settings`);
     });
     localStorage.removeItem('alurkarya_workspace_index');
@@ -1635,6 +1653,119 @@ export class WorkspaceStore {
 
   getInitials(name) {
     return getInitials(name);
+  }
+
+  getOnboardingProgress() {
+    const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+    if (!wsId) {
+      return { completed: 0, total: 12, nextStepId: 'workspace_created' };
+    }
+    
+    let manualSteps = {};
+    try {
+      const stored = localStorage.getItem(`alurkarya_workspace_${wsId}__alurpandu_progress`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        manualSteps = parsed.manualSteps || {};
+      }
+    } catch (e) {}
+
+    const steps = [
+      {
+        id: 'workspace_created',
+        completed: !!wsId
+      },
+      {
+        id: 'workspace_pin_reviewed',
+        completed: (() => {
+          try {
+            const indexStr = localStorage.getItem('alurkarya_workspace_index');
+            const index = indexStr ? JSON.parse(indexStr) : [];
+            const currentWs = index.find(w => w.workspaceId === wsId);
+            if (currentWs && currentWs.workspacePinHash) return true;
+          } catch (e) {}
+          return manualSteps['workspace_pin_reviewed'] === 'completed';
+        })()
+      },
+      {
+        id: 'profile_completed',
+        completed: (() => {
+          const profile = this.freelancerProfile;
+          return !!(profile && profile.freelancerName && profile.freelancerName.trim() !== '' &&
+                    profile.freelancerName !== 'Your Name' && profile.freelancerName !== 'Nama Anda');
+        })()
+      },
+      {
+        id: 'first_project_created',
+        completed: !!(this.projects && this.projects.length > 0)
+      },
+      {
+        id: 'client_added',
+        completed: (() => {
+          if (this.clients && this.clients.length > 0) return true;
+          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
+          return !!(activeProj && (activeProj.client || activeProj.clientName) && (activeProj.client || activeProj.clientName).trim() !== '');
+        })()
+      },
+      {
+        id: 'project_stage_set',
+        completed: (() => {
+          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
+          return !!(activeProj && activeProj.stage && activeProj.stage !== 'new_lead');
+        })()
+      },
+      {
+        id: 'next_action_added',
+        completed: (() => {
+          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
+          return !!(activeProj && activeProj.nextAction && activeProj.nextAction.trim() !== '');
+        })()
+      },
+      {
+        id: 'deadline_added',
+        completed: (() => {
+          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
+          return !!(activeProj && activeProj.dueDate && activeProj.dueDate.trim() !== '');
+        })()
+      },
+      {
+        id: 'review_delivery_link_added',
+        completed: (() => {
+          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
+          return !!(activeProj && (activeProj.previewLink || activeProj.reviewLink || activeProj.finalFileLink || activeProj.deliveryLink));
+        })()
+      },
+      {
+        id: 'first_backup_exported',
+        completed: (() => {
+          try {
+            const indexStr = localStorage.getItem('alurkarya_workspace_index');
+            const index = indexStr ? JSON.parse(indexStr) : [];
+            const currentWs = index.find(w => w.workspaceId === wsId);
+            if (currentWs && currentWs.lastBackupAt) return true;
+          } catch (e) {}
+          if (localStorage.getItem('alurkarya_backup_exported') === 'true') return true;
+          return manualSteps['first_backup_exported'] === 'completed';
+        })()
+      },
+      {
+        id: 'client_dashboard_checked',
+        completed: manualSteps['client_dashboard_checked'] === 'completed'
+      },
+      {
+        id: 'first_client_update_prepared',
+        completed: manualSteps['first_client_update_prepared'] === 'completed'
+      }
+    ];
+
+    const completed = steps.filter(s => s.completed).length;
+    const nextStep = steps.find(s => !s.completed);
+
+    return {
+      completed,
+      total: steps.length,
+      nextStepId: nextStep ? nextStep.id : 'completed'
+    };
   }
 }
 export const store = new WorkspaceStore();

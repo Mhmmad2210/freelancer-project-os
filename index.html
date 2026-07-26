@@ -26,6 +26,89 @@
 </head>
 <body>
 
+  <script>
+    (function() {
+      let bootCompleted = false;
+      let fallbackTriggered = false;
+
+      // Timeout of 9 seconds (between 8 and 10 seconds)
+      const BOOT_TIMEOUT = 9000; 
+
+      const timeoutId = setTimeout(function() {
+        if (!bootCompleted) {
+          showBootError("Application took too long to load.");
+        }
+      }, BOOT_TIMEOUT);
+
+      function showBootError(reason) {
+        if (fallbackTriggered) return;
+        fallbackTriggered = true;
+        bootCompleted = true;
+        clearTimeout(timeoutId);
+
+        console.error('[ALURKARYA_BOOT_ERROR] Boot failure:', reason);
+
+        const root = document.getElementById('app-root');
+        if (!root) return;
+
+        root.className = '';
+        root.style.cssText = 'min-height: 100vh; background: radial-gradient(circle at 50% 50%, hsl(224, 45%, 6%) 0%, hsl(224, 60%, 2%) 100%); color: #f8fafc; font-family: sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box;';
+        
+        const isIndo = navigator.language && navigator.language.toLowerCase().startsWith('id');
+        const titleText = isIndo ? "Oops! Terjadi kesalahan booting" : "Oops! Booting error occurred";
+        const descText = isIndo 
+          ? "Kami gagal menyiapkan workspace Anda. Silakan coba muat ulang halaman atau atur ulang mode masuk."
+          : "We failed to prepare your workspace. Please try reloading the page or resetting your entry mode.";
+        const reloadBtnText = isIndo ? "Muat Ulang" : "Reload";
+        const resetBtnText = isIndo ? "Kembali ke Awal" : "Back to Home";
+
+        root.innerHTML = `
+          <div style="width: min(90vw, 480px); background: rgba(11, 17, 32, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 40px 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px; box-sizing: border-box; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #6D5DFB, #9B5CFF);"></div>
+            <div style="font-size: 3rem; filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.3));">⚠️</div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #f8fafc; margin: 0; font-family: system-ui, -apple-system, sans-serif;">${titleText}</h2>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin: 0; line-height: 1.6; font-family: system-ui, -apple-system, sans-serif;">${descText}</p>
+            <div style="display: flex; gap: 12px; width: 100%; flex-wrap: wrap; justify-content: center; margin-top: 8px;">
+              <button id="boot-btn-reload" style="flex: 1; min-width: 140px; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; background: linear-gradient(135deg, #6D5DFB, #8b5cf6); color: white; border: none; cursor: pointer; transition: all 0.2s ease;">${reloadBtnText}</button>
+              <button id="boot-btn-reset" style="flex: 1; min-width: 140px; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; background: rgba(255,255,255,0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s ease;">${resetBtnText}</button>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('boot-btn-reload').addEventListener('click', function() {
+          window.location.reload();
+        });
+        document.getElementById('boot-btn-reset').addEventListener('click', function() {
+          localStorage.removeItem('alurkarya_entry_mode');
+          sessionStorage.removeItem('alurkarya_active_workspace_id');
+          sessionStorage.removeItem('alurkarya_session_unlocked');
+          window.location.reload();
+        });
+      }
+
+      window.addEventListener('alurkarya:ready', function() {
+        bootCompleted = true;
+        clearTimeout(timeoutId);
+      });
+
+      window.addEventListener('alurkarya:boot-error', function(e) {
+        showBootError(e.detail ? e.detail.message : 'Unknown initialization error');
+      });
+
+      window.addEventListener('error', function(event) {
+        if (!bootCompleted) {
+          showBootError(event.error ? event.error.message : event.message);
+        }
+      });
+
+      window.addEventListener('unhandledrejection', function(event) {
+        if (!bootCompleted) {
+          showBootError(event.reason ? event.reason.message : 'Unhandled promise rejection');
+        }
+      });
+    })();
+  </script>
+
   <!-- Accessibility Hidden Header for SEO Parsing -->
   <h1 class="d-none">AlurKarya - Ultimate Workspace Dashboard</h1>
 

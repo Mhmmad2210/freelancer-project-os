@@ -3,7 +3,7 @@
    ========================================================================== */
 
 import { getIcon } from '../icons.js';
-import { formatCurrency, formatMoney, formatDate, isValidImageUrl } from '../utils.js';
+import { formatCurrency, formatMoney, formatDate, isValidImageUrl, escapeHTML, safeUrl } from '../utils.js';
 import { promptTemplates } from './AIPromptHelpers.js';
 import { t, getLanguage } from '../i18n.js';
 import { buildClientDashboardData } from '../utils/clientSafeData.js';
@@ -805,6 +805,7 @@ export class ClientProjectView {
     
     // Initials fallback
     const getInitials = (name) => {
+      if (!name) return 'YN';
       return name.split(' ').map(x => x[0]).slice(0, 2).join('').toUpperCase();
     };
     const flInitials = getInitials(fl.name);
@@ -817,30 +818,30 @@ export class ClientProjectView {
         <div style="display: flex; align-items: center; gap: 12px;">
           <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 50%; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; font-weight: 700; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); color: #fff; border: 1.5px solid rgba(255,255,255,0.1); overflow: hidden;">
             ${(fl.avatar && isValidImageUrl(fl.avatar)) ?
-              `<img src="${fl.avatar}" alt="${fl.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.outerHTML='${flInitials}'">` :
-              flInitials
+              `<img src="${escapeHTML(safeUrl(fl.avatar))}" alt="${escapeHTML(fl.name)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.outerHTML='${escapeHTML(flInitials)}'">` :
+              escapeHTML(flInitials)
             }
           </div>
           <div>
-            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0;">${fl.name}</h4>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">${fl.role}</span>
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0;">${escapeHTML(fl.name)}</h4>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(fl.role)}</span>
           </div>
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 6px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 12px; margin-top: 4px;">
           ${fl.location ? `
             <div style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-muted);">
-              <span style="font-size: 0.8rem;">📍</span> <span>${fl.location}</span>
+              <span style="font-size: 0.8rem;">📍</span> <span>${escapeHTML(fl.location)}</span>
             </div>
           ` : ''}
           ${fl.email ? `
             <div style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-muted);">
-              <span style="font-size: 0.8rem;">✉️</span> <a href="mailto:${fl.email}" style="color: var(--text-secondary); text-decoration: none;">${fl.email}</a>
+              <span style="font-size: 0.8rem;">✉️</span> <a href="mailto:${escapeHTML(fl.email)}" style="color: var(--text-secondary); text-decoration: none;">${escapeHTML(fl.email)}</a>
             </div>
           ` : ''}
           ${fl.portfolioLink ? `
             <div style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-muted);">
-              ${getIcon('externalLink', '', 12)} <a href="${fl.portfolioLink}" target="_blank" rel="noopener noreferrer" style="color: var(--color-secondary); text-decoration: none; font-weight: 600;">${t('clientView.portfolioWebsite', 'Portfolio Website')}</a>
+              ${getIcon('externalLink', '', 12)} <a href="${escapeHTML(safeUrl(fl.portfolioLink))}" target="_blank" rel="noopener noreferrer" style="color: var(--color-secondary); text-decoration: none; font-weight: 600;">${t('clientView.portfolioWebsite', 'Portfolio Website')}</a>
             </div>
           ` : ''}
         </div>

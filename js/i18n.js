@@ -99,12 +99,17 @@ export const translations = {
       dashboard: "Dashboard",
       workspaceBoard: "Workspace Board",
       plannerHub: "Planner Hub",
+      planner: "Planner",
       weeklyFocus: "Weekly Focus",
       clientHub: "Client Hub",
       invoiceLedger: "Invoice Ledger",
       quotations: "Quotations",
       portfolioSandbox: "Portfolio Sandbox",
       settings: "Settings",
+      language: "Language",
+      viewGuide: "View Guide",
+      lockWorkspace: "Lock Workspace",
+      switchWorkspace: "Switch Workspace",
       freelancerProfile: "Freelancer Profile",
       tagline: "Manage freelance projects from client to paid."
     },
@@ -112,17 +117,28 @@ export const translations = {
     kanban: {
       searchPlaceholder: "Search projects, clients, or tags...",
       sortBy: "Sort by",
+      all: "Default",
+      simple: "Simple",
+      detailed: "Detailed",
       viewSimple: "Simple",
       viewDetailed: "Detailed",
       collapseAll: "Collapse All",
       expandAll: "Expand All",
-      addProject: "Add Project",
       templates: "Templates",
+      addProject: "Add Project",
+      scrollHint: "Scroll sideways to see all workflow stages.",
+      scrollSideways: "Scroll sideways to see all workflow stages.",
+      noProjects: "No projects in this stage",
+      noProjectsDescription: "No projects match the current search or filters.",
+      noFilterResults: "No projects match the current search or filters.",
+      clearFilters: "Clear Filters",
       emptyStateTitle: "Start with a freelancer template",
       emptyStateDesc: "Choose your freelance type and AlurKarya will create a sample client-to-paid workflow for you.",
       chooseTemplate: "Choose Template",
       createProject: "Create Project",
-      noProjects: "No projects in this stage",
+      noProjectsYet: "No projects yet.",
+      noProjectsYetDescription: "Add your first project or import a backup if you already have saved data to start managing your client-to-paid workflow.",
+      createFirstProjectGuided: "Create First Project with AlurPandu",
       emptyBoard: "No projects found. Use Templates or Add Project to start.",
       stages: {
         new_lead: "New Lead",
@@ -1071,6 +1087,83 @@ export const translations = {
       created: "Created",
       send: "Send",
       estimatedValue: "Estimated Value"
+    },
+    dashboard: {
+      activeProjects: "ACTIVE PROJECTS",
+      totalProjectValue: "TOTAL PROJECT VALUE",
+      unpaidInvoices: "UNPAID INVOICES",
+      avgRevisions: "AVG. REVISIONS",
+      activeProjectsDescription: "Active freelance work",
+      totalProjectValueDescription: "All active projects value",
+      unpaidInvoicesDescription: "Pending client payments",
+      avgRevisionsDescription: "Average revisions per project"
+    },
+    agenda: {
+      title: "Agenda & Schedule Summary",
+      tip: "Tip: More details can be accessed in the Planner Hub tab.",
+      collapse: "Collapse Summary",
+      expand: "Show Summary",
+      today: "TODAY",
+      thisWeek: "THIS WEEK",
+      meetings: "MEETINGS",
+      dueSoon: "DUE SOON",
+      followUp: "FOLLOW-UP",
+      waitingPayment: "WAITING PAYMENT",
+      todayClean: "All caught up today",
+      clear: "Clear",
+      noDeadlines: "No deadlines",
+      noMeetings: "No meetings",
+      noUrgentDeadlines: "No urgent deadlines",
+      noActions: "No actions required",
+      noPending: "No pending payments",
+      openPlanner: "Open Planner",
+      openLedger: "Open Ledger",
+      openLink: "Open {label}",
+      moreLink: "+{count} more • View {label}",
+      sessionsScheduled: {
+        zero: "No sessions scheduled",
+        one: "{count} session scheduled",
+        other: "{count} sessions scheduled"
+      },
+      dueSoonCount: {
+        zero: "No projects due soon",
+        one: "{count} project due soon",
+        other: "{count} projects due soon"
+      },
+      overdueInvoicesCount: {
+        zero: "no invoices overdue",
+        one: "{count} invoice overdue",
+        other: "{count} invoices overdue"
+      },
+      followUpDueCount: {
+        zero: "no follow-ups due",
+        one: "{count} follow-up due",
+        other: "{count} follow-ups due"
+      },
+      pendingInvoicesCount: {
+        zero: "no invoices pending",
+        one: "{count} invoice pending",
+        other: "{count} invoices pending"
+      },
+      pendingProjectsCount: {
+        zero: "no projects pending",
+        one: "{count} project pending",
+        other: "{count} projects pending"
+      },
+      pendingMixedCount: "{invCount} inv, {projCount} proj pending"
+    },
+    status: {
+      overdue: "Overdue",
+      awaiting_payment: "Waiting Payment",
+      paid: "Paid",
+      pending: "Pending",
+      follow_up: "Follow-up",
+      client_review: "Client Review",
+      completed: "Completed",
+      in_progress: "In Progress",
+      on_hold: "On Hold",
+      revision: "Revision",
+      approved: "Approved"
     }
   },
   id: {
@@ -1169,12 +1262,17 @@ export const translations = {
       dashboard: "Dashboard",
       workspaceBoard: "Board Project",
       plannerHub: "Planner",
+      planner: "Planner",
       weeklyFocus: "Fokus Mingguan",
-      clientHub: "Client Hub",
-      invoiceLedger: "Invoice Ledger",
+      clientHub: "Pusat Klien",
+      invoiceLedger: "Ledger Invoice",
       quotations: "Penawaran",
-      portfolioSandbox: "Portfolio Sandbox",
+      portfolioSandbox: "Ruang Portofolio",
       settings: "Pengaturan",
+      language: "Bahasa",
+      viewGuide: "Panduan Lengkap",
+      lockWorkspace: "Kunci Workspace",
+      switchWorkspace: "Ganti Workspace",
       freelancerProfile: "Profil Freelancer",
       tagline: "Kelola project freelance dari lead hingga lunas."
     },
@@ -1182,17 +1280,28 @@ export const translations = {
     kanban: {
       searchPlaceholder: "Cari project, client, atau tag...",
       sortBy: "Urutkan berdasarkan",
+      all: "Default",
+      simple: "Sederhana",
+      detailed: "Detail",
       viewSimple: "Sederhana",
       viewDetailed: "Detail",
       collapseAll: "Ciutkan Semua",
       expandAll: "Bentangkan Semua",
-      addProject: "Tambah Project",
       templates: "Template",
+      addProject: "Tambah Project",
+      scrollHint: "Geser ke samping untuk melihat semua tahapan workflow.",
+      scrollSideways: "Geser ke samping untuk melihat semua tahapan workflow.",
+      noProjects: "Tidak ada project di stage ini",
+      noProjectsDescription: "Tidak ada project yang cocok dengan pencarian atau filter ini.",
+      noFilterResults: "Tidak ada project yang cocok dengan pencarian atau filter ini.",
+      clearFilters: "Hapus Filter",
       emptyStateTitle: "Mulai dengan template freelancer",
       emptyStateDesc: "Pilih jenis pekerjaan freelance Anda dan AlurKarya akan membuat contoh workflow client-to-paid untuk Anda.",
       chooseTemplate: "Pilih Template",
       createProject: "Buat Project",
-      noProjects: "Tidak ada project di stage ini",
+      noProjectsYet: "Belum ada project.",
+      noProjectsYetDescription: "Tambahkan project pertama atau impor backup jika kamu sudah punya data sebelumnya untuk mulai mengelola workflow client-to-paid.",
+      createFirstProjectGuided: "Buat Project Pertama lewat AlurPandu",
       emptyBoard: "Project tidak ditemukan. Gunakan Template atau Tambah Project untuk mulai.",
       stages: {
         new_lead: "Lead Baru",
@@ -2133,6 +2242,83 @@ export const translations = {
       created: "Dibuat",
       send: "Kirim",
       estimatedValue: "Estimasi Nilai"
+    },
+    dashboard: {
+      activeProjects: "PROJECT AKTIF",
+      totalProjectValue: "TOTAL NILAI PROJECT",
+      unpaidInvoices: "INVOICE BELUM DIBAYAR",
+      avgRevisions: "RATA-RATA REVISI",
+      activeProjectsDescription: "Pekerjaan aktif freelance",
+      totalProjectValueDescription: "Nilai semua project aktif",
+      unpaidInvoicesDescription: "Menunggu pembayaran client",
+      avgRevisionsDescription: "Rata-rata revisi per project"
+    },
+    agenda: {
+      title: "Ringkasan Agenda & Jadwal",
+      tip: "Tips: Detail selengkapnya dapat dilihat melalui tab Planner.",
+      collapse: "Ciutkan Ringkasan",
+      expand: "Tampilkan Ringkasan",
+      today: "HARI INI",
+      thisWeek: "MINGGU INI",
+      meetings: "PERTEMUAN",
+      dueSoon: "SEGERA JATUH TEMPO",
+      followUp: "TINDAK LANJUT",
+      waitingPayment: "MENUNGGU PEMBAYARAN",
+      todayClean: "Semua agenda hari ini sudah tertangani",
+      clear: "Tidak ada agenda",
+      noDeadlines: "Tidak ada tenggat",
+      noMeetings: "Tidak ada pertemuan",
+      noUrgentDeadlines: "Tidak ada tenggat mendesak",
+      noActions: "Tidak ada tindakan yang diperlukan",
+      noPending: "Tidak ada pembayaran tertunda",
+      openPlanner: "Buka Planner",
+      openLedger: "Buka Ledger Invoice",
+      openLink: "Buka {label}",
+      moreLink: "+{count} lagi • Lihat {label}",
+      sessionsScheduled: {
+        zero: "Tidak ada pertemuan",
+        one: "{count} pertemuan dijadwalkan",
+        other: "{count} pertemuan dijadwalkan"
+      },
+      dueSoonCount: {
+        zero: "Tidak ada project segera jatuh tempo",
+        one: "{count} project segera jatuh tempo",
+        other: "{count} project segera jatuh tempo"
+      },
+      overdueInvoicesCount: {
+        zero: "tidak ada invoice terlambat",
+        one: "{count} invoice melewati jatuh tempo",
+        other: "{count} invoice melewati jatuh tempo"
+      },
+      followUpDueCount: {
+        zero: "tidak ada tindak lanjut",
+        one: "{count} tindak lanjut jatuh tempo",
+        other: "{count} tindak lanjut jatuh tempo"
+      },
+      pendingInvoicesCount: {
+        zero: "tidak ada invoice tertunda",
+        one: "{count} invoice tertunda",
+        other: "{count} invoice tertunda"
+      },
+      pendingProjectsCount: {
+        zero: "tidak ada project tertunda",
+        one: "{count} project tertunda",
+        other: "{count} project tertunda"
+      },
+      pendingMixedCount: "{invCount} inv, {projCount} proj tertunda"
+    },
+    status: {
+      overdue: "Terlambat",
+      awaiting_payment: "Menunggu Pembayaran",
+      paid: "Lunas",
+      pending: "Tertunda",
+      follow_up: "Tindak Lanjut",
+      client_review: "Review Klien",
+      completed: "Selesai",
+      in_progress: "Sedang Dikerjakan",
+      on_hold: "On Hold",
+      revision: "Revisi",
+      approved: "Disetujui"
     }
   }
 };
@@ -2164,12 +2350,25 @@ export function setLanguage(lang) {
 
 /**
  * Helper to translate a dot-notated string key. Falls back to English, then back to fallback string.
- * Never displays undefined or null.
+ * Supports string parameter interpolation and pluralization keys (zero, one, other).
  * @param {string} path - e.g. "sidebar.dashboard"
- * @param {string} [fallback] - default return if both translations are missing
+ * @param {string|object} [fallbackOrParams] - fallback string OR object of parameters
+ * @param {object} [params] - object of parameters if fallback was provided
  * @returns {string} translated text or fallback
  */
-export function t(path, fallback = '') {
+export function t(path, fallbackOrParams = '', params = null) {
+  let fallback = '';
+  let actualParams = null;
+  
+  if (typeof fallbackOrParams === 'object' && fallbackOrParams !== null) {
+    actualParams = fallbackOrParams;
+  } else {
+    fallback = fallbackOrParams;
+    if (typeof params === 'object' && params !== null) {
+      actualParams = params;
+    }
+  }
+  
   const currentLang = getLanguage();
   
   const getNestedValue = (obj, p) => {
@@ -2177,23 +2376,44 @@ export function t(path, fallback = '') {
       return acc && acc[part] !== undefined ? acc[part] : undefined;
     }, obj);
   };
-
+  
   // 1. Try active language
-  const translation = getNestedValue(translations[currentLang], path);
-  if (translation !== undefined && translation !== null) {
-    return translation;
-  }
-
+  let translation = getNestedValue(translations[currentLang], path);
+  
   // 2. Try English fallback
-  if (currentLang !== 'en') {
-    const enTranslation = getNestedValue(translations['en'], path);
-    if (enTranslation !== undefined && enTranslation !== null) {
-      return enTranslation;
+  if ((translation === undefined || translation === null) && currentLang !== 'en') {
+    translation = getNestedValue(translations['en'], path);
+  }
+  
+  // 3. Use fallback string if still missing
+  if (translation === undefined || translation === null) {
+    translation = fallback !== undefined && fallback !== null ? fallback : path;
+  }
+  
+  // Handle pluralization/conditional matching if a count is provided
+  if (actualParams && typeof actualParams.count === 'number') {
+    const count = actualParams.count;
+    if (typeof translation === 'object' && translation !== null) {
+      if (count === 0 && translation.zero !== undefined) {
+        translation = translation.zero;
+      } else if (count === 1 && translation.one !== undefined) {
+        translation = translation.one;
+      } else if (translation.other !== undefined) {
+        translation = translation.other;
+      } else {
+        translation = translation.one || translation.other || translation.zero || '';
+      }
     }
   }
-
-  // 3. Try manual fallback string
-  return fallback !== undefined && fallback !== null ? fallback : path;
+  
+  // Handle string interpolation if actualParams are passed
+  if (actualParams && typeof translation === 'string') {
+    Object.keys(actualParams).forEach(key => {
+      translation = translation.replace(new RegExp(`{${key}}`, 'g'), actualParams[key]);
+    });
+  }
+  
+  return translation;
 }
 
 /**

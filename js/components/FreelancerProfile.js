@@ -4,6 +4,7 @@
 
 import { getIcon } from '../icons.js';
 import { t, getLanguage, setLanguage } from '../i18n.js';
+import { safeUrl, escapeHTML } from '../utils.js';
 
 export class FreelancerProfile {
   /**
@@ -15,6 +16,7 @@ export class FreelancerProfile {
     this.container = container;
     this.store = store;
     this.onTriggerToast = onTriggerToast;
+    this.initialsEditedManually = false;
   }
 
   update() {
@@ -27,38 +29,14 @@ export class FreelancerProfile {
     const isIndo = activeLang === 'id';
 
     const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
-    if (!activeWorkspaceId) {
-      const titleText = isIndo ? "Pilih workspace terlebih dahulu" : "Select a workspace first";
-      const bodyText = isIndo 
-        ? "Profil freelancer disimpan untuk setiap workspace. Pilih atau buat workspace agar kamu bisa mengatur profilmu."
-        : "Freelancer profiles are stored separately for each workspace. Select or create a workspace to manage your profile.";
-      const ctaText = isIndo ? "Pilih Workspace" : "Select Workspace";
+    const hasWorkspace = !!activeWorkspaceId;
 
-      const blockerEl = document.createElement('div');
-      blockerEl.className = 'focus-module-box';
-      blockerEl.style.cssText = 'max-width: 500px; padding: 40px; margin: 80px auto; text-align: center; border: 1px solid rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.02); border-radius: var(--border-radius-lg); display: flex; flex-direction: column; align-items: center; gap: 20px;';
-      blockerEl.innerHTML = `
-        <div style="font-size: 3rem; filter: drop-shadow(0 4px 12px rgba(139,92,246,0.3));">💼</div>
-        <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0;">${titleText}</h2>
-        <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0; line-height: 1.6;">${bodyText}</p>
-        <button type="button" class="btn btn-primary" id="btn-recovery-select-workspace" style="font-size: 0.8rem; padding: 10px 24px; border-radius: 8px; font-weight: 700; margin-top: 8px;">
-          ${ctaText}
-        </button>
-      `;
-      this.container.appendChild(blockerEl);
-      
-      const btn = blockerEl.querySelector('#btn-recovery-select-workspace');
-      if (btn) {
-        btn.addEventListener('click', () => {
-          sessionStorage.removeItem('alurkarya_active_workspace_id');
-          window.location.reload();
-        });
-      }
-      return;
-    }
-
-    const profile = this.store.getFreelancerProfile();
+    const profile = { ...this.store.getDefaultFreelancerProfile(), ...this.store.getFreelancerProfile() };
     const defaultCurrency = window.getDefaultCurrency ? window.getDefaultCurrency() : 'IDR';
+
+    // Initials manual/auto detection
+    const defaultInitials = this.store.getInitials(profile.freelancerName);
+    this.initialsEditedManually = !!(profile.freelancerInitials && profile.freelancerInitials !== defaultInitials);
 
     const viewEl = document.createElement('div');
     viewEl.className = 'profile-viewport';
@@ -79,6 +57,18 @@ export class FreelancerProfile {
       <p style="margin-top: 6px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">${headerDesc}</p>
     `;
     viewEl.appendChild(introBox);
+
+    // If no workspace active, show warning banner at the top
+    if (!hasWorkspace) {
+      const warnBox = document.createElement('div');
+      warnBox.className = 'safety-notice';
+      warnBox.style.cssText = 'max-width: 1100px; margin: 0 auto 16px auto; width: 100%; border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.05); color: #f59e0b; display: flex; align-items: center; gap: 8px; box-sizing: border-box;';
+      warnBox.innerHTML = `
+        <span style="font-size: 1.1rem;">⚠️</span>
+        <span style="font-size: 0.8rem; font-weight: 600;">${isIndo ? 'Pilih atau buat workspace terlebih dahulu sebelum mengubah profil.' : 'Select or create a workspace before editing your profile.'}</span>
+      `;
+      viewEl.appendChild(warnBox);
+    }
 
     // Responsive Grid layout for Form and Preview
     const gridLayout = document.createElement('div');
@@ -105,6 +95,11 @@ export class FreelancerProfile {
         background: rgba(0, 0, 0, 0.35) !important;
         box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
       }
+      .profile-viewport .form-control:disabled {
+        opacity: 0.55 !important;
+        cursor: not-allowed !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+      }
     `;
     viewEl.appendChild(styleEl);
 
@@ -124,49 +119,49 @@ export class FreelancerProfile {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${isIndo ? 'Nama Freelancer' : 'Freelancer Name'}</label>
-            <input type="text" name="name" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${profile.freelancerName || ''}" placeholder="e.g. Aris Aulia" required />
+            <input type="text" name="name" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${escapeHTML(profile.freelancerName || '')}" placeholder="e.g. Aris Aulia" required ${!hasWorkspace ? 'disabled' : ''} />
           </div>
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${isIndo ? 'Role / Spesialisasi' : 'Role / Specialization'}</label>
-            <input type="text" name="role" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${profile.freelancerRole || ''}" placeholder="e.g. Creative Freelancer" required />
+            <input type="text" name="role" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${escapeHTML(profile.freelancerRole || '')}" placeholder="e.g. Creative Freelancer" required ${!hasWorkspace ? 'disabled' : ''} />
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${isIndo ? 'Email' : 'Email'}</label>
-            <input type="email" name="email" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${profile.freelancerEmail || ''}" placeholder="e.g. hello@arisaulia.com" required />
+            <input type="email" name="email" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${escapeHTML(profile.freelancerEmail || '')}" placeholder="e.g. hello@arisaulia.com" required ${!hasWorkspace ? 'disabled' : ''} />
           </div>
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${isIndo ? 'Lokasi' : 'Location'}</label>
-            <input type="text" name="location" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${profile.freelancerLocation || ''}" placeholder="e.g. Bandung, Indonesia" required />
+            <input type="text" name="location" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${escapeHTML(profile.freelancerLocation || '')}" placeholder="e.g. Bandung, Indonesia" required ${!hasWorkspace ? 'disabled' : ''} />
           </div>
         </div>
 
         <div class="form-group">
           <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${isIndo ? 'Bio Singkat' : 'Short Bio'}</label>
-          <textarea name="bio" class="form-control" style="font-size: 0.8rem; padding: 10px; min-height: 80px; resize: vertical;" placeholder="Tell your clients a little bit about what you specialize in..." required>${profile.freelancerBio || ''}</textarea>
+          <textarea name="bio" class="form-control" style="font-size: 0.8rem; padding: 10px; min-height: 80px; resize: vertical;" placeholder="Tell your clients a little bit about what you specialize in..." required ${!hasWorkspace ? 'disabled' : ''}>${escapeHTML(profile.freelancerBio || '')}</textarea>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${isIndo ? 'Link Portfolio' : 'Portfolio Link'}</label>
-            <input type="url" name="portfolio" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${profile.freelancerPortfolioLink || ''}" placeholder="e.g. https://dribbble.com/arisaulia" required />
+            <input type="url" name="portfolio" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${escapeHTML(profile.freelancerPortfolioLink || '')}" placeholder="e.g. https://dribbble.com/arisaulia" required ${!hasWorkspace ? 'disabled' : ''} />
           </div>
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${isIndo ? 'Foto / Avatar' : 'Photo / Avatar'}</label>
-            <input type="url" name="avatar" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${profile.freelancerAvatar || ''}" placeholder="e.g. https://images.unsplash.com/..." />
+            <input type="url" name="avatar" class="form-control" style="font-size: 0.8rem; padding: 10px;" value="${escapeHTML(profile.freelancerAvatar || '')}" placeholder="e.g. https://images.unsplash.com/..." ${!hasWorkspace ? 'disabled' : ''} />
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${isIndo ? 'Initial' : 'Initials'}</label>
-            <input type="text" name="initials" class="form-control" style="font-size: 0.8rem; padding: 10px; text-transform: uppercase;" value="${profile.freelancerInitials || ''}" maxlength="3" placeholder="Auto-generated if empty" />
+            <input type="text" name="initials" class="form-control" style="font-size: 0.8rem; padding: 10px; text-transform: uppercase;" value="${escapeHTML(profile.freelancerInitials || '')}" maxlength="3" placeholder="Auto-generated if empty" ${!hasWorkspace ? 'disabled' : ''} />
           </div>
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${t('profile.language', 'Language / Bahasa')}</label>
-            <select class="form-control" id="profile-lang-select" style="font-size: 0.8rem; padding: 10px; cursor: pointer;">
+            <select class="form-control" id="profile-lang-select" style="font-size: 0.8rem; padding: 10px; cursor: pointer;" ${!hasWorkspace ? 'disabled' : ''}>
               <option value="en" ${activeLang === 'en' ? 'selected' : ''}>English</option>
               <option value="id" ${activeLang === 'id' ? 'selected' : ''}>Bahasa Indonesia</option>
             </select>
@@ -176,7 +171,7 @@ export class FreelancerProfile {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: #cbd5e1;">${t('profile.defaultCurrency', 'Default Currency')}</label>
-            <select class="form-control" id="profile-currency-select" style="font-size: 0.8rem; padding: 10px; cursor: pointer;">
+            <select class="form-control" id="profile-currency-select" style="font-size: 0.8rem; padding: 10px; cursor: pointer;" ${!hasWorkspace ? 'disabled' : ''}>
               <option value="IDR" ${defaultCurrency === 'IDR' ? 'selected' : ''}>IDR - Indonesian Rupiah</option>
               <option value="USD" ${defaultCurrency === 'USD' ? 'selected' : ''}>USD - US Dollar</option>
               <option value="SGD" ${defaultCurrency === 'SGD' ? 'selected' : ''}>SGD - Singapore Dollar</option>
@@ -190,10 +185,10 @@ export class FreelancerProfile {
           <button type="button" class="btn btn-secondary" id="btn-switch-entry-mode" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; color: var(--color-warning); border-color: rgba(245,158,11,0.15);">
             🔄 ${t('entryMode.switchMode', 'Switch Entry Mode')}
           </button>
-          <button type="button" class="btn btn-secondary" id="btn-open-portal" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+          <button type="button" class="btn btn-secondary" id="btn-open-portal" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;" ${!hasWorkspace ? 'disabled' : ''}>
             ${getIcon('externalLink', '', 12)} ${t('profile.openClientView', 'Open Client View')}
           </button>
-          <button type="submit" class="btn btn-primary" style="font-size: 0.75rem; padding: 8px 20px; border-radius: 6px; font-weight: 600;">
+          <button type="submit" class="btn btn-primary" style="font-size: 0.75rem; padding: 8px 20px; border-radius: 6px; font-weight: 600;" ${!hasWorkspace ? 'disabled' : ''}>
             ${saveBtnText}
           </button>
         </div>
@@ -207,6 +202,11 @@ export class FreelancerProfile {
     previewBox.style.cssText = 'padding: 24px; display: flex; flex-direction: column; gap: 16px; width: 100%; box-sizing: border-box;';
 
     const previewTitle = isIndo ? 'Preview Profil' : 'Profile Preview';
+    const initialName = profile.freelancerName || (isIndo ? 'Nama Belum Diatur' : 'Name Not Set');
+    const initialRole = profile.freelancerRole || (isIndo ? 'Role Belum Diatur' : 'Role Not Set');
+    const initialBio = profile.freelancerBio || (isIndo ? 'Belum ada bio singkat.' : 'No short bio yet.');
+    const initialInitials = profile.freelancerInitials || this.store.getInitials(profile.freelancerName);
+
     previewBox.innerHTML = `
       <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
         ${getIcon('user', 'text-primary', 16)} ${previewTitle}
@@ -215,33 +215,32 @@ export class FreelancerProfile {
         <!-- Avatar circle -->
         <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: #fff; border: 2px solid rgba(255,255,255,0.1); overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" id="preview-avatar-container">
           ${profile.freelancerAvatar 
-            ? `<img src="${profile.freelancerAvatar}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; document.getElementById('preview-avatar-initials').style.display='flex';" />`
+            ? `<img src="${escapeHTML(profile.freelancerAvatar)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; document.getElementById('preview-avatar-initials').style.display='flex';" />`
             : ''}
-          <span id="preview-avatar-initials" style="display: ${profile.freelancerAvatar ? 'none' : 'flex'};">${profile.freelancerInitials || 'AK'}</span>
+          <span id="preview-avatar-initials" style="display: ${profile.freelancerAvatar ? 'none' : 'flex'};">${escapeHTML(initialInitials)}</span>
         </div>
         <!-- Info -->
         <div>
-          <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;" id="preview-name">${profile.freelancerName || (isIndo ? 'Nama Belum Diatur' : 'Name Not Set')}</h4>
-          <span style="font-size: 0.8rem; color: #a78bfa; font-weight: 600; display: block; margin-top: 4px;" id="preview-role">${profile.freelancerRole || (isIndo ? 'Role Belum Diatur' : 'Role Not Set')}</span>
+          <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;" id="preview-name">${escapeHTML(initialName)}</h4>
+          <span style="font-size: 0.8rem; color: #a78bfa; font-weight: 600; display: block; margin-top: 4px;" id="preview-role">${escapeHTML(initialRole)}</span>
         </div>
         <!-- Bio -->
         <p style="margin: 0; font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5; max-width: 100%; word-break: break-word;" id="preview-bio">
-          ${profile.freelancerBio || (isIndo ? 'Belum ada bio singkat.' : 'No short bio yet.')}
+          ${escapeHTML(initialBio)}
         </p>
         <!-- Contact Info -->
         <div style="width: 100%; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 16px; font-size: 0.75rem; text-align: left; color: var(--text-secondary);">
           <div style="display: flex; align-items: center; gap: 8px; word-break: break-all;">
-            <span>📧</span> <span id="preview-email">${profile.freelancerEmail || '-'}</span>
+            <span>📧</span> <span id="preview-email">${escapeHTML(profile.freelancerEmail || '-')}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span>📍</span> <span id="preview-location">${profile.freelancerLocation || '-'}</span>
+            <span>📍</span> <span id="preview-location">${escapeHTML(profile.freelancerLocation || '-')}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px; word-break: break-all;">
-            <span>🔗</span> <span id="preview-portfolio">${profile.freelancerPortfolioLink ? `<a href="${profile.freelancerPortfolioLink}" target="_blank" style="color: #60a5fa; text-decoration: none;">${profile.freelancerPortfolioLink}</a>` : '-'}</span>
+            <span>🔗</span> <span id="preview-portfolio">${profile.freelancerPortfolioLink ? `<a href="${escapeHTML(safeUrl(profile.freelancerPortfolioLink))}" target="_blank" style="color: #60a5fa; text-decoration: none;">${escapeHTML(profile.freelancerPortfolioLink)}</a>` : '-'}</span>
           </div>
         </div>
       </div>
-    </div>
     `;
     gridLayout.appendChild(previewBox);
     viewEl.appendChild(gridLayout);
@@ -251,11 +250,11 @@ export class FreelancerProfile {
     settingsBox.className = 'focus-module-box';
     settingsBox.style.cssText = 'max-width: 1100px; padding: 24px; display: flex; flex-direction: column; gap: 16px; margin: 0 auto; width: 100%; border: 1px solid rgba(255, 255, 255, 0.08); box-sizing: border-box;';
 
-    const settingsTitle = t('privacy.dangerZone', 'Workspace Data Settings');
+    const settingsTitle = isIndo ? 'Pengaturan Data Workspace' : 'Workspace Data Settings';
     const settingsDesc = isIndo
       ? 'Atur backup, penguncian, dan penghapusan data workspace yang tersimpan di browser ini.'
       : 'Manage backup, lock, and deletion settings for workspace data stored in this browser.';
-    const advancedLabel = t('profile.advancedActions', 'Advanced Actions');
+    const advancedLabel = isIndo ? 'Tindakan Lanjutan' : 'Advanced Actions';
 
     settingsBox.innerHTML = `
       <h3 style="font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0;">
@@ -273,14 +272,14 @@ export class FreelancerProfile {
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 16px;">
             <div style="flex: 1; min-width: 250px;">
               <span style="font-size: 0.82rem; font-weight: 600; color: #f8fafc; display: block; margin-bottom: 4px;">
-                ${t('profile.deleteWorkspace', 'Delete This Workspace')}
+                ${isIndo ? 'Hapus Workspace Ini' : 'Delete This Workspace'}
               </span>
               <small style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.45; display: block;">
-                ${t('profile.deleteWorkspaceDesc', 'Deletes only the active workspace. Other workspaces in this browser will not be deleted.')}
+                ${isIndo ? 'Menghapus hanya workspace yang aktif saat ini. Workspace lain di browser ini tidak akan terhapus.' : 'Deletes only the active workspace. Other workspaces in this browser will not be deleted.'}
               </small>
             </div>
-            <button type="button" class="btn btn-secondary text-danger" id="btn-delete-workspace" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
-              ${t('profile.deleteWorkspace', 'Delete This Workspace')}
+            <button type="button" class="btn btn-secondary text-danger" id="btn-delete-workspace" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;" ${!hasWorkspace ? 'disabled style="cursor: not-allowed; opacity: 0.5;"' : ''}>
+              ${isIndo ? 'Hapus Workspace Ini' : 'Delete This Workspace'}
             </button>
           </div>
 
@@ -288,14 +287,14 @@ export class FreelancerProfile {
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
             <div style="flex: 1; min-width: 250px;">
               <span style="font-size: 0.82rem; font-weight: 600; color: #f8fafc; display: block; margin-bottom: 4px;">
-                ${t('profile.deleteAllData', 'Delete All Data in This Browser')}
+                ${isIndo ? 'Hapus Semua Data di Browser Ini' : 'Delete All Data in This Browser'}
               </span>
               <small style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.45; display: block;">
-                ${t('profile.deleteAllDataDesc', 'Deletes all AlurKarya workspaces stored in this browser. Use this only if you already have a backup or truly want to start over.')}
+                ${isIndo ? 'Menghapus seluruh workspace AlurKarya yang tersimpan di browser ini secara permanen.' : 'Deletes all AlurKarya workspaces stored in this browser.'}
               </small>
             </div>
             <button type="button" class="btn btn-secondary text-danger" id="btn-delete-all-local" style="font-size: 0.75rem; padding: 8px 16px; border-radius: 6px; border-color: rgba(239,68,68,0.25); background: transparent;">
-              ${t('profile.deleteAllData', 'Delete All Data in This Browser')}
+              ${isIndo ? 'Hapus Semua Data di Browser Ini' : 'Delete All Data in This Browser'}
             </button>
           </div>
         </div>
@@ -305,10 +304,13 @@ export class FreelancerProfile {
 
     const versionMarker = document.createElement('div');
     versionMarker.style.cssText = 'font-size: 0.6rem; color: var(--text-muted); text-align: center; margin-top: 16px; opacity: 0.3;';
+    versionMarker.setAttribute('data-profile-ui-version', 'profile-form-v2');
     versionMarker.textContent = 'Profile UI Version: profile-form-v2';
     viewEl.appendChild(versionMarker);
 
     this.container.appendChild(viewEl);
+
+    if (!hasWorkspace) return; // Skip input event bindings if form is disabled
 
     // Form Change / Type Realtime Preview Sync
     const form = viewEl.querySelector('#freelancer-profile-form');
@@ -333,7 +335,7 @@ export class FreelancerProfile {
       const avatar = inputs.avatar.value.trim();
       const initials = inputs.initials.value.trim().toUpperCase();
 
-      const calculatedInitials = initials || (name ? name.split(' ').map(n => n[0]).join('').substring(0, 3).toUpperCase() : 'AK');
+      const calculatedInitials = initials || (name ? this.store.getInitials(name) : 'YN');
 
       const nameEl = viewEl.querySelector('#preview-name');
       const roleEl = viewEl.querySelector('#preview-role');
@@ -349,20 +351,23 @@ export class FreelancerProfile {
       if (emailEl) emailEl.textContent = email || '-';
       if (locationEl) locationEl.textContent = location || '-';
       
+      const cleanPortfolio = safeUrl(portfolio);
       if (portfolioEl) {
-        portfolioEl.innerHTML = portfolio 
-          ? `<a href="${portfolio}" target="_blank" style="color: #60a5fa; text-decoration: none;">${portfolio}</a>`
+        portfolioEl.innerHTML = cleanPortfolio 
+          ? `<a href="${escapeHTML(cleanPortfolio)}" target="_blank" style="color: #60a5fa; text-decoration: none;">${escapeHTML(portfolio)}</a>`
           : '-';
       }
 
       if (avatarContainer) {
         avatarContainer.innerHTML = '';
-        if (avatar) {
+        const cleanAvatar = safeUrl(avatar);
+        if (cleanAvatar) {
           const img = document.createElement('img');
-          img.src = avatar;
+          img.src = cleanAvatar;
           img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
           const spanInitials = document.createElement('span');
           spanInitials.style.cssText = 'display: none;';
+          spanInitials.id = 'preview-avatar-initials';
           spanInitials.textContent = calculatedInitials;
           img.onerror = () => {
             img.style.display = 'none';
@@ -372,14 +377,34 @@ export class FreelancerProfile {
           avatarContainer.appendChild(spanInitials);
         } else {
           const spanInitials = document.createElement('span');
+          spanInitials.id = 'preview-avatar-initials';
           spanInitials.textContent = calculatedInitials;
           avatarContainer.appendChild(spanInitials);
         }
       }
     };
 
+    // Auto-update initials when name changes unless manual edited
+    inputs.name.addEventListener('input', () => {
+      if (!this.initialsEditedManually) {
+        inputs.initials.value = this.store.getInitials(inputs.name.value);
+      }
+      updatePreview();
+    });
+
+    inputs.initials.addEventListener('input', () => {
+      const val = inputs.initials.value.trim();
+      if (val === '') {
+        this.initialsEditedManually = false;
+        inputs.initials.value = this.store.getInitials(inputs.name.value);
+      } else {
+        this.initialsEditedManually = true;
+      }
+      updatePreview();
+    });
+
     Object.values(inputs).forEach(input => {
-      if (input) {
+      if (input && input !== inputs.name && input !== inputs.initials) {
         input.addEventListener('input', updatePreview);
       }
     });
@@ -414,13 +439,21 @@ export class FreelancerProfile {
         freelancerInitials: initVal
       });
 
-      this.onTriggerToast(t('toast.profileUpdated', 'Profile updated.'), 'text-success');
+      const successToastMsg = isIndo ? 'Profil berhasil disimpan.' : 'Profile saved successfully.';
+      this.onTriggerToast(successToastMsg, 'text-success');
       this.update();
       
-      // Force update the sidebar footer rendering
+      // Force update the sidebar footer rendering without page reload
       if (window.app && window.app.sidebar) {
         window.app.sidebar.update(window.app.activeTab);
       }
+
+      // Sync Client portal
+      window.dispatchEvent(
+        new CustomEvent('alurkarya:profile-updated', {
+          detail: { workspaceId: activeWorkspaceId }
+        })
+      );
     });
 
     viewEl.querySelector('#profile-lang-select').addEventListener('change', (e) => {
@@ -453,7 +486,9 @@ export class FreelancerProfile {
       const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
       if (!activeWorkspaceId) return;
 
-      const warningText = t('profile.confirmDeleteWorkspace');
+      const warningText = isIndo
+        ? 'PERINGATAN: Tindakan ini akan menghapus workspace saat ini beserta seluruh data di dalamnya secara permanen.\nDisarankan untuk melakukan ekspor backup terlebih dahulu.\n\nKetik HAPUS untuk mengonfirmasi:'
+        : 'WARNING: This will permanently delete the current workspace and all its local data.\nIt is highly recommended to export a backup first.\n\nType DELETE to confirm:';
       const confirmVal = prompt(warningText);
       const expected = isIndo ? 'HAPUS' : 'DELETE';
       
@@ -461,24 +496,26 @@ export class FreelancerProfile {
         this.store.deleteWorkspace(activeWorkspaceId);
         sessionStorage.removeItem('alurkarya_active_workspace_id');
         sessionStorage.removeItem('alurkarya_session_unlocked');
-        this.onTriggerToast(t('profile.workspaceDeleted', 'Workspace deleted successfully.'), 'text-success');
+        this.onTriggerToast(isIndo ? 'Workspace berhasil dihapus.' : 'Workspace deleted successfully.', 'text-success');
         setTimeout(() => window.location.reload(), 1200);
       } else {
-        this.onTriggerToast(t('profile.deletionCancelled', 'Deletion cancelled.'), 'text-muted');
+        this.onTriggerToast(isIndo ? 'Penghapusan dibatalkan.' : 'Deletion cancelled.', 'text-muted');
       }
     });
 
     viewEl.querySelector('#btn-delete-all-local').addEventListener('click', () => {
-      const warningText = t('profile.confirmDeleteAllData');
+      const warningText = isIndo
+        ? 'PERINGATAN SANGAT PENTING: Tindakan ini akan menghapus seluruh data workspace AlurKarya di browser ini secara permanen.\nSeluruh data akan hilang.\n\nKetik HAPUS untuk mengonfirmasi:'
+        : 'CRITICAL WARNING: This will permanently delete all AlurKarya workspaces and data stored in this browser.\nAll data will be lost.\n\nType DELETE to confirm:';
       const confirmVal = prompt(warningText);
       const expected = isIndo ? 'HAPUS' : 'DELETE';
 
       if (confirmVal === expected) {
         this.store.deleteAllLocalData();
-        this.onTriggerToast(t('profile.allDataCleared', 'All local data cleared successfully.'), 'text-success');
+        this.onTriggerToast(isIndo ? 'Semua data lokal berhasil dihapus.' : 'All local data cleared successfully.', 'text-success');
         setTimeout(() => window.location.reload(), 1200);
       } else {
-        this.onTriggerToast(t('profile.deletionCancelled', 'Deletion cancelled.'), 'text-muted');
+        this.onTriggerToast(isIndo ? 'Penghapusan dibatalkan.' : 'Deletion cancelled.', 'text-muted');
       }
     });
   }

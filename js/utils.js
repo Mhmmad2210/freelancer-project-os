@@ -2,7 +2,7 @@
    FREELANCER PROJECT OS - UTILITY HELPERS
    ========================================================================== */
 
-import { getLanguage } from './i18n.js';
+import { getLanguage, t } from './i18n.js';
 
 /**
  * Generates a unique secure pseudo-random identifier.
@@ -805,4 +805,98 @@ export function normalizeProject(p) {
   p.updatedAt = p.updatedAt || new Date().toISOString();
 
   return p;
+}
+
+/**
+ * Safely escapes characters in HTML to prevent XSS injection while keeping emojis intact.
+ * @param {string} value
+ * @returns {string}
+ */
+export function escapeHTML(value = '') {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  })[character]);
+}
+
+/**
+ * Validates a URL to prevent unsafe protocols like javascript: or data:
+ * @param {string} url
+ * @returns {string}
+ */
+export function safeUrl(url = '') {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^(javascript|data):/i.test(trimmed)) {
+    console.warn(`[Security Warning] Unsafe protocol rejected in URL: ${trimmed}`);
+    return '';
+  }
+  return trimmed;
+}
+
+/**
+ * Maps any raw database status to its canonical lowercase value.
+ * Supporting English, Indonesian legacy, whitespace variations, and casing.
+ * @param {string} rawStatus
+ * @returns {string}
+ */
+export function getCanonicalStatus(rawStatus) {
+  if (typeof rawStatus !== 'string') return 'pending';
+  const s = rawStatus.trim().toLowerCase().replace(/[-_\s]+/g, '_');
+
+  const aliases = {
+    // Overdue
+    overdue: 'overdue',
+    terlambat: 'overdue',
+    invoice_overdue: 'overdue',
+    // Awaiting Payment
+    awaiting_payment: 'awaiting_payment',
+    waiting_payment: 'awaiting_payment',
+    menunggu_payment: 'awaiting_payment',
+    menunggu_pembayaran: 'awaiting_payment',
+    // Paid
+    paid: 'paid',
+    lunas: 'paid',
+    // Pending
+    pending: 'pending',
+    tertunda: 'pending',
+    // Follow-up
+    follow_up: 'follow_up',
+    tindak_lanjut: 'follow_up',
+    // Client Review
+    client_review: 'client_review',
+    review_klien: 'client_review',
+    review_client: 'client_review',
+    // Completed
+    completed: 'completed',
+    selesai: 'completed',
+    // In Progress
+    in_progress: 'in_progress',
+    sedang_dikerjakan: 'in_progress',
+    // On Hold
+    on_hold: 'on_hold',
+    ditunda: 'on_hold',
+    // Revision
+    revision: 'revision',
+    revisi: 'revision',
+    // Approved
+    approved: 'approved',
+    disetujui: 'approved'
+  };
+
+  return aliases[s] || s;
+}
+
+/**
+ * Returns localized string for status key.
+ * @param {string} rawStatus
+ * @returns {string}
+ */
+export function getLocalizedStatus(rawStatus) {
+  const canonical = getCanonicalStatus(rawStatus);
+  return t(`status.${canonical}`, rawStatus);
 }
