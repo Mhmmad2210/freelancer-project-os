@@ -144,9 +144,8 @@ export class KanbanBoard {
     
     const activeLang = getLanguage();
     const activeWs = sessionStorage.getItem('alurkarya_active_workspace_id') || '';
-    const unlocked = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
     const guideUrl = activeWs 
-      ? `alurpandu-guided-start.html?workspace_id=${activeWs}&session_unlocked=${unlocked}`
+      ? `alurpandu-guided-start.html?workspace_id=${activeWs}`
       : 'alurpandu-guided-start.html';
 
     const labelText = activeLang === 'id' ? 'Lanjutkan Setup' : 'Continue Setup';

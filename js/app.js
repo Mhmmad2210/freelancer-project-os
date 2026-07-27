@@ -2,7 +2,7 @@
    FREELANCER PROJECT OS - MASTER ENTRYPOINT & ROUTER MODULE
    ========================================================================== */
 
-import { store } from './store.js';
+import { store, isWorkspaceSessionUnlocked, setWorkspaceSessionUnlocked, clearWorkspaceSessionUnlock } from './store.js';
 import { getIcon } from './icons.js';
 import { SidebarNav } from './components/Sidebar.js';
 import { KanbanBoard } from './components/KanbanBoard.js';
@@ -158,6 +158,65 @@ class FreelancerApp {
     store.subscribe(() => {
       this.refreshActiveView();
     });
+
+    // Parse URL view/action hints for deep-linking
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewParam = urlParams.get('view');
+    const actionParam = urlParams.get('action');
+
+    const allowedViews = new Set([
+      'kanban',
+      'freelancer-profile',
+      'client-hub',
+      'planner',
+      'invoice-ledger',
+      'client-dashboard'
+    ]);
+
+    const allowedActions = new Set([
+      'add-project',
+      'switch-workspace',
+      'lock-workspace',
+      'export-backup',
+      'prepare-client-update'
+    ]);
+
+    if (viewParam) {
+      let mappedView = viewParam;
+      if (mappedView === 'workspace-board') mappedView = 'kanban';
+      if (allowedViews.has(mappedView)) {
+        this.switchView(mappedView);
+      }
+    }
+
+    if (actionParam && allowedActions.has(actionParam)) {
+      setTimeout(() => {
+        // Clean URL action parameter so subsequent refreshes do not re-execute it
+        try {
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete('action');
+          window.history.replaceState({}, document.title, cleanUrl.pathname + cleanUrl.search);
+        } catch (e) {}
+
+        if (actionParam === 'switch-workspace') {
+          this.switchWorkspace();
+        } else if (actionParam === 'lock-workspace') {
+          const isId = localStorage.getItem('alurkarya_language') === 'id';
+          const msg = isId ? 'Apakah Anda ingin mengunci workspace aktif?' : 'Do you want to lock the active workspace?';
+          if (confirm(msg)) {
+            this.lockWorkspace('manual');
+          }
+        } else if (actionParam === 'export-backup') {
+          const isId = localStorage.getItem('alurkarya_language') === 'id';
+          const msg = isId ? 'Apakah Anda ingin mengekspor backup workspace sekarang?' : 'Do you want to export the workspace backup now?';
+          if (confirm(msg)) {
+            window.AlurKaryaActions.exportBackup();
+          }
+        } else if (actionParam === 'add-project') {
+          this.projectModal.open(null);
+        }
+      }, 300);
+    }
   }
 
   renderShell() {
@@ -394,8 +453,7 @@ class FreelancerApp {
       if (anchor && anchor.getAttribute('href') && anchor.getAttribute('href').includes('alurpandu-guided-start.html')) {
         e.preventDefault();
         const activeWs = sessionStorage.getItem('alurkarya_active_workspace_id') || '';
-        const unlocked = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
-        window.open(`alurpandu-guided-start.html?workspace_id=${activeWs}&session_unlocked=${unlocked}`, '_blank');
+        window.open(`alurpandu-guided-start.html?workspace_id=${activeWs}`, '_blank');
       }
     });
 
@@ -547,8 +605,7 @@ class FreelancerApp {
     if (reopenOnboardingBtn) {
       reopenOnboardingBtn.addEventListener('click', () => {
         const activeWs = sessionStorage.getItem('alurkarya_active_workspace_id') || '';
-        const unlocked = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
-        window.open(`alurpandu-guided-start.html?workspace_id=${activeWs}&session_unlocked=${unlocked}`, '_blank');
+        window.open(`alurpandu-guided-start.html?workspace_id=${activeWs}`, '_blank');
       });
     }
 
@@ -702,7 +759,7 @@ class FreelancerApp {
       activeSearchQuery: searchVal,
       stageKeysFound: stagesFound,
       localStorageParseStatus: lsParseStatus,
-      migrationStatus: sessionStorage.getItem('alurkarya_session_unlocked') ? 'Unlocked' : 'Locked',
+      migrationStatus: isWorkspaceSessionUnlocked(sessionStorage.getItem('alurkarya_active_workspace_id')) ? 'Unlocked' : 'Locked',
       kanbanColumnsRendered: colsRendered
     };
 
@@ -899,9 +956,11 @@ class FreelancerApp {
   lockWorkspace(reason = 'manual') {
     // 1. Set the lock reason in sessionStorage
     sessionStorage.setItem('alurkarya_lock_reason', reason);
-    // 2. Remove the session unlock flag
+    const activeWs = sessionStorage.getItem('alurkarya_active_workspace_id');
+    if (activeWs) {
+      clearWorkspaceSessionUnlock(activeWs);
+    }
     sessionStorage.removeItem('alurkarya_session_unlocked');
-    // 3. Clear active workspace ID
     sessionStorage.removeItem('alurkarya_active_workspace_id');
     
     // 4. Close open project modals and cleanup any dialogs
@@ -1103,8 +1162,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isGranted) {
       const activeWorkspaceId = sessionStorage.getItem('alurkarya_active_workspace_id');
       if (activeWorkspaceId) {
-        window.app = new FreelancerApp();
-        window.app.init();
+        let workspaces = [];
+        try {
+          const stored = localStorage.getItem('alurkarya_workspace_index');
+          workspaces = stored ? JSON.parse(stored) : [];
+        } catch (e) {}
+        const currentWs = workspaces.find(w => w.workspaceId === activeWorkspaceId);
+        const hasPin = currentWs && !!currentWs.workspacePinHash;
+        const isUnlocked = isWorkspaceSessionUnlocked(activeWorkspaceId);
+
+        if (hasPin && !isUnlocked) {
+          const workspaceSelection = new WorkspaceProfileSelection(root, store, () => {
+            window.location.reload();
+          });
+          workspaceSelection.render();
+        } else {
+          window.app = new FreelancerApp();
+          window.app.init();
+        }
       } else {
         const workspaceSelection = new WorkspaceProfileSelection(root, store, () => {
           window.location.reload();

@@ -1062,6 +1062,10 @@ export class WorkspaceStore {
   deleteProject(id) {
     this.projects = this.projects.filter(p => p.id !== id);
     this.invoices = this.invoices.filter(inv => inv.projectId !== id);
+    const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+    if (wsId) {
+      repairWorkspaceReferencesAfterProjectDeletion(wsId, id);
+    }
     this.saveState();
   }
 
@@ -1655,6 +1659,85 @@ export class WorkspaceStore {
     return getInitials(name);
   }
 
+  getOnboardingProjectId() {
+    const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+    if (!wsId) return null;
+
+    let progressData = {};
+    try {
+      const stored = localStorage.getItem(`alurkarya_workspace_${wsId}__alurpandu_progress`);
+      if (stored) {
+        progressData = JSON.parse(stored);
+      }
+    } catch (e) {}
+
+    const projects = this.projects || [];
+    if (projects.length === 0) return null;
+
+    // 1. Use valid onboardingProjectId from progress
+    let targetProjectId = progressData.onboardingProjectId;
+    let currentFocus = projects.find(p => p.id === targetProjectId);
+    if (currentFocus) {
+      return targetProjectId;
+    }
+
+    // 2. Active project selected by user
+    const userActiveProjId = localStorage.getItem(`alurkarya_workspace_${wsId}__active_project_id`);
+    if (userActiveProjId) {
+      let activeFocus = projects.find(p => p.id === userActiveProjId);
+      if (activeFocus) {
+        progressData.onboardingProjectId = userActiveProjId;
+        localStorage.setItem(`alurkarya_workspace_${wsId}__alurpandu_progress`, JSON.stringify(progressData));
+        return userActiveProjId;
+      }
+    }
+
+    // Sort projects deterministically: newest first
+    const sortedProjects = [...projects].sort((a, b) => {
+      const diff = getProjectTimestamp(b) - getProjectTimestamp(a);
+      if (diff !== 0) return diff;
+      return String(a.id).localeCompare(String(b.id));
+    });
+
+    // 3. Choose latest incomplete project
+    let firstIncomplete = sortedProjects.find(p => isProjectOnboardingIncomplete(p));
+    if (firstIncomplete) {
+      targetProjectId = firstIncomplete.id;
+    } else {
+      // 4. Choose latest non-completed project
+      let firstNotCompleted = sortedProjects.find(p => p.stage !== 'completed');
+      if (firstNotCompleted) {
+        targetProjectId = firstNotCompleted.id;
+      } else {
+        // 5. Choose latest project
+        targetProjectId = sortedProjects[0].id;
+      }
+    }
+
+    // Save it deterministically
+    progressData.onboardingProjectId = targetProjectId;
+    localStorage.setItem(`alurkarya_workspace_${wsId}__alurpandu_progress`, JSON.stringify(progressData));
+    
+    return targetProjectId;
+  }
+
+  setOnboardingProjectId(projectId) {
+    const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+    if (!wsId) return;
+
+    let progressData = {};
+    try {
+      const stored = localStorage.getItem(`alurkarya_workspace_${wsId}__alurpandu_progress`);
+      if (stored) {
+        progressData = JSON.parse(stored);
+      }
+    } catch (e) {}
+
+    progressData.onboardingProjectId = projectId;
+    localStorage.setItem(`alurkarya_workspace_${wsId}__alurpandu_progress`, JSON.stringify(progressData));
+    this.notifyListeners();
+  }
+
   getOnboardingProgress() {
     const wsId = sessionStorage.getItem('alurkarya_active_workspace_id');
     if (!wsId) {
@@ -1662,13 +1745,18 @@ export class WorkspaceStore {
     }
     
     let manualSteps = {};
+    let projectManualSteps = {};
     try {
       const stored = localStorage.getItem(`alurkarya_workspace_${wsId}__alurpandu_progress`);
       if (stored) {
         const parsed = JSON.parse(stored);
         manualSteps = parsed.manualSteps || {};
+        projectManualSteps = parsed.projectManualSteps || {};
       }
     } catch (e) {}
+
+    const onboardingProjId = this.getOnboardingProjectId();
+    const activeProj = this.projects.find(p => p.id === onboardingProjId) || null;
 
     const steps = [
       {
@@ -1684,6 +1772,8 @@ export class WorkspaceStore {
             const currentWs = index.find(w => w.workspaceId === wsId);
             if (currentWs && currentWs.workspacePinHash) return true;
           } catch (e) {}
+          const item = manualSteps['workspace_pin_reviewed'];
+          if (item && typeof item === 'object') return item.completed === true;
           return manualSteps['workspace_pin_reviewed'] === 'completed';
         })()
       },
@@ -1703,35 +1793,30 @@ export class WorkspaceStore {
         id: 'client_added',
         completed: (() => {
           if (this.clients && this.clients.length > 0) return true;
-          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
           return !!(activeProj && (activeProj.client || activeProj.clientName) && (activeProj.client || activeProj.clientName).trim() !== '');
         })()
       },
       {
         id: 'project_stage_set',
         completed: (() => {
-          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
           return !!(activeProj && activeProj.stage && activeProj.stage !== 'new_lead');
         })()
       },
       {
         id: 'next_action_added',
         completed: (() => {
-          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
           return !!(activeProj && activeProj.nextAction && activeProj.nextAction.trim() !== '');
         })()
       },
       {
         id: 'deadline_added',
         completed: (() => {
-          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
           return !!(activeProj && activeProj.dueDate && activeProj.dueDate.trim() !== '');
         })()
       },
       {
         id: 'review_delivery_link_added',
         completed: (() => {
-          const activeProj = this.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || this.projects[0];
           return !!(activeProj && (activeProj.previewLink || activeProj.reviewLink || activeProj.finalFileLink || activeProj.deliveryLink));
         })()
       },
@@ -1745,27 +1830,196 @@ export class WorkspaceStore {
             if (currentWs && currentWs.lastBackupAt) return true;
           } catch (e) {}
           if (localStorage.getItem('alurkarya_backup_exported') === 'true') return true;
+          const item = manualSteps['first_backup_exported'];
+          if (item && typeof item === 'object') return item.completed === true;
           return manualSteps['first_backup_exported'] === 'completed';
         })()
       },
       {
         id: 'client_dashboard_checked',
-        completed: manualSteps['client_dashboard_checked'] === 'completed'
+        completed: (() => {
+          const item = manualSteps['client_dashboard_checked'];
+          if (item && typeof item === 'object') {
+            return item.completed === true && item.projectId === onboardingProjId;
+          }
+          return !!(onboardingProjId && projectManualSteps[onboardingProjId] && projectManualSteps[onboardingProjId]['client_dashboard_checked'] === 'completed');
+        })()
       },
       {
         id: 'first_client_update_prepared',
-        completed: manualSteps['first_client_update_prepared'] === 'completed'
+        completed: (() => {
+          const item = manualSteps['first_client_update_prepared'];
+          if (item && typeof item === 'object') {
+            return item.completed === true && item.projectId === onboardingProjId;
+          }
+          return !!(onboardingProjId && projectManualSteps[onboardingProjId] && projectManualSteps[onboardingProjId]['first_client_update_prepared'] === 'completed');
+        })()
       }
     ];
 
-    const completed = steps.filter(s => s.completed).length;
-    const nextStep = steps.find(s => !s.completed);
+    const coreSteps = [
+      'workspace_created',
+      'profile_completed',
+      'first_project_created',
+      'client_added',
+      'project_stage_set',
+      'next_action_added',
+      'deadline_added',
+      'review_delivery_link_added',
+      'first_backup_exported',
+      'client_dashboard_checked',
+      'first_client_update_prepared'
+    ];
+
+    const optionalSteps = [
+      'workspace_pin_reviewed'
+    ];
+
+    const coreCompleted = steps.filter(s => coreSteps.includes(s.id) && s.completed).length;
+    const optionalCompleted = steps.filter(s => optionalSteps.includes(s.id) && s.completed).length;
+
+    // Find next recommended core step
+    const nextCoreStep = steps.find(s => coreSteps.includes(s.id) && !s.completed);
+    
+    // nextStepId resolves to next core step, or completed if all core steps are done
+    const nextStepId = nextCoreStep ? nextCoreStep.id : 'completed';
 
     return {
-      completed,
+      completed: steps.filter(s => s.completed).length,
       total: steps.length,
-      nextStepId: nextStep ? nextStep.id : 'completed'
+      coreCompleted,
+      coreTotal: coreSteps.length,
+      optionalCompleted,
+      optionalTotal: optionalSteps.length,
+      nextStepId
     };
   }
 }
 export const store = new WorkspaceStore();
+
+export function migrateLegacyUnlockState(workspaceId) {
+  if (!workspaceId) return false;
+  const rawLegacy = sessionStorage.getItem('alurkarya_session_unlocked');
+  if (!rawLegacy) return false;
+
+  // Protect the global Access Gate boolean
+  if (rawLegacy === 'true' || rawLegacy === 'false') {
+    return false;
+  }
+
+  try {
+    const parsed = JSON.parse(rawLegacy);
+    if (
+      parsed &&
+      parsed.workspaceId === workspaceId &&
+      parsed.unlocked === true
+    ) {
+      sessionStorage.setItem(`alurkarya_workspace_${workspaceId}__session_unlocked`, 'true');
+      sessionStorage.removeItem('alurkarya_session_unlocked');
+      return true;
+    }
+  } catch (e) {
+    // Malformed JSON or non-object legacy string
+  }
+  return false;
+}
+
+export function isWorkspaceSessionUnlocked(workspaceId) {
+  if (!workspaceId) return false;
+  migrateLegacyUnlockState(workspaceId);
+  return sessionStorage.getItem(`alurkarya_workspace_${workspaceId}__session_unlocked`) === 'true';
+}
+
+export function setWorkspaceSessionUnlocked(workspaceId) {
+  if (!workspaceId) return;
+  sessionStorage.setItem(`alurkarya_workspace_${workspaceId}__session_unlocked`, 'true');
+  sessionStorage.setItem('alurkarya_active_workspace_id', workspaceId);
+}
+
+export function clearWorkspaceSessionUnlock(workspaceId) {
+  if (!workspaceId) return;
+  sessionStorage.removeItem(`alurkarya_workspace_${workspaceId}__session_unlocked`);
+}
+
+export function repairWorkspaceReferencesAfterProjectDeletion(workspaceId, projectId) {
+  if (!workspaceId || !projectId) return;
+  try {
+    const progressKey = `alurkarya_workspace_${workspaceId}__alurpandu_progress`;
+    const stored = localStorage.getItem(progressKey);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      let changed = false;
+      if (parsed.onboardingProjectId === projectId) {
+        delete parsed.onboardingProjectId;
+        changed = true;
+      }
+      
+      // Clean up any project-specific manual confirmations to prevent leakage
+      if (parsed.projectManualSteps && parsed.projectManualSteps[projectId]) {
+        delete parsed.projectManualSteps[projectId];
+        changed = true;
+      }
+      
+      // Clean new manualSteps project-specific confirmations
+      const projectSpecificSteps = ['client_dashboard_checked', 'first_client_update_prepared'];
+      if (parsed.manualSteps) {
+        projectSpecificSteps.forEach(stepId => {
+          const item = parsed.manualSteps[stepId];
+          if (item && typeof item === 'object' && item.projectId === projectId) {
+            delete parsed.manualSteps[stepId];
+            changed = true;
+          }
+        });
+      }
+      
+      if (changed) {
+        localStorage.setItem(progressKey, JSON.stringify(parsed));
+      }
+    }
+  } catch (e) {
+    console.error("Failed to repair workspace references after project deletion:", e);
+  }
+}
+
+function hasValidClient(p) {
+  return !!(p.client || p.clientName || p.clientId);
+}
+function hasValidStage(p) {
+  return p.stage && p.stage !== 'new_lead';
+}
+function hasNextAction(p) {
+  return p.nextAction && p.nextAction.trim() !== '';
+}
+function hasValidDeadline(p) {
+  return p.dueDate && p.dueDate.trim() !== '';
+}
+function hasReviewOrDeliveryLink(p) {
+  return !!(p.previewLink || p.reviewLink || p.finalFileLink || p.deliveryLink);
+}
+
+export function isProjectOnboardingIncomplete(p) {
+  if (!p) return true;
+  return (
+    !hasValidClient(p) ||
+    !hasValidStage(p) ||
+    !hasNextAction(p) ||
+    !hasValidDeadline(p) ||
+    !hasReviewOrDeliveryLink(p)
+  );
+}
+
+export function getProjectTimestamp(project) {
+  if (!project) return 0;
+  const candidates = [
+    project.createdAt,
+    project.updatedAt,
+    project.dueDate
+  ];
+
+  for (const value of candidates) {
+    const timestamp = Date.parse(value);
+    if (Number.isFinite(timestamp)) return timestamp;
+  }
+
+  return 0;
+}

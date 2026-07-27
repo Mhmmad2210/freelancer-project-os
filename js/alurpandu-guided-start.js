@@ -1,24 +1,22 @@
-import { WorkspaceStore } from './store.js';
+import { WorkspaceStore, isWorkspaceSessionUnlocked, setWorkspaceSessionUnlocked, clearWorkspaceSessionUnlock } from './store.js';
 
 // Setup workspace session from window.opener if missing in current tab
 const currentActive = sessionStorage.getItem('alurkarya_active_workspace_id');
 if (!currentActive) {
-  // Check URL params first (safer fallback if opener is isolated)
   const urlParams = new URLSearchParams(window.location.search);
   const wsParam = urlParams.get('workspace_id');
-  if (wsParam) {
+  if (wsParam && /^[a-zA-Z0-9_-]{1,100}$/.test(wsParam)) {
     sessionStorage.setItem('alurkarya_active_workspace_id', wsParam);
-    if (urlParams.get('session_unlocked') === 'true') {
-      sessionStorage.setItem('alurkarya_session_unlocked', 'true');
-    }
+    // Ignore URL session_unlocked bypass parameter entirely
   } else if (window.opener && !window.opener.closed) {
     try {
       const openerActive = window.opener.sessionStorage.getItem('alurkarya_active_workspace_id');
-      if (openerActive) {
+      if (openerActive && /^[a-zA-Z0-9_-]{1,100}$/.test(openerActive)) {
         sessionStorage.setItem('alurkarya_active_workspace_id', openerActive);
-        const openerUnlocked = window.opener.sessionStorage.getItem('alurkarya_session_unlocked');
-        if (openerUnlocked) {
-          sessionStorage.setItem('alurkarya_session_unlocked', openerUnlocked);
+        const parentSpecificKey = `alurkarya_workspace_${openerActive}__session_unlocked`;
+        const openerUnlocked = window.opener.sessionStorage.getItem(parentSpecificKey);
+        if (openerUnlocked === 'true') {
+          sessionStorage.setItem(parentSpecificKey, 'true');
         }
       }
     } catch (e) {
@@ -425,19 +423,28 @@ function getValidatedActiveWorkspaceId() {
   const urlParams = new URLSearchParams(window.location.search);
   const wsParam = urlParams.get('workspace_id');
   
-  let targetWsId = wsParam || sessionStorage.getItem('alurkarya_active_workspace_id');
+  let targetWsId = null;
+  if (wsParam && /^[a-zA-Z0-9_-]{1,100}$/.test(wsParam)) {
+    targetWsId = wsParam;
+  } else {
+    targetWsId = sessionStorage.getItem('alurkarya_active_workspace_id');
+  }
   
   if (window.opener && !window.opener.closed) {
     try {
       const openerActive = window.opener.sessionStorage.getItem('alurkarya_active_workspace_id');
-      const openerUnlocked = window.opener.sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
-      if (openerActive && (!targetWsId || targetWsId === openerActive)) {
-        targetWsId = openerActive;
-        sessionStorage.setItem('alurkarya_active_workspace_id', openerActive);
-        if (openerUnlocked) {
-          sessionStorage.setItem('alurkarya_session_unlocked', 'true');
-        } else {
-          sessionStorage.removeItem('alurkarya_session_unlocked');
+      if (openerActive && /^[a-zA-Z0-9_-]{1,100}$/.test(openerActive)) {
+        if (!targetWsId || targetWsId === openerActive) {
+          targetWsId = openerActive;
+          sessionStorage.setItem('alurkarya_active_workspace_id', openerActive);
+          
+          const parentSpecificKey = `alurkarya_workspace_${openerActive}__session_unlocked`;
+          const openerUnlocked = window.opener.sessionStorage.getItem(parentSpecificKey) === 'true';
+          if (openerUnlocked) {
+            sessionStorage.setItem(parentSpecificKey, 'true');
+          } else {
+            sessionStorage.removeItem(parentSpecificKey);
+          }
         }
       }
     } catch (e) {
@@ -457,13 +464,14 @@ function getValidatedActiveWorkspaceId() {
   }
   
   const hasPin = !!foundWs.workspacePinHash;
-  let isUnlocked = sessionStorage.getItem('alurkarya_session_unlocked') === 'true';
+  let isUnlocked = isWorkspaceSessionUnlocked(targetWsId);
   
   if (hasPin && !isUnlocked) {
     return { workspaceId: targetWsId, locked: true };
   }
   
   sessionStorage.setItem('alurkarya_active_workspace_id', targetWsId);
+  setWorkspaceSessionUnlocked(targetWsId);
   return { workspaceId: targetWsId, locked: false };
 }
 
@@ -504,57 +512,130 @@ function renderSecurityOverlay(type) {
   document.body.appendChild(overlay);
 }
 
-window.goToAlurKarya = function() {
-  if (window.opener && !window.opener.closed) {
-    window.opener.focus();
-  } else {
-    window.location.href = 'index.html';
+function navigateToAlurKarya(target) {
+  const targetUrl = new URL('/', window.location.origin);
+
+  const viewMap = {
+    'profile': 'freelancer-profile',
+    'clients': 'client-hub',
+    'kanban': 'workspace-board',
+    'invoices': 'invoice-ledger',
+    'client-view': 'client-dashboard'
+  };
+
+  const actionMap = {
+    'openWorkspaceSwitcher': 'switch-workspace',
+    'lockWorkspace': 'lock-workspace',
+    'exportBackup': 'export-backup',
+    'project_creator': 'add-project'
+  };
+
+  if (viewMap[target]) {
+    targetUrl.searchParams.set('view', viewMap[target]);
   }
+  if (actionMap[target]) {
+    targetUrl.searchParams.set('action', actionMap[target]);
+  }
+
+  const allowedViews = new Set([
+    'workspace-board',
+    'freelancer-profile',
+    'client-hub',
+    'planner',
+    'invoice-ledger',
+    'client-dashboard'
+  ]);
+
+  const allowedActions = new Set([
+    'add-project',
+    'switch-workspace',
+    'lock-workspace',
+    'export-backup',
+    'prepare-client-update'
+  ]);
+
+  const reqView = targetUrl.searchParams.get('view');
+  const reqAction = targetUrl.searchParams.get('action');
+
+  if (reqView && !allowedViews.has(reqView)) {
+    console.error("Navigation error: view target not in allowlist", reqView);
+    return;
+  }
+  if (reqAction && !allowedActions.has(reqAction)) {
+    console.error("Navigation error: action target not in allowlist", reqAction);
+    return;
+  }
+
+  try {
+    if (
+      window.opener &&
+      !window.opener.closed &&
+      window.opener.location.origin === window.location.origin
+    ) {
+      const parent = window.opener;
+      if (reqAction === 'switch-workspace') {
+        if (parent.AlurKaryaActions && typeof parent.AlurKaryaActions.openWorkspaceSwitcher === 'function') {
+          parent.AlurKaryaActions.openWorkspaceSwitcher();
+        } else {
+          parent.dispatchEvent(new CustomEvent('alurkarya:open-workspace-switcher'));
+        }
+      } else if (reqAction === 'lock-workspace') {
+        if (parent.AlurKaryaActions && typeof parent.AlurKaryaActions.lockWorkspace === 'function') {
+          parent.AlurKaryaActions.lockWorkspace();
+        } else {
+          parent.dispatchEvent(new CustomEvent('alurkarya:lock-workspace'));
+        }
+      } else if (reqAction === 'export-backup') {
+        if (parent.AlurKaryaActions && typeof parent.AlurKaryaActions.exportBackup === 'function') {
+          parent.AlurKaryaActions.exportBackup();
+        } else {
+          parent.dispatchEvent(new CustomEvent('alurkarya:export-backup'));
+        }
+      } else if (reqAction === 'add-project') {
+        if (parent.app && parent.app.projectModal && typeof parent.app.projectModal.open === 'function') {
+          parent.app.projectModal.open(null);
+        } else {
+          parent.dispatchEvent(new CustomEvent('alurkarya:add-project'));
+        }
+      } else if (reqView) {
+        let parentView = reqView;
+        if (parentView === 'workspace-board') parentView = 'kanban';
+        if (parent.app && parent.app.sidebarNav && typeof parent.app.sidebarNav.onTabChange === 'function') {
+          parent.app.sidebarNav.onTabChange(parentView);
+        } else {
+          parent.dispatchEvent(new CustomEvent('alurkarya:change-tab', { detail: { tab: parentView } }));
+        }
+      }
+      parent.focus();
+      return;
+    }
+  } catch (error) {
+    console.warn(
+      '[ALURPANDU_NAVIGATION]',
+      'Parent window is not safely accessible.'
+    );
+  }
+
+  // Fallback to same tab redirection
+  window.location.href = targetUrl.href;
+}
+
+window.goToAlurKarya = function() {
+  try {
+    if (
+      window.opener &&
+      !window.opener.closed &&
+      window.opener.location.origin === window.location.origin
+    ) {
+      window.opener.focus();
+      return;
+    }
+  } catch (e) {}
+  window.location.href = '/';
 };
 
 window.navigateToParentView = function(target) {
-  const parent = window.opener;
-  if (!parent || parent.closed) {
-    showToast(getLanguage() === 'id' 
-      ? "Gunakan fitur ini dari dashboard AlurKarya utama Anda." 
-      : "Use this feature from your main AlurKarya dashboard.");
-    return;
-  }
-  
-  parent.focus();
-
-  try {
-    if (target === 'openWorkspaceSwitcher') {
-      if (parent.AlurKaryaActions && typeof parent.AlurKaryaActions.openWorkspaceSwitcher === 'function') {
-        parent.AlurKaryaActions.openWorkspaceSwitcher();
-      } else {
-        parent.dispatchEvent(new CustomEvent('alurkarya:open-workspace-switcher'));
-      }
-    } else if (target === 'lockWorkspace') {
-      if (parent.AlurKaryaActions && typeof parent.AlurKaryaActions.lockWorkspace === 'function') {
-        parent.AlurKaryaActions.lockWorkspace();
-      } else {
-        parent.dispatchEvent(new CustomEvent('alurkarya:lock-workspace'));
-      }
-    } else if (target === 'exportBackup') {
-      if (parent.AlurKaryaActions && typeof parent.AlurKaryaActions.exportBackup === 'function') {
-        parent.AlurKaryaActions.exportBackup();
-      } else {
-        parent.dispatchEvent(new CustomEvent('alurkarya:export-backup'));
-      }
-    } else if (target === 'project_creator') {
-      openProjectCreatorModal();
-    } else {
-      if (parent.app && parent.app.sidebarNav && typeof parent.app.sidebarNav.onTabChange === 'function') {
-        parent.app.sidebarNav.onTabChange(target);
-      } else {
-        parent.dispatchEvent(new CustomEvent('alurkarya:change-tab', { detail: { tab: target } }));
-      }
-    }
-  } catch (err) {
-    console.error("Failed to route action to parent:", err);
-    showToast(getLanguage() === 'id' ? "Gagal mengirim aksi ke aplikasi utama." : "Failed to trigger action in main application.");
-  }
+  navigateToAlurKarya(target);
 };
 
 function loadChecklist() {
@@ -638,6 +719,36 @@ function updateChecklistUI() {
   
   mount.innerHTML = '';
   
+  // Project being set up container
+  const activeProjId = store.getOnboardingProjectId();
+  const activeProj = store.projects.find(p => p.id === activeProjId);
+  
+  if (store.projects.length > 0) {
+    const selectorEl = document.createElement('div');
+    selectorEl.className = 'onboarding-project-selector';
+    selectorEl.style.cssText = 'background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--border-radius-md); padding: 12px 16px; margin: 0 0 16px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;';
+    
+    selectorEl.innerHTML = `
+      <div>
+        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+          ${lang === 'id' ? 'Project yang sedang disiapkan:' : 'Project being set up:'}
+        </span>
+        <div style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-top: 2px;">
+          ${activeProj ? activeProj.title : '—'}
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 0.8rem; color: var(--text-secondary);">${lang === 'id' ? 'Ganti Project:' : 'Change Project:'}</span>
+        <select id="onboarding-project-focus-dropdown" onchange="window.setOnboardingProjectFocus(this.value)" style="background: var(--bg-surface); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; outline: none; cursor: pointer;">
+          ${store.projects.map(p => `
+            <option value="${p.id}" ${p.id === activeProjId ? 'selected' : ''}>${p.title}</option>
+          `).join('')}
+        </select>
+      </div>
+    `;
+    mount.appendChild(selectorEl);
+  }
+  
   onboardingSteps.forEach((step, idx) => {
     const isStepCompleted = checkIfStepCompleted(step.id);
     
@@ -682,18 +793,63 @@ function updateChecklistUI() {
         <p class="accordion-desc">${descText}</p>
         
         <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px;">
-          ${!isStepCompleted ? `
-            <button class="btn btn-primary" style="font-size: 0.8rem; padding: 6px 16px;" onclick="window.navigateToParentView('${step.ctaAction}')">
-              ${lang === 'id' ? step.ctaLabelId : step.ctaLabelEn}
-            </button>
-          ` : ''}
+          ${!isStepCompleted ? (() => {
+            if (step.id === 'workspace_pin_reviewed') {
+              const primaryLabel = lang === 'id' ? 'Gunakan PIN Workspace' : 'Use Workspace PIN';
+              const secondaryLabel = lang === 'id' ? 'Lanjut tanpa PIN' : 'Continue without PIN';
+              return `
+                <button class="btn btn-primary" style="font-size: 0.8rem; padding: 6px 16px;" onclick="window.navigateToParentView('${step.ctaAction}')">
+                  ${primaryLabel}
+                </button>
+                <button class="btn btn-outline" style="font-size: 0.8rem; padding: 6px 16px; border: 1px solid rgba(255,255,255,0.15);" onclick="window.skipWorkspacePin()">
+                  ${secondaryLabel}
+                </button>
+              `;
+            } else {
+              return `
+                <button class="btn btn-primary" style="font-size: 0.8rem; padding: 6px 16px;" onclick="window.navigateToParentView('${step.ctaAction}')">
+                  ${lang === 'id' ? step.ctaLabelId : step.ctaLabelEn}
+                </button>
+              `;
+            }
+          })() : ''}
           
-          ${step.manualToggle ? `
-            <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-primary); cursor: pointer; padding: 6px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; user-select: none;">
-              <input type="checkbox" id="chk-manual-${step.id}" ${isStepCompleted ? 'checked' : ''} onchange="window.toggleManualStep('${step.id}', this.checked)" style="cursor: pointer;" />
-              <span>${lang === 'id' ? 'Tandai Selesai' : 'Mark as Completed'}</span>
-            </label>
-          ` : ''}
+          ${step.manualToggle && step.id !== 'workspace_pin_reviewed' ? (() => {
+            let labelText = '';
+            if (step.id === 'first_backup_exported') {
+              labelText = lang === 'id'
+                ? 'Saya sudah berhasil mengekspor backup pertama workspace ini.'
+                : 'I have successfully exported the first backup for this workspace.';
+            } else if (step.id === 'client_dashboard_checked') {
+              labelText = lang === 'id'
+                ? 'Saya sudah membuka dan memeriksa Client Dashboard untuk project ini.'
+                : 'I have opened and reviewed the Client Dashboard for this project.';
+            } else if (step.id === 'first_client_update_prepared') {
+              labelText = lang === 'id'
+                ? 'Saya sudah menyiapkan update pertama yang siap dikirim kepada client.'
+                : 'I have prepared the first client update ready to send.';
+            } else {
+              labelText = lang === 'id' ? 'Tandai Selesai' : 'Mark as Completed';
+            }
+            return `
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-primary); cursor: pointer; padding: 8px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; user-select: none;">
+                <input type="checkbox" id="chk-manual-${step.id}" ${isStepCompleted ? 'checked' : ''} onchange="window.toggleManualStep('${step.id}', this.checked)" style="cursor: pointer; width: 16px; height: 16px;" />
+                <span>${labelText}</span>
+              </label>
+            `;
+          })() : ''}
+
+          ${step.id === 'workspace_pin_reviewed' && isStepCompleted ? (() => {
+            const labelText = lang === 'id'
+              ? 'Saya sudah memilih menggunakan PIN atau melanjutkan tanpa PIN.'
+              : 'I have chosen whether to use a PIN or continue without one.';
+            return `
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-primary); cursor: pointer; padding: 8px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; user-select: none;">
+                <input type="checkbox" id="chk-manual-${step.id}" checked onchange="window.toggleManualStep('${step.id}', this.checked)" style="cursor: pointer; width: 16px; height: 16px;" />
+                <span>${labelText}</span>
+              </label>
+            `;
+          })() : ''}
         </div>
         
         <div id="accordion-mount-${step.id}" style="margin-top: 16px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 16px; display: none;"></div>
@@ -763,13 +919,18 @@ function checkIfStepCompleted(stepId) {
   if (!wsId) return false;
   
   let manualSteps = {};
+  let projectManualSteps = {};
   try {
     const stored = localStorage.getItem(`alurkarya_workspace_${wsId}__alurpandu_progress`);
     if (stored) {
       const parsed = JSON.parse(stored);
       manualSteps = parsed.manualSteps || {};
+      projectManualSteps = parsed.projectManualSteps || {};
     }
   } catch (e) {}
+
+  const onboardingProjId = store.getOnboardingProjectId();
+  const activeProj = store.projects.find(p => p.id === onboardingProjId) || null;
 
   if (stepId === 'workspace_created') {
     return !!wsId;
@@ -793,23 +954,18 @@ function checkIfStepCompleted(stepId) {
   }
   if (stepId === 'client_added') {
     if (store.clients && store.clients.length > 0) return true;
-    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
     return !!(activeProj && (activeProj.client || activeProj.clientName) && (activeProj.client || activeProj.clientName).trim() !== '');
   }
   if (stepId === 'project_stage_set') {
-    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
     return !!(activeProj && activeProj.stage && activeProj.stage !== 'new_lead');
   }
   if (stepId === 'next_action_added') {
-    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
     return !!(activeProj && activeProj.nextAction && activeProj.nextAction.trim() !== '');
   }
   if (stepId === 'deadline_added') {
-    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
     return !!(activeProj && activeProj.dueDate && activeProj.dueDate.trim() !== '');
   }
   if (stepId === 'review_delivery_link_added') {
-    const activeProj = store.projects.find(p => p.stage !== 'completed' && p.stage !== 'on_hold') || store.projects[0];
     return !!(activeProj && (activeProj.previewLink || activeProj.reviewLink || activeProj.finalFileLink || activeProj.deliveryLink));
   }
   if (stepId === 'first_backup_exported') {
@@ -823,10 +979,10 @@ function checkIfStepCompleted(stepId) {
     return manualSteps['first_backup_exported'] === 'completed';
   }
   if (stepId === 'client_dashboard_checked') {
-    return manualSteps['client_dashboard_checked'] === 'completed';
+    return !!(onboardingProjId && projectManualSteps[onboardingProjId] && projectManualSteps[onboardingProjId]['client_dashboard_checked'] === 'completed');
   }
   if (stepId === 'first_client_update_prepared') {
-    return manualSteps['first_client_update_prepared'] === 'completed';
+    return !!(onboardingProjId && projectManualSteps[onboardingProjId] && projectManualSteps[onboardingProjId]['first_client_update_prepared'] === 'completed');
   }
   return false;
 }
@@ -845,7 +1001,7 @@ window.toggleManualStep = function(stepId, isChecked) {
   if (!wsId) return;
   
   let progressKey = `alurkarya_workspace_${wsId}__alurpandu_progress`;
-  let data = { manualSteps: {} };
+  let data = { manualSteps: {}, projectManualSteps: {} };
   try {
     const stored = localStorage.getItem(progressKey);
     if (stored) {
@@ -854,7 +1010,19 @@ window.toggleManualStep = function(stepId, isChecked) {
   } catch (e) {}
   
   if (!data.manualSteps) data.manualSteps = {};
-  data.manualSteps[stepId] = isChecked ? 'completed' : 'not_started';
+  if (!data.projectManualSteps) data.projectManualSteps = {};
+  
+  const currentProjectId = store.getOnboardingProjectId();
+  const isProjectSpecific = stepId === 'client_dashboard_checked' || stepId === 'first_client_update_prepared';
+  
+  if (isProjectSpecific && currentProjectId) {
+    if (!data.projectManualSteps[currentProjectId]) {
+      data.projectManualSteps[currentProjectId] = {};
+    }
+    data.projectManualSteps[currentProjectId][stepId] = isChecked ? 'completed' : 'not_started';
+  } else {
+    data.manualSteps[stepId] = isChecked ? 'completed' : 'not_started';
+  }
   
   localStorage.setItem(progressKey, JSON.stringify(data));
   
@@ -2621,3 +2789,22 @@ window.handleExportBackup = handleExportBackup;
 window.saveTemplateLinks = saveTemplateLinks;
 window.toggleSafetyAcknowledgement = toggleSafetyAcknowledgement;
 window.loadSafetyAcknowledgementState = loadSafetyAcknowledgementState;
+
+window.setOnboardingProjectFocus = function(projectId) {
+  store.setOnboardingProjectId(projectId);
+  loadChecklist();
+};
+
+window.skipWorkspacePin = function() {
+  window.toggleManualStep('workspace_pin_reviewed', true);
+};
+
+window.addEventListener('focus', () => {
+  if (window.opener && !window.opener.closed) {
+    try {
+      const openerActive = window.opener.sessionStorage.getItem('alurkarya_active_workspace_id');
+      if (openerActive) {
+        sessionStorage.setItem('alurkarya_active_workspace_id', openerActive);
+        const parentSpecificKey = `alurkarya_workspace_${openerActive}__session_unlocked`;
+        const openerUnlocked = window.opener.sessionStorage.getItem(parentSpecificKey);
+        if (openerUnlo

@@ -1,5 +1,6 @@
 import { getIcon } from '../icons.js';
 import { getLanguage, t } from '../i18n.js';
+import { setWorkspaceSessionUnlocked } from '../store.js';
 
 export class WorkspaceProfileSelection {
   /**
@@ -708,8 +709,7 @@ export class WorkspaceProfileSelection {
 
   selectWorkspace(ws) {
     // Set active workspace details in sessionStorage
-    sessionStorage.setItem('alurkarya_active_workspace_id', ws.workspaceId);
-    sessionStorage.setItem('alurkarya_session_unlocked', 'true');
+    setWorkspaceSessionUnlocked(ws.workspaceId);
 
     // Update lastOpenedAt timestamp in index
     const index = this.store.getWorkspaces();

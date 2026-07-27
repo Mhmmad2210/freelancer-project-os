@@ -80,8 +80,7 @@
         });
         document.getElementById('boot-btn-reset').addEventListener('click', function() {
           localStorage.removeItem('alurkarya_entry_mode');
-          sessionStorage.removeItem('alurkarya_active_workspace_id');
-          sessionStorage.removeItem('alurkarya_session_unlocked');
+          sessionStorage.clear();
           window.location.reload();
         });
       }

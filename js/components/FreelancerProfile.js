@@ -494,6 +494,7 @@ export class FreelancerProfile {
       
       if (confirmVal === expected) {
         this.store.deleteWorkspace(activeWorkspaceId);
+        sessionStorage.removeItem(`alurkarya_workspace_${activeWorkspaceId}__session_unlocked`);
         sessionStorage.removeItem('alurkarya_active_workspace_id');
         sessionStorage.removeItem('alurkarya_session_unlocked');
         this.onTriggerToast(isIndo ? 'Workspace berhasil dihapus.' : 'Workspace deleted successfully.', 'text-success');
